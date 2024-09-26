@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 
+import appConfig from '~/appConfig';
 import useCrewContext from '~/hooks/useCrewContext';
 import activities, { getHydrationQueryKey } from '~/lib/activities';
 
@@ -36,9 +37,9 @@ const getActivityConfig = (queryClient, defaultViewingAs) => (activity, override
   const onBeforeReceived = config?.onBeforeReceived ? config.onBeforeReceived(activity) : (async () => {});
 
   const logContent = config?.getLogContent ? config.getLogContent(activity, viewingAs, prepopped) : null;
-  if (logContent && activity.event.transactionHash) logContent.txLink = `${process.env.REACT_APP_STARKNET_EXPLORER_URL}/tx/${activity.event.transactionHash}`;
+  if (logContent && activity.event.transactionHash) logContent.txLink = `${appConfig.get('Url.starknetExplorer')}/tx/${activity.event.transactionHash}`;
   // TODO: support L1? __t is in event record, but is not included in activity record...
-  //  `${process.env.REACT_APP_ETHEREUM_EXPLORER_URL}/tx/${activity.event?.transactionHash}`
+  //  `${appConfig.get('Url.ethereumExplorer')}/tx/${activity.event?.transactionHash}`
   
   const requiresCrewTime = !!config?.requiresCrewTime;
 

@@ -3,6 +3,7 @@ import { Building, Crewmate, Entity, Inventory, Permission, Process, Processor, 
 import { useHistory } from 'react-router-dom';
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
 
+import appConfig from '~/appConfig';
 import { ZOOM_IN_ANIMATION_TIME, ZOOM_OUT_ANIMATION_TIME, ZOOM_TO_PLOT_ANIMATION_MAX_TIME, ZOOM_TO_PLOT_ANIMATION_MIN_TIME } from '~/game/scene/Asteroid';
 import useCrewAgreements from '~/hooks/useCrewAgreements';
 import useCrewBuildings from '~/hooks/useCrewBuildings';
@@ -1038,7 +1039,7 @@ const useSimulationSteps = () => {
             You did it, congratulations! You are now officially ready to choose your career 
             class and start your own crew.
             <br /><br />
-            Remember: the <a href="https://wiki.influenceth.io/en/docs/user-guides" target="_blank" rel="noopener noreferrer">Wiki</a>
+            Remember: the <a href={`${appConfig.get('Url.wiki')}/en/docs/user-guides`} target="_blank" rel="noopener noreferrer">Wiki</a>
             {' '}and  <a href="https://discord.com/invite/influenceth" target="_blank" rel="noopener noreferrer">Discord</a>
             {' '}are resources that are always available to you when seeking help from your fellow Adalians.
             <br/><br/>
@@ -1054,9 +1055,7 @@ const useSimulationSteps = () => {
           disabled: connecting,
           onClick: () => {
             fireTrackingEvent('simulation', { step: 'login' });
-            
-            // webWallet does not work from localhost...
-            login(process.env.NODE_ENV === 'development' ? undefined : { webWallet: true });
+            login({ webWallet: true });
             // TODO: add on-logged-in url
           },
         }

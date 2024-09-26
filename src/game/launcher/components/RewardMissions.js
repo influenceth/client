@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import styled from 'styled-components';
 import Loader from 'react-spinners/PuffLoader';
 
+import appConfig from '~/appConfig';
 import AsteroidsHeroImage from '~/assets/images/sales/asteroids_hero.png';
 import AsteroidSurfaceImage from '~/assets/images/hud_headers/Asteroid.png';
 import ClipCorner from '~/components/ClipCorner';
@@ -327,7 +328,7 @@ const MissionWrapper = styled.div`
 const Mission = ({ mission, mode }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const onClick = useCallback(() => {
-    const targetUrl = mode === 'community' ? process.env.REACT_APP_COMMUNITY_MISSIONS_URL : process.env.REACT_APP_COLONIZATION_MISSIONS_URL;
+    const targetUrl = mode === 'community' ? appConfig.get('Url.communityMissions') : appConfig.get('Url.colonizationMissions');
     if (targetUrl) {
       window.open(targetUrl);
     }
@@ -377,8 +378,8 @@ const RewardMissions = ({ mode }) => {
             {mode === 'colonization' && (
               <label>
                 Individual milestones with SWAY rewards.{' '}
-                {process.env.REACT_APP_COLONIZATION_MISSIONS_URL
-                  ? <>View your completion status on <a href={process.env.REACT_APP_COLONIZATION_MISSIONS_URL} target="_blank" rel="noopener noreferrer">Wendash</a>.</>
+                {appConfig.get('Url.colonizationMissions')
+                  ? <>View your completion status on <a href={appConfig.get('Url.colonizationMissions')} target="_blank" rel="noopener noreferrer">Wendash</a>.</>
                   : <>Coming Soon</>
                 }
               </label>
@@ -386,7 +387,7 @@ const RewardMissions = ({ mode }) => {
             {mode === 'community' && (
               <label>
                 Players work together towards these massively social milestones.
-                View your completion status on <a href={process.env.REACT_APP_COMMUNITY_MISSIONS_URL} target="_blank" rel="noopener noreferrer">Wendash</a>.
+                View your completion status on <a href={appConfig.get('Url.communityMissions')} target="_blank" rel="noopener noreferrer">Wendash</a>.
               </label>
             )}
             <RewardsWrapper>

@@ -1,0 +1,69 @@
+{
+  "App": {
+    "deployment": "development",
+    "disableIntroAnimation": false,
+    "disableLauncherLanding": false,
+    "disableLaunchTrailer": false,
+    "defaultMuted": false,
+    "disableScreensizeWarning": false,
+    "enableDevTools": false,
+    "hideSocial": true,
+    "verboseLogs": false
+  },
+  "Api": {
+    "argent": "",
+    "argentWebWallet": "",
+    "avnu": "",
+    "influence": "",
+    "influenceImage": "",
+    "ipfs": "",
+    "ramp": "",
+    "ClientId": {
+      "google": "",
+      "gtm": "",
+      "layerswap": "",
+      "ramp": ""
+    }
+  },
+  "Cloudfront": {
+    "imageUrl": "",
+    "otherUrl": "",
+    "bucket": ""
+  },
+  "Ethereum": {
+    "Address": {
+      "asteroidToken": "",
+      "crewmateToken": ""
+    }
+  },
+  "Starknet": {
+    "chainId": "",
+    "provider": "",
+    "providerBackup": "",
+    "Address": {
+      "ethToken": "",
+      "usdcToken": "",
+      "asteroidToken": "",
+      "crewmateToken": "",
+      "dispatcher": "",
+      "escrow": "",
+      "shipToken": "",
+      "swayToken": ""
+    }
+  },
+  "Url": {
+    "bridge": "",
+    "bugReport": "https://discord.gg/influenceth",
+    "colonizationMissions": "",
+    "communityMissions": "https://influence.wendash.com/",
+    "discord": "https://discord.gg/influenceth",
+    "ethereumExplorer": "",
+    "ethereumNftMarket": "",
+    "help": "https://discord.gg/influenceth",
+    "home": "https://influence.io",
+    "socialQuests": "https://starknet.quest/quest/32",
+    "starknetExplorer": "",
+    "starknetNftMarket": "",
+    "wiki": "https://wiki.influenceth.io"
+  }
+}

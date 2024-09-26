@@ -1,0 +1,48 @@
+{
+  "App": {
+    "deployment": "production",
+    "hideSocial": false
+  },
+  "Api": {
+    "argent": "https://cloud.argent-api.com/v1",
+    "argentWebWallet": "https://web.argent.xyz",
+    "avnu": "https://starknet.api.avnu.fi",
+    "influence": "https://api.influenceth.io",
+    "influenceImage": "https://images.influenceth.io",
+    "ipfs": "https://influence.infura-ipfs.io/ipfs",
+    "ramp": "https://app.ramp.network"
+  },
+  "Cloudfront": {
+    "imageUrl": "https://d2xo5vocah3zyk.cloudfront.net",
+    "otherUrl": "https://d1c1daundk1ax0.cloudfront.net/influence/prerelease",
+    "bucket": "unstoppablegames"
+  },
+  "Ethereum": {
+    "Address": {
+      "asteroidToken": "0x6e4c6D9B0930073e958ABd2ABa516b885260b8Ff",
+      "crewmateToken": "0x746Db7B1728aF413C4e2b98216C6171B2FC9D00e"
+    }
+  },
+  "Starknet": {
+    "chainId": "0x534e5f4d41494e",
+    "provider": "https://free-rpc.nethermind.io/mainnet-juno/v0_7",
+    "Address": {
+      "ethToken": "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+      "usdcToken": "0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
+      "asteroidToken": "0x0603cf837055c64d026a3c5a9e3a83036cea6c4a3f68a9e19f7a687d726fe817",
+      "crewmateToken": "0x0241b9c4ce12c06f49fee2ec7c16337386fa5185168f538a7631aacecdf3df74",
+      "dispatcher": "0x0422d33a3638dcc4c62e72e1d6942cd31eb643ef596ccac2351e0e21f6cd4bf4",
+      "escrow": "0x487a1c4d61c05d79e22ed90d4811b32277961707338c78d563a245749f57618",
+      "shipToken": "0x04369e47e647ab5fc4d36cee26590276b99a89a83fc3306462d21d366611fde3",
+      "swayToken": "0x004878d1148318a31829523ee9c6a5ee563af6cd87f90a30809e5b0d27db8a9b"
+    }
+  },
+  "Url": {
+    "bridge": "https://assets.influenceth.io",
+    "ethereumExplorer": "https://etherscan.io",
+    "ethereumNftMarket": "https://opensea.io",
+    "help": "https://discord.gg/dkfNaSp2PW",
+    "starknetExplorer": "https://starkscan.co",
+    "starknetNftMarket": "https://pyramid.market"
+  }
+}

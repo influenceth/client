@@ -3,6 +3,7 @@ import { Crew, Entity, Lot, Order, Permission, Processor, Time } from '@influenc
 import { shortString } from 'starknet';
 import trim from 'lodash/trim';
 
+import appConfig from '~/appConfig';
 import { ManufactureIcon, GrowIcon, AssembleIcon, RefineIcon } from '~/components/Icons';
 import { TOKEN, TOKEN_SCALE } from './priceUtils';
 
@@ -387,7 +388,7 @@ export const safeBigInt = (unsafe) => {
   return BigInt(Math.round(Number(unsafe || 0)));
 }
 
-export const openAccessJSTime = `${process.env.REACT_APP_CHAIN_ID}` === `0x534e5f4d41494e` ? 1719495000e3 : 0;
+export const openAccessJSTime = `${appConfig.get('Starknet.chainId')}` === `0x534e5f4d41494e` ? 1719495000e3 : 0;
 export const displayTimeFractionDigits = 2;
 export const maxAnnotationLength = 750;
 

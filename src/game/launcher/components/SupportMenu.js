@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import styled from 'styled-components';
 
+import appConfig from '~/appConfig';
 import { ChevronDoubleRightIcon, InfluenceIcon } from '~/components/Icons';
 import ClipCorner from '~/components/ClipCorner';
 
@@ -76,7 +77,7 @@ const SupportWrapper = styled.div`
 
 const SupportMenu = () => {
   const goToDiscord = useCallback(() => {
-    window.open(process.env.REACT_APP_HELP_URL);
+    window.open(appConfig.get('Url.help'));
   }, []);
   return (
     <SupportWrapper onClick={goToDiscord}>

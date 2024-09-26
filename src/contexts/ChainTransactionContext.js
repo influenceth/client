@@ -5,6 +5,7 @@ import { hash, num, shortString, uint256 } from 'starknet';
 import { fetchBuildExecuteTransaction, fetchQuotes } from '@avnu/avnu-sdk';
 import * as gasless from '@avnu/gasless-sdk';
 
+import appConfig from '~/appConfig';
 import useActivitiesContext from '~/hooks/useActivitiesContext';
 import useCrewContext from '~/hooks/useCrewContext';
 import useSession from '~/hooks/useSession';
@@ -432,7 +433,7 @@ const customConfigs = {
             utoken.high
           ],
           tokenAddress,
-          process.env.REACT_APP_STARKNET_SWAY_TOKEN,
+          appConfig.get('Starknet.Address.swayToken'),
         ),
         System.getFormattedCall(
           tokenAddress,
@@ -466,7 +467,7 @@ const customConfigs = {
 
 const getSystemCallAndProcessedVars = (runSystem, rawVars, encodeEntrypoint = false, limitToVars = false, overrideCalldataLength = false) => {
   let vars = customConfigs[runSystem]?.preprocess ? customConfigs[runSystem].preprocess(rawVars) : rawVars;
-  const systemCall = System.getRunSystemCall(runSystem, vars, process.env.REACT_APP_STARKNET_DISPATCHER, limitToVars);
+  const systemCall = System.getRunSystemCall(runSystem, vars, appConfig.get('Starknet.Address.dispatcher'), limitToVars);
   if (encodeEntrypoint) { // used where nested (i.e. in escrow call)
     systemCall.entrypoint = hash.getSelectorFromName(systemCall.entrypoint);
   }
@@ -575,7 +576,7 @@ export function ChainTransactionProvider({ children }) {
         );
         console.log('simulation', simulation);
 
-        const tokens = await gasless.fetchGasTokenPrices({ baseUrl: process.env.REACT_APP_AVNU_API_URL });
+        const tokens = await gasless.fetchGasTokenPrices({ baseUrl: appConfig.get('Api.avnu') });
         console.log('fetchGasTokenPrices', tokens);
         gasToken = tokens.find((t) => Address.areEqual(t.tokenAddress, TOKEN.SWAY));
         console.log('gasToken', gasToken);
@@ -585,7 +586,7 @@ export function ChainTransactionProvider({ children }) {
         // TODO: figure out why some txs require this
         
         maxFee = gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken)
-          * (process.env.REACT_APP_DEPLOYMENT === 'production' ? 3n : 100n);
+          * (appConfig.get('App.deployment') === 'production' ? 3n : 100n);
         
         // (not sure why this would ever be negative, but it is on dev at least)
         if (maxFee < 0n) maxFee *= -1n;
@@ -599,14 +600,14 @@ export function ChainTransactionProvider({ children }) {
 
       // Check if wallet has sufficient funds for gas fees
       // (skip this check in testnet since the allowed gas tokens are inconsistent)
-      // if (process.env.REACT_APP_DEPLOYMENT !== 'production' || gasTokenBalance >= maxFee) {
+      // if (appConfig.get('App.deployment') !== 'production' || gasTokenBalance >= maxFee) {
       if (canPayGasWithSway) {
         const { typedData, signature } = await getOutsideExecutionData(formattedCalls, gasToken.tokenAddress, maxFee, canUseSessionKey);
         return await gasless.fetchExecuteTransaction(
           accountAddress,
           JSON.stringify(typedData),
           signature,
-          { baseUrl: process.env.REACT_APP_AVNU_API_URL }
+          { baseUrl: appConfig.get('Api.avnu') }
         );
       }
     }
@@ -743,8 +744,8 @@ export function ChainTransactionProvider({ children }) {
                     escrowAmount,
                     depositSystemCall,
                     withdrawSystemCall,
-                    process.env.REACT_APP_STARKNET_ESCROW,
-                    process.env.REACT_APP_STARKNET_SWAY_TOKEN,
+                    appConfig.get('Starknet.Address.escrow'),
+                    appConfig.get('Starknet.Address.swayToken'),
                   );
 
                   console.log('runSystem via escrow deposit', runSystem, processedVars, escrowCall);
@@ -765,8 +766,8 @@ export function ChainTransactionProvider({ children }) {
                     rawVars.depositCaller,
                     withdrawSystemCall,
                     withdrawSystemData,
-                    process.env.REACT_APP_STARKNET_ESCROW,
-                    process.env.REACT_APP_STARKNET_SWAY_TOKEN,
+                    appConfig.get('Starknet.Address.escrow'),
+                    appConfig.get('Starknet.Address.swayToken'),
                   );
 
                   console.log('runSystem via escrow withdrawal', runSystem, processedVars, escrowCall);
@@ -789,8 +790,8 @@ export function ChainTransactionProvider({ children }) {
                     t.recipient,
                     t.amount,
                     t.memo,
-                    t.consumer || process.env.REACT_APP_STARKNET_DISPATCHER,
-                    process.env.REACT_APP_STARKNET_SWAY_TOKEN,
+                    t.consumer || appConfig.get('Starknet.Address.dispatcher'),
+                    appConfig.get('Starknet.Address.swayToken'),
                   ));
                 });
               }
@@ -813,7 +814,7 @@ export function ChainTransactionProvider({ children }) {
 
             if (totalEscrow > 0n) {
               calls.unshift(System.getApproveErc20Call(
-                totalEscrow, process.env.REACT_APP_STARKNET_SWAY_TOKEN, process.env.REACT_APP_STARKNET_ESCROW
+                totalEscrow, appConfig.get('Starknet.Address.swayToken'), appConfig.get('Starknet.Address.escrow')
               ));
             }
 
@@ -822,7 +823,7 @@ export function ChainTransactionProvider({ children }) {
               calls.unshift(System.getApproveErc20Call(
                 totalPrice,
                 totalPriceToken,
-                process.env.REACT_APP_STARKNET_DISPATCHER
+                appConfig.get('Starknet.Address.dispatcher')
               ));
 
               const wallet = walletRef.current;
@@ -847,21 +848,21 @@ export function ChainTransactionProvider({ children }) {
                   const slippageMult = (1 / (1 - slippage));
                   console.log({ totalPrice, balanceInTargetToken });
                   console.log({
-                    sellTokenAddress: totalPriceToken === process.env.REACT_APP_USDC_TOKEN_ADDRESS
-                      ? process.env.REACT_APP_ERC20_TOKEN_ADDRESS
-                      : process.env.REACT_APP_USDC_TOKEN_ADDRESS,
+                    sellTokenAddress: totalPriceToken === appConfig.get('Starknet.Address.usdcToken')
+                      ? appConfig.get('Starknet.Address.ethToken')
+                      : appConfig.get('Starknet.Address.usdcToken'),
                     buyTokenAddress: totalPriceToken,
                     buyAmount: safeBigInt(Math.ceil(slippageMult * parseInt(totalPrice - balanceInTargetToken))),
                     takerAddress: accountAddress,
                   });
                   const quotes = await fetchQuotes({
-                    sellTokenAddress: totalPriceToken === process.env.REACT_APP_USDC_TOKEN_ADDRESS
-                      ? process.env.REACT_APP_ERC20_TOKEN_ADDRESS
-                      : process.env.REACT_APP_USDC_TOKEN_ADDRESS,
+                    sellTokenAddress: totalPriceToken === appConfig.get('Starknet.Address.usdcToken')
+                      ? appConfig.get('Starknet.Address.ethToken')
+                      : appConfig.get('Starknet.Address.usdcToken'),
                     buyTokenAddress: totalPriceToken,
                     buyAmount: safeBigInt(Math.ceil(slippageMult * parseInt(totalPrice - balanceInTargetToken))),
                     takerAddress: accountAddress,
-                  }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
+                  }, { baseUrl: appConfig.get('Api.avnu') });
                   if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
 
                   // prepend swap calls
@@ -870,7 +871,7 @@ export function ChainTransactionProvider({ children }) {
                     accountAddress,
                     slippage,
                     true,
-                    { baseUrl: process.env.REACT_APP_AVNU_API_URL }
+                    { baseUrl: appConfig.get('Api.avnu') }
                   );
 
                   console.log('prepend calls', swapTx.calls);
@@ -1069,7 +1070,7 @@ export function ChainTransactionProvider({ children }) {
           // walletAccount.deployAccount({ contractAddress: accountAddress });
           executeCalls([
             System.getFormattedCall(
-              process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
+              appConfig.get('Starknet.Address.ethToken'),
               'transfer',
               [
                 { value: accountAddress, type: 'ContractAddress' },

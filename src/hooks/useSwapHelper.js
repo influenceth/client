@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { fetchBuildExecuteTransaction } from '@avnu/avnu-sdk';
 
+import appConfig from '~/appConfig';
 import useStore from '~/hooks/useStore';
 import useWalletPurchasableBalances from '~/hooks/useWalletPurchasableBalances';
 import { TOKEN } from '~/lib/priceUtils';
@@ -8,7 +9,7 @@ import usePriceHelper from '~/hooks/usePriceHelper';
 import api from '~/lib/api';
 import useSession from '~/hooks/useSession';
 
-const avnuOptions = { baseUrl: process.env.REACT_APP_AVNU_API_URL };
+const avnuOptions = { baseUrl: appConfig.get('Api.avnu') };
 
 const useSwapHelper = () => {
   const { accountAddress } = useSession();

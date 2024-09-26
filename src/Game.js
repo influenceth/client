@@ -6,6 +6,7 @@ import { useDetectGPU } from '@react-three/drei';
 
 import { initializeTagManager } from './gtm';
 
+import appConfig from '~/appConfig';
 import FullpageInterstitial from '~/components/FullpageInterstitial';
 import { ActionItemProvider } from '~/contexts/ActionItemContext';
 import { ActivitiesProvider } from '~/contexts/ActivitiesContext';
@@ -62,7 +63,7 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-const DISABLE_LAUNCHER_LANDING = true && process.env.NODE_ENV === 'development';
+const DISABLE_LAUNCHER_LANDING = appConfig.get('App.disableLauncherLanding');
 
 const LauncherRedirect = () => {
   const { authenticated } = useSession();

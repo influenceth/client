@@ -1,10 +1,11 @@
 import { useState } from 'react';
 
+import appConfig from '~/appConfig';
 import FullpageInterstitial from '~/components/FullpageInterstitial';
 import useScreenSize from '~/hooks/useScreenSize';
 import theme from '~/theme';
 
-const disableScreensizeWarning = process.env.NODE_ENV === 'development';
+const disableScreensizeWarning = appConfig.get('App.disableScreensizeWarning');
 
 const ScreensizeWarning = () => {
   const { height, width } = useScreenSize();

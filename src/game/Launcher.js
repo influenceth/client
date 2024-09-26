@@ -3,6 +3,7 @@ import styled, { css, keyframes } from 'styled-components';
 import { PuffLoader as Loader } from 'react-spinners';
 import { Tooltip } from 'react-tooltip';
 
+import appConfig from '~/appConfig';
 import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
 import {
@@ -23,7 +24,7 @@ import Rewards from './launcher/Rewards';
 import { fireTrackingEvent, reactBool } from '~/lib/utils';
 import theme from '~/theme';
 
-const DISABLE_LAUNCHER_TRAILER = true && process.env.NODE_ENV === 'development';
+const DISABLE_LAUNCH_TRAILER = appConfig.get('App.disableLaunchTrailer');
 
 const footerHeight = 80;
 export const navMenuWidth = 250;
@@ -389,10 +390,10 @@ const Launcher = (props) => {
   const onClickPlay = useCallback(() => {
     fireTrackingEvent('play', { externalId: accountAddress });
     dispatchLauncherPage();
-    if (!hasSeenIntroVideo && !DISABLE_LAUNCHER_TRAILER) {
+    if (!hasSeenIntroVideo && !DISABLE_LAUNCH_TRAILER) {
       dispatchSeenIntroVideo(true);
       dispatchCutscene(
-        `${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/videos/intro.m3u8`,
+        `${appConfig.get('Cloudfront.otherUrl')}/videos/intro.m3u8`,
         true
       );
     }
@@ -411,15 +412,15 @@ const Launcher = (props) => {
   }, []);
 
   const openHelpChannel = useCallback(() => {
-    window.open(process.env.REACT_APP_HELP_URL, '_blank', 'noopener');
+    window.open(appConfig.get('Url.help'), '_blank', 'noopener');
   }, []);
 
   const openAssetsPortal = useCallback(() => {
-    window.open(process.env.REACT_APP_BRIDGE_URL, '_blank', 'noopener');
+    window.open(appConfig.get('Url.bridge'), '_blank', 'noopener');
   }, []);
 
   const openWebWalletDashboard = useCallback(() => {
-    window.open(`${process.env.REACT_APP_ARGENT_WEB_WALLET_URL}`, '_blank', 'noopener');
+    window.open(`${appConfig.get('Api.argentWebWallet')}`, '_blank', 'noopener');
   }, []);
 
   return (
@@ -458,7 +459,7 @@ const Launcher = (props) => {
 
             <NavItem isRule />
 
-            {process.env.REACT_APP_BRIDGE_URL && (
+            {appConfig.get('Url.bridge') && (
               <NavItem onClick={openAssetsPortal} isExternal>
                 <StyledNavIcon /> Assets Portal
               </NavItem>
@@ -470,7 +471,7 @@ const Launcher = (props) => {
               </NavItem>
             )}
 
-            {process.env.REACT_APP_HELP_URL && (
+            {appConfig.get('Url.bugReport') && (
               <NavItem onClick={openHelpChannel} isExternal>
                 <StyledNavIcon /> Bug Report
               </NavItem>
@@ -546,9 +547,9 @@ const Launcher = (props) => {
 
         <Footer>
           <div>
-            <a href="https://influenceth.io" target="_blank" rel="noopener noreferrer">About</a>
-            <a href="https://discord.gg/influenceth" target="_blank" rel="noopener noreferrer">Discord</a>
-            <a href="https://wiki.influenceth.io" target="_blank" rel="noopener noreferrer">Wiki</a>
+            <a href={appConfig.get('Url.home')} target="_blank" rel="noopener noreferrer">About</a>
+            <a href={appConfig.get('Url.discord')} target="_blank" rel="noopener noreferrer">Discord</a>
+            <a href={appConfig.get('Url.wiki')} target="_blank" rel="noopener noreferrer">Wiki</a>
           </div>
         </Footer>
       </ContentWrapper>

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 
+import appConfig from '~/appConfig';
 import useSession from '~/hooks/useSession';
 
 const WebsocketContext = createContext();
@@ -38,7 +39,7 @@ export function WebsocketProvider({ children }) {
     const roomKey = (room || '').includes('::') ? room : DEFAULT_ROOM;
     Object.values(messageHandlers.current).forEach((handler) => {
       if (handler.room === roomKey) {
-        if (process.env.NODE_ENV !== 'production') console.log('handleMessage', roomKey, { type, body, ...others });
+        if (appConfig.get('App.verboseLogs')) console.log('handleMessage', roomKey, { type, body, ...others });
         handler.callback({ type, body, ...others });
       }
     });
@@ -97,7 +98,7 @@ export function WebsocketProvider({ children }) {
     config.transports = [ 'websocket' ];
     if (token) config.query = `token=${token}`;
 
-    socket.current = new io(process.env.REACT_APP_API_URL, config);
+    socket.current = new io(appConfig.get('Api.influence'), config);
     socket.current.onAny(handleMessage);
     socket.current.on('connect', () => handleConnection(true));
     socket.current.on('disconnect', () => handleConnection(false));

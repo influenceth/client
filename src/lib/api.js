@@ -3,6 +3,7 @@ import { Asteroid, Building, Deposit, Entity, Inventory, Order, Ship } from '@in
 import esb from 'elastic-builder';
 import { executeSwap, fetchQuotes } from "@avnu/avnu-sdk";
 
+import appConfig from '~/appConfig';
 import useStore from '~/hooks/useStore';
 import { entityToAgreements, esbLocationQuery, esbPermissionQuery, safeBigInt, safeEntityId } from './utils';
 import { TOKEN, TOKEN_SCALE } from './priceUtils';
@@ -11,7 +12,7 @@ import { TOKEN, TOKEN_SCALE } from './priceUtils';
 const apiVersion = 'v2';
 
 // pass initial config to axios
-const config = { baseURL: process.env.REACT_APP_API_URL, headers: {} };
+const config = { baseURL: appConfig.get('Api.influence'), headers: {} };
 const initialToken = useStore.getState().currentSession?.token;
 if (initialToken) config.headers = { Authorization: `Bearer ${initialToken}`};
 const instance = axios.create(config);
@@ -796,7 +797,7 @@ const api = {
 
   // AVNU endpoints
   getSwapQuote: async ({ sellToken, buyToken, amount, account }) => {
-    const options = { baseUrl: process.env.REACT_APP_AVNU_API_URL };
+    const options = { baseUrl: appConfig.get('Api.avnu') };
     return fetchQuotes({
       sellTokenAddress: sellToken,
       buyTokenAddress: buyToken,
@@ -806,7 +807,7 @@ const api = {
   },
 
   executeSwaySwap: async ({ quote, account }) => {
-    const options = { baseUrl: process.env.REACT_APP_AVNU_API_URL };
+    const options = { baseUrl: appConfig.get('Api.avnu') };
     return executeSwap(account, quote, {}, options);
   },
 

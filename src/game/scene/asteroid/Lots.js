@@ -38,6 +38,7 @@ import theme from '~/theme';
 
 import frag from './shaders/delivery.frag';
 import vert from './shaders/delivery.vert';
+import appConfig from '~/appConfig';
 
 const { MAX_LOTS_RENDERED } = constants;
 
@@ -286,7 +287,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
   }, [lotResultMap, lastLotUpdate, positionsReady]);
 
   const handleWSMessage = useCallback((message) => {
-    if (process.env.NODE_ENV !== 'production') console.log('onWSMessage (lots)', message);
+    if (appConfig.get('App.verboseLogs')) console.log('onWSMessage (lots)', message);
     const { type: eventType, body } = message;
 
     // pass the event to useMappedAsteroidLots hook to update scene

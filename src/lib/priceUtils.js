@@ -1,12 +1,13 @@
 import { Address } from '@influenceth/sdk';
 
+import appConfig from '~/appConfig';
 import { EthIcon, SwayIcon } from '~/components/Icons';
 import { safeBigInt } from './utils';
 
 export const TOKEN = {
-  ETH: Address.toStandard(process.env.REACT_APP_ERC20_TOKEN_ADDRESS),
-  SWAY: Address.toStandard(process.env.REACT_APP_STARKNET_SWAY_TOKEN),
-  USDC: Address.toStandard(process.env.REACT_APP_USDC_TOKEN_ADDRESS),
+  ETH: Address.toStandard(appConfig.get('Starknet.Address.ethToken')),
+  SWAY: Address.toStandard(appConfig.get('Starknet.Address.swayToken')),
+  USDC: Address.toStandard(appConfig.get('Starknet.Address.usdcToken')),
 }
 
 export const TOKEN_SCALE = {

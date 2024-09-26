@@ -1,5 +1,7 @@
 import { Assets, Building, Product, Ship } from '@influenceth/sdk';
 
+import appConfig from '~/appConfig';
+
 const ASSET_CACHE = {};
 
 export const getCloudfrontUrl = (rawSlug, { w, h, f } = {}) => {
@@ -7,7 +9,7 @@ export const getCloudfrontUrl = (rawSlug, { w, h, f } = {}) => {
     ? window.btoa(
       JSON.stringify({
         key: rawSlug,
-        bucket: process.env.REACT_APP_CLOUDFRONT_BUCKET,
+        bucket: appConfig.get('Cloudfront.bucket'),
         edits: {
           resize: {
             width: w,
@@ -18,7 +20,7 @@ export const getCloudfrontUrl = (rawSlug, { w, h, f } = {}) => {
       })
     )
     : rawSlug;
-  return `${process.env.REACT_APP_CLOUDFRONT_IMAGE_URL}/${slug}`;
+  return `${appConfig.get('Cloudfront.imageUrl')}/${slug}`;
 }
 
 const getSlug = (assetName) => {
@@ -26,7 +28,7 @@ const getSlug = (assetName) => {
 }
 
 const getIconUrl = ({ type, assetName, append, w, h, f } = {}) => {
-  const environment = process.env.REACT_APP_DEPLOYMENT || 'production';
+  const environment = appConfig.get('App.deployment') || 'production';
 
   return getCloudfrontUrl(
     `influence/${environment}/images/icons/${type}/${getSlug(assetName)}${append || ''}.png`,
@@ -38,7 +40,7 @@ export const getModelUrl = ({ type, assetName, modelVersion, append } = {}) => {
   let slug = `models/${type}/${getSlug(assetName)}${append || ''}`;
   if (modelVersion) slug += `.v${modelVersion}`;
   slug += '.glb';
-  return `${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/${slug}`;
+  return `${appConfig.get('Cloudfront.otherUrl')}/${slug}`;
 }
 
 export const BUILDING_SIZES = {

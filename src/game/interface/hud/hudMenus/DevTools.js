@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { NoToneMapping } from 'three';
 import { Building, Product, Ship } from '@influenceth/sdk';
 
+import appConfig from '~/appConfig';
 import Button from '~/components/ButtonAlt';
 import Dropdown from '~/components/Dropdown';
 import IconButton from '~/components/IconButton';
@@ -206,7 +207,7 @@ const DevTools = () => {
     }, 100);
   }, [assetType]);
 
-  if (!process.env.REACT_APP_ENABLE_DEV_TOOLS || resetting) return null;
+  if (!appConfig.get('enableDevTools') || resetting) return null;
   return (
     <Scrollable>
       <HudMenuCollapsibleSection titleText="Viewer">

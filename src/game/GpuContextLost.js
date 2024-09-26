@@ -2,6 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
 import styled from 'styled-components';
 
+import appConfig from '~/appConfig';
 import useStore from '~/hooks/useStore';
 import Button from '~/components/ButtonDumb';
 import OnClickLink from '~/components/OnClickLink';
@@ -65,7 +66,7 @@ export const GpuContextLostMessage = () => {
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
 
   const openHelpChannel = useCallback(() => {
-    window.open(process.env.REACT_APP_HELP_URL || 'https://discord.gg/influenceth', '_blank');
+    window.open(appConfig.get('Url.help'), '_blank');
   }, []);
 
   return (

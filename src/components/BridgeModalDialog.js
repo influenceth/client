@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
+import appConfig from '~/appConfig';
 import BrightButton from '~/components/BrightButton';
 import IconButton from '~/components/IconButton';
 import { CloseIcon } from '~/components/Icons';
@@ -77,7 +78,7 @@ const CloseButton = styled(IconButton)`
 
 const BridgeModalDialog = ({ onClose }) => {
   const openBridge = () => {
-    window.open(process.env.REACT_APP_BRIDGE_URL);
+    window.open(appConfig.get('Url.bridge'));
     onClose();
   };
 
@@ -93,8 +94,8 @@ const BridgeModalDialog = ({ onClose }) => {
             <Title>Influence is now on Starknet, the L2 Ethereum Network!</Title>
             <div>
               All of your assets are still accounted for and can still be traded on either
-              L1 Ethereum (i.e. via <a href={`${process.env.REACT_APP_ETHEREUM_NFT_MARKET_URL}/Influence?tab=created`} target="_blank" rel="noreferrer">OpenSea</a>)
-              or Starknet (i.e. via <a href={process.env.REACT_APP_STARKNET_NFT_MARKET_URL} target="_blank" rel="noreferrer">Unframed</a>)
+              L1 Ethereum (i.e. via <a href={`${appConfig.get('Url.ethereumNftMarket')}/Influence?tab=created`} target="_blank" rel="noreferrer">OpenSea</a>)
+              or Starknet (i.e. via <a href={appConfig.get('Url.starknetNftMarket')} target="_blank" rel="noreferrer">Unframed</a>)
             </div>
             <div>
               In the interest of lower transaction fees, however, Influence itself will only be

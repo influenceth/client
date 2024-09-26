@@ -4,6 +4,7 @@ import styled, { css } from 'styled-components';
 import pick from 'lodash/pick';
 import { Crewmate } from '@influenceth/sdk';
 
+import appConfig from '~/appConfig';
 import silhouette from '~/assets/images/silhouette.png';
 import CrewmateCardOverlay, { cardTransitionSpeed, cardTransitionFunction } from '~/components/CrewmateCardOverlay';
 import CrewClassIcon from '~/components/CrewClassIcon';
@@ -234,9 +235,9 @@ const CrewmateCard = ({ crewmate = {}, useExplicitAppearance, ...props }) => {
     if (props.width) options += `&width=${props.width}`;
 
     if (!useExplicitAppearance && crewmate?.id) {
-      url = `${process.env.REACT_APP_IMAGES_URL}/v2/crewmates/${crewmate.id}/image.png?bustOnly=true${options}`;
+      url = `${appConfig.get('Api.influenceImage')}/v2/crewmates/${crewmate.id}/image.png?bustOnly=true${options}`;
     } else if (safeBigInt(crewmate.Crewmate?.appearance || 0) > 0n) {
-      url = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/provided/image.svg?bustOnly=true&options=${JSON.stringify(
+      url = `${appConfig.get('Api.influenceImage')}/v1/crew/provided/image.svg?bustOnly=true&options=${JSON.stringify(
         pick(crewmate.Crewmate, ['coll', 'class', 'title', 'appearance'])
       )}`;
     }
@@ -261,7 +262,7 @@ export const CrewCaptainCard = ({ crewId, ...props }) => {
   if (props.width) options += `&width=${props.width}`;
 
   let imageUrl = useMemo(() => crewId
-    ? `${process.env.REACT_APP_IMAGES_URL}/v2/crews/${crewId}/captain/image.png?bustOnly=true${options}`
+    ? `${appConfig.get('Api.influenceImage')}/v2/crews/${crewId}/captain/image.png?bustOnly=true${options}`
     : silhouette,
     [crewId]
   );

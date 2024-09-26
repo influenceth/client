@@ -4,6 +4,7 @@ import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import Loader from 'react-spinners/PuffLoader';
 
+import appConfig from '~/appConfig';
 import { ChevronDoubleDownIcon } from '~/components/Icons';
 import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
@@ -55,10 +56,10 @@ const Bubble = styled.div`
 const CrewmateImage = styled.div`
   background-image: 
   ${p => p.crewmateImageOptionString
-    ? `url("${process.env.REACT_APP_IMAGES_URL}/v1/crew/provided/image.svg?bustOnly=true&options=${escape(p.crewmateImageOptionString)}")`
+    ? `url("${appConfig.get('Api.influenceImage')}/v1/crew/provided/image.svg?bustOnly=true&options=${escape(p.crewmateImageOptionString)}")`
     : (
       p.crewmateId
-      ? `url("${process.env.REACT_APP_IMAGES_URL}/v1/crew/${p.crewmateId}/image.svg?bustOnly=true")`
+      ? `url("${appConfig.get('Api.influenceImage')}/v1/crew/${p.crewmateId}/image.svg?bustOnly=true")`
       : 'none'
     )
   };
@@ -134,9 +135,7 @@ const WelcomeSimulation = () => {
 
   const handleSkip = useCallback(() => {
     fireTrackingEvent('simulation', { step: 'skip-to-login' });
-            
-    // webWallet does not work from localhost...
-    login(process.env.NODE_ENV === 'development' ? undefined : { webWallet: true });
+    login({ webWallet: true });
   }, []);
 
   if (!currentStep) return null;

@@ -1,5 +1,7 @@
 import { useCallback, useState, } from 'react';
 
+import appConfig from '~/appConfig';
+
 const MarketplaceLink = ({ assetType, chain, children, id }) => {
   const [referenceEl, setReferenceEl] = useState();
 
@@ -8,14 +10,14 @@ const MarketplaceLink = ({ assetType, chain, children, id }) => {
 
     // Ethereum > OpenSea
     if (chain === 'ETHEREUM') {
-      url = `${process.env.REACT_APP_ETHEREUM_NFT_MARKET_URL}/`;
+      url = `${appConfig.get('Url.ethereumNftMarket')}/`;
       // single asset
       if (assetType === 'asteroid' && id) {
-        url += `assets/${process.env.REACT_APP_CONTRACT_ASTEROID_TOKEN}/${id}`;
+        url += `assets/${appConfig.get('Ethereum.Address.asteroidToken')}/${id}`;
       } else if(assetType === 'crewmate' && id) {
         // TODO: swap to v2 once enough crewmates have been bridged
         // Message on OpenSea also directs to other contract
-        url += `assets/${process.env.REACT_APP_CONTRACT_CREWMATE_TOKEN}/${id}`;
+        url += `assets/${appConfig.get('Ethereum.Address.crewmateToken')}/${id}`;
       // collection (NOTE: these are not used currently)
       } else if (assetType === 'asteroid') {
         url += `influenceth-asteroids`;
@@ -28,17 +30,17 @@ const MarketplaceLink = ({ assetType, chain, children, id }) => {
 
     // Starknet > Pyramid
     } else if (chain === 'STARKNET') {
-      url = `${process.env.REACT_APP_STARKNET_NFT_MARKET_URL}/`;
+      url = `${appConfig.get('Url.starknetNftMarket')}/`;
       // single asset
       if (assetType === 'asteroid' && id) {
-        url += `asset/${process.env.REACT_APP_STARKNET_ASTEROID_TOKEN}/${id}`;
+        url += `asset/${appConfig.get('Starknet.Address.asteroidToken')}/${id}`;
       } else if(assetType === 'crewmate' && id) {
-        url += `asset/${process.env.REACT_APP_STARKNET_CREWMATE_TOKEN}/${id}`;
+        url += `asset/${appConfig.get('Starknet.Address.crewmateToken')}/${id}`;
       // collection
       } else if (assetType === 'asteroid') {
-        url += `collection/${process.env.REACT_APP_STARKNET_ASTEROID_TOKEN}`;
+        url += `collection/${appConfig.get('Starknet.Address.asteroidToken')}`;
       } else if (assetType === 'crewmate') {
-        url += `collection/${process.env.REACT_APP_STARKNET_CREWMATE_TOKEN}`;
+        url += `collection/${appConfig.get('Starknet.Address.crewmateToken')}`;
       // account
       } else if (assetType === 'account') {
         url += `user/${id}`;

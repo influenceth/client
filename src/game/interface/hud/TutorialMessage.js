@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 
+import appConfig from '~/appConfig';
 import Button from '~/components/ButtonAlt';
 import ClipCorner from '~/components/ClipCorner';
 import IconButton from '~/components/IconButton';
@@ -30,10 +31,10 @@ const CrewmateOverflow = styled.div`
 const CrewmateImage = styled.div`
   background-image: 
   ${p => p.crewmateImageOptionString
-    ? `url("${process.env.REACT_APP_IMAGES_URL}/v1/crew/provided/image.svg?bustOnly=true&options=${escape(p.crewmateImageOptionString)}")`
+    ? `url("${appConfig.get('Api.influenceImage')}/v1/crew/provided/image.svg?bustOnly=true&options=${escape(p.crewmateImageOptionString)}")`
     : (
       p.crewmateId
-      ? `url("${process.env.REACT_APP_IMAGES_URL}/v1/crew/${p.crewmateId}/image.svg?bustOnly=true")`
+      ? `url("${appConfig.get('Api.influenceImage')}/v1/crew/${p.crewmateId}/image.svg?bustOnly=true")`
       : 'none'
     )
   };

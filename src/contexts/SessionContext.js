@@ -18,6 +18,7 @@ import * as gasless from '@avnu/gasless-sdk';
 import { getStarkKey, utils } from 'micro-starknet';
 import { Address } from '@influenceth/sdk';
 
+import appConfig from '~/appConfig';
 import LoginPrompt from '~/components/LoginPrompt';
 import Reconnecting from '~/components/Reconnecting';
 import api from '~/lib/api';
@@ -32,7 +33,7 @@ const getErrorMessage = (error) => {
 };
 
 const isAllowedChain = (chain) => {
-  return areChainsEqual(chain, process.env.REACT_APP_CHAIN_ID);
+  return areChainsEqual(chain, appConfig.get('Starknet.chainId'));
 }
 
 const STATUSES = {
@@ -45,11 +46,11 @@ const STATUSES = {
 
 // Methods allowed for Starknet sessions
 const allowedMethods = [
-  { 'Contract Address': process.env.REACT_APP_STARKNET_DISPATCHER, selector: 'run_system' },
-  { 'Contract Address': process.env.REACT_APP_STARKNET_SWAY_TOKEN, selector: 'transfer_with_confirmation' },
-  { 'Contract Address': process.env.REACT_APP_STARKNET_SWAY_TOKEN, selector: 'transfer' },
-  { 'Contract Address': process.env.REACT_APP_STARKNET_ESCROW, selector: 'withdraw' },
-  { 'Contract Address': process.env.REACT_APP_STARKNET_ESCROW, selector: 'deposit' }
+  { 'Contract Address': appConfig.get('Starknet.Address.dispatcher'), selector: 'run_system' },
+  { 'Contract Address': appConfig.get('Starknet.Address.swayToken'), selector: 'transfer_with_confirmation' },
+  { 'Contract Address': appConfig.get('Starknet.Address.swayToken'), selector: 'transfer' },
+  { 'Contract Address': appConfig.get('Starknet.Address.escrow'), selector: 'withdraw' },
+  { 'Contract Address': appConfig.get('Starknet.Address.escrow'), selector: 'deposit' }
 ];
 
 const SessionContext = createContext();
@@ -86,10 +87,10 @@ export function SessionProvider({ children }) {
 
   const authenticated = useMemo(() => status === STATUSES.AUTHENTICATED, [status]);
   const provider = useMemo(() => {
-    let nodeUrl = process.env.REACT_APP_STARKNET_PROVIDER;
+    let nodeUrl = appConfig.get('Starknet.provider');
 
-    if (process.env.REACT_APP_STARKNET_PROVIDER_BACKUP && Math.random() > 0.5) {
-      nodeUrl = process.env.REACT_APP_STARKNET_PROVIDER_BACKUP;
+    if (appConfig.get('Starknet.providerBackup') && Math.random() > 0.5) {
+      nodeUrl = appConfig.get('Starknet.providerBackup');
     }
 
     return new RpcProvider({ nodeUrl });
@@ -108,7 +109,7 @@ export function SessionProvider({ children }) {
         options: {
           url: typeof window !== 'undefined' ? window.location.href : '',
           dappName: 'Influence',
-          chainId: resolveChainId(process.env.REACT_APP_CHAIN_ID),
+          chainId: resolveChainId(appConfig.get('Starknet.chainId')),
           provider
         }
       });
@@ -118,8 +119,8 @@ export function SessionProvider({ children }) {
       if (isInArgentMobileAppBrowser()) {
         connectors.push(argentMobileConnector);
       } else {
-        if (enabledConnectors.webWallet && !!process.env.REACT_APP_ARGENT_WEB_WALLET_URL) {
-          connectors.push(new WebWalletConnector({ url: process.env.REACT_APP_ARGENT_WEB_WALLET_URL, provider }));
+        if (enabledConnectors.webWallet && !!appConfig.get('Api.argentWebWallet')) {
+          connectors.push(new WebWalletConnector({ url: appConfig.get('Api.argentWebWallet'), provider }));
         }
   
         if (enabledConnectors.argentX) connectors.push(new InjectedConnector({ options: { id: 'argentX', provider }}));
@@ -155,7 +156,7 @@ export function SessionProvider({ children }) {
           try {
             await wallet.request({
               type: 'wallet_switchStarknetChain',
-              params: { chainId: process.env.REACT_APP_CHAIN_ID }
+              params: { chainId: appConfig.get('Starknet.chainId') }
             });
           } catch (e) { // (standardize error message here since different between wallets)
             throw new Error('Incorrect chain');
@@ -175,7 +176,7 @@ export function SessionProvider({ children }) {
     } catch(e) {
       if (e.message === 'Incorrect chain') {
         console.log('');
-        setError(`Incorrect chain, please switch to ${resolveChainId(process.env.REACT_APP_CHAIN_ID)}`);
+        setError(`Incorrect chain, please switch to ${resolveChainId(appConfig.get('Starknet.chainId'))}`);
       }
 
       else if (e.message !== 'User rejected request') {
@@ -302,8 +303,8 @@ export function SessionProvider({ children }) {
         };
 
         const gasFees = {
-          tokenAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
-          maxAmount: areChainsEqual(process.env.REACT_APP_CHAIN_ID, 'SN_MAIN')
+          tokenAddress: appConfig.get('Starknet.Address.ethToken'),
+          maxAmount: areChainsEqual(appConfig.get('Starknet.chainId'), 'SN_MAIN')
             ? '10000000000000000'
             : '100000000000000000'
         };
@@ -312,7 +313,7 @@ export function SessionProvider({ children }) {
         const metaData = { projectID: 'influence', txFees: [ gasFees ] };
         const sessionParams = { allowedMethods, expiry, metaData, publicDappKey: dappKey.publicKey };
 
-        const hexChainId = resolveChainId(process.env.REACT_APP_CHAIN_ID, 'hex');
+        const hexChainId = resolveChainId(appConfig.get('Starknet.chainId'), 'hex');
         console.log('waiting 2 seconds...');
         await new Promise(resolve => setTimeout(resolve, 2000)); // deal with timeout delay from Argent
         const sessionSignature = await openSession({
@@ -421,10 +422,10 @@ export function SessionProvider({ children }) {
       accountSessionSignature: currentSession.sessionSignature,
       sessionRequest: currentSession.sessionRequest,
       provider,
-      chainId: resolveChainId(process.env.REACT_APP_CHAIN_ID, 'hex'),
+      chainId: resolveChainId(appConfig.get('Starknet.chainId'), 'hex'),
       address: currentSession.accountAddress,
       dappKey: currentSession.sessionDappKey,
-      argentSessionServiceBaseUrl: process.env.REACT_APP_ARGENT_API
+      argentSessionServiceBaseUrl: appConfig.get('Api.argent')
     });
 
     setStarknetSession(offchainSessionAccount);
@@ -483,7 +484,7 @@ export function SessionProvider({ children }) {
     if (currentSession?.isDeployed) {
       gasless.fetchAccountCompatibility(
         currentSession.accountAddress,
-        { baseUrl: process.env.REACT_APP_AVNU_API_URL }
+        { baseUrl: appConfig.get('Api.avnu') }
       )
       .then((response) => {
         setIsFeeAbstractionCompatible(!!response?.isCompatible)
@@ -512,7 +513,7 @@ export function SessionProvider({ children }) {
       calldata,
       gasTokenAddress,
       maxGasTokenAmount,
-      { baseUrl: process.env.REACT_APP_AVNU_API_URL }
+      { baseUrl: appConfig.get('Api.avnu') }
     );
 
     let signature;
@@ -520,7 +521,7 @@ export function SessionProvider({ children }) {
     if (canUseSessionKey && gameplay.useSessions && currentSession.sessionRequest) {
       const dappKey = currentSession.sessionDappKey;
       const sessionSignature = currentSession.sessionSignature;
-      const beService = new ArgentSessionService(dappKey.publicKey, sessionSignature, process.env.REACT_APP_ARGENT_API);
+      const beService = new ArgentSessionService(dappKey.publicKey, sessionSignature, appConfig.get('Api.argent'));
       const chainId = shortString.encodeShortString(connectedChainId);
       const sessionDappService = new SessionDappService(beService, chainId, dappKey);
       const { Calldata: feeCalldata } = typedData.message.Calls[0];
@@ -543,16 +544,6 @@ export function SessionProvider({ children }) {
   }, [currentSession, gameplay.useSessions, connectedChainId, connectedWalletId, walletAccount]);
 
   // Block management -------------------------------------------------------------------------------------------------
-
-  // If using devnet, put "create block" on a timer since otherwise, blocks will not be advancing in the background
-  useEffect(() => {
-    if (process.env.REACT_APP_IS_DEVNET) {
-      let blockInterval = setInterval(() => { api.createDevnetBlock(); }, 15e3);
-      return () => {
-        if (blockInterval) clearInterval(blockInterval);
-      }
-    }
-  }, []);
 
   // Argent is slow to put together it's final "starknet" object, so we check explicitly for getBlock method
   const canCheckBlock = useMemo(() => {

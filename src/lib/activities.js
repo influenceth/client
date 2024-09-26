@@ -2,6 +2,7 @@ import { Address, Building, Delivery, Entity, Lot, Permission, Process, Product,
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
 
+import appConfig from '~/appConfig';
 import AddressLink from '~/components/AddressLink';
 import EntityLink from '~/components/EntityLink';
 import {
@@ -52,8 +53,8 @@ import { RandomEventIcon } from '~/components/AnimatedIcons';
 const addressMaxWidth = '100px';
 
 const getNamedAddress = (address) => {
-  if (Address.areEqual(address, process.env.REACT_APP_STARKNET_ASTEROID_TOKEN)) return 'the Asteroid Bridge';
-  else if (Address.areEqual(address, process.env.REACT_APP_STARKNET_CREWMATE_TOKEN)) return 'the Crewmate Bridge';
+  if (Address.areEqual(address, appConfig.get('Starknet.Address.asteroidToken'))) return 'the Asteroid Bridge';
+  else if (Address.areEqual(address, appConfig.get('Starknet.Address.crewmateToken'))) return 'the Crewmate Bridge';
 }
 
 const getEntityName = (entity) => {

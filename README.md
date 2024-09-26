@@ -5,26 +5,15 @@ The browser game client for Influence.
 ## Test Environment
 1. Initialize your .env file:
     ```
-    echo "REACT_APP_API_URL=http://localhost:3001
-    REACT_APP_IMAGES_URL=http://localhost:3001
-    REACT_APP_BRIDGE_URL=http://localhost:4000
-    REACT_APP_STARKNET_NETWORK=http://localhost:9000
-    REACT_APP_ETHEREUM_EXPLORER_URL=https://etherscan.io
-    REACT_APP_STARKNET_EXPLORER_URL=https://voyager.online
-    REACT_APP_ETHEREUM_NFT_MARKET_URL=https://opensea.io
-    REACT_APP_STTARKNET_NFT_MARKET_URL=https://unframed.co
+    echo "BUFFER_GLOBAL=1
+    SKIP_PREFLIGHT_CHECK=1
 
-    # (this is the devnet >0.4 token address)
-    REACT_APP_ERC20_TOKEN_ADDRESS=0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
-    REACT_APP_STARKNET_DISPATCHER=
-
-    REACT_APP_HIDE_SOCIAL=false
-
-    SKIP_PREFLIGHT_CHECK=true
-    " > .env
+    NODE_ENV=prerelease
+    REACT_APP_APP_VERBOSELOGS=1" > .env
     ```
-1. Adjust or fill in any missing .env variables as needed.
-    > i.e. If you are running starknet devnet, `REACT_APP_STARKNET_DISPATCHER` value is available by running `node bin/printEnv.js` from the `starknet-contracts` project.
+1. Adjust or fill in any missing .env variables as needed. Most values are preset in 
+`src/appConfig/prerelease.json`. However, if you need to overwrite any of these presets,
+you can do so in your local env file by following the instructions in `src/appConfig/index.js`
 1. Run `npm start`.
 
 ## Available Scripts

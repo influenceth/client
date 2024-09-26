@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import Clipboard from 'react-clipboard.js';
 import numeral from 'numeral';
 
+import appConfig from '~/appConfig';
 import { CheckIcon, CloseIcon, ExtendAgreementIcon, FormAgreementIcon, FormLotAgreementIcon, GiveNoticeIcon, LinkIcon, CancelAgreementIcon, LotControlIcon, PermissionIcon, RefreshIcon, SwayIcon, WarningOutlineIcon, WarningIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
@@ -467,7 +468,7 @@ const FormAgreement = ({
               <ContractDesc>
                 Custom Contracts are used by owners to share or delegate permissions in a flexible manner.
                 They are written outside of the game client and may be viewed externally on{' '}
-                <a href={`${process.env.REACT_APP_STARKNET_EXPLORER_URL}/contract/${currentPolicy?.policyDetails?.contract}`} target="_blank" rel="noreferrer">Starkscan</a>.
+                <a href={`${appConfig.get('Url.starknetExplorer')}/contract/${currentPolicy?.policyDetails?.contract}`} target="_blank" rel="noreferrer">Starkscan</a>.
               </ContractDesc>
 
               <Clipboard

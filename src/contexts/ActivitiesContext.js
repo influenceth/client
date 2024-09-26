@@ -11,6 +11,7 @@ import useWebsocket from '~/hooks/useWebsocket';
 import { hydrateActivities } from '~/lib/activities';
 import api from '~/lib/api';
 import useSimulationState from '~/hooks/useSimulationState';
+import appConfig from '~/appConfig';
 
 // TODO (enhancement): rather than invalidating, make optimistic updates to cache value directly
 // (i.e. update asteroid name wherever asteroid referenced rather than invalidating large query results)
@@ -296,7 +297,7 @@ export function ActivitiesProvider({ children }) {
         if (debugInvalidation) console.log('deduped final invalidate', finalInvalidations);
 
         finalInvalidations.forEach((queryKey) => {
-          if (process.env.NODE_ENV !== 'production') console.log('invalidate', queryKey);
+          if (appConfig.get('App.verboseLogs')) console.log('invalidate', queryKey);
           queryClient.invalidateQueries({ queryKey, refetchType: 'active' });
         });
       }
@@ -351,7 +352,7 @@ export function ActivitiesProvider({ children }) {
   }, [disconnected]);
 
   const onWSMessage = useCallback((message) => {
-    if (process.env.NODE_ENV !== 'production') console.log('onWSMessage (activities)', message);
+    if (appConfig.get('App.verboseLogs')) console.log('onWSMessage (activities)', message);
     const { type, body } = message;
     if (ignoreEventTypes.includes(type)) return;
     if (type === 'CURRENT_STARKNET_BLOCK_NUMBER') {
@@ -363,7 +364,6 @@ export function ActivitiesProvider({ children }) {
       else if (blockNumber > 0 && body.previous > 0 && body.previous > blockNumber) {
         console.log(`Missed a block! (new: ${body.blockNumber}, server prev: ${body.previous}, local prev: ${blockNumber})`);
 
-        // if (process.env.NODE_ENV !== 'production') window.alert('Missed a block!');
         setIsBlockMissing(true);
       }
 
