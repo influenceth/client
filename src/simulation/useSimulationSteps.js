@@ -3,7 +3,7 @@ import { Building, Crewmate, Entity, Inventory, Permission, Process, Processor, 
 import { useHistory } from 'react-router-dom';
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import { ZOOM_IN_ANIMATION_TIME, ZOOM_OUT_ANIMATION_TIME, ZOOM_TO_PLOT_ANIMATION_MAX_TIME, ZOOM_TO_PLOT_ANIMATION_MIN_TIME } from '~/game/scene/Asteroid';
 import useCrewAgreements from '~/hooks/useCrewAgreements';
 import useCrewBuildings from '~/hooks/useCrewBuildings';

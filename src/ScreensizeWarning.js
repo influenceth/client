@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import FullpageInterstitial from '~/components/FullpageInterstitial';
 import useScreenSize from '~/hooks/useScreenSize';
 import theme from '~/theme';

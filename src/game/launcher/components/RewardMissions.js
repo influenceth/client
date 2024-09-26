@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import styled from 'styled-components';
 import Loader from 'react-spinners/PuffLoader';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import AsteroidsHeroImage from '~/assets/images/sales/asteroids_hero.png';
 import AsteroidSurfaceImage from '~/assets/images/hud_headers/Asteroid.png';
 import ClipCorner from '~/components/ClipCorner';

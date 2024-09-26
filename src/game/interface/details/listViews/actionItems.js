@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import styled from 'styled-components';
 import { Lot } from '@influenceth/sdk';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import { statuses } from '~/lib/actionItem';

@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
 import styled from 'styled-components';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import useStore from '~/hooks/useStore';
 import Button from '~/components/ButtonDumb';
 import OnClickLink from '~/components/OnClickLink';

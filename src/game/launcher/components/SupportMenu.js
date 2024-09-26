@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import styled from 'styled-components';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import { ChevronDoubleRightIcon, InfluenceIcon } from '~/components/Icons';
 import ClipCorner from '~/components/ClipCorner';
 

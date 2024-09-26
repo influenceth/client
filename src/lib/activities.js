@@ -2,7 +2,7 @@ import { Address, Building, Delivery, Entity, Lot, Permission, Process, Product,
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import AddressLink from '~/components/AddressLink';
 import EntityLink from '~/components/EntityLink';
 import {

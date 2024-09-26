@@ -5,7 +5,7 @@ import { MdFullscreen as FullscreenIcon, MdFullscreenExit as ExitFullscreenIcon 
 import { ResetCameraIcon } from '~/components/Icons';
 import screenfull from 'screenfull';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import { BackIcon } from '~/components/Icons';
 import PrereleaseLogoSVG from '~/assets/images/logo-prerelease.svg';
 import useStore from '~/hooks/useStore';

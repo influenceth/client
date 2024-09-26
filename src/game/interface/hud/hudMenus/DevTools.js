@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { NoToneMapping } from 'three';
 import { Building, Product, Ship } from '@influenceth/sdk';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import Button from '~/components/ButtonAlt';
 import Dropdown from '~/components/Dropdown';
 import IconButton from '~/components/IconButton';

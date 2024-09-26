@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import Loader from 'react-spinners/PuffLoader';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import { PlayIcon } from '~/components/Icons';
 import LauncherDialog from './components/LauncherDialog';
 import SupportMenu from './components/SupportMenu';

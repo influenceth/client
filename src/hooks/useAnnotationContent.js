@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useQuery } from 'react-query';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 
 const useAnnotationContent = (annotation) => {
   const hash = annotation?.ipfs?.hash;

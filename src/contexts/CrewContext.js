@@ -2,7 +2,7 @@ import { createContext, useCallback, useEffect, useMemo, useRef, useState } from
 import { useQuery, useQueryClient } from 'react-query';
 import { Crewmate, Entity, Permission, Ship, System } from '@influenceth/sdk';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import api from '~/lib/api';
 import useSession from '~/hooks/useSession';
 import useConstants from '~/hooks/useConstants';

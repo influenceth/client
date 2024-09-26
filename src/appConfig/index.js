@@ -30,7 +30,7 @@ const rawConfig = {
 };
 
 // override config with environment variables
-const appConfig = reduce(
+const appConfigData = reduce(
   rawConfig,
   (res, v, key) => {
     const overrideKey = `REACT_APP_${key.replace(/\./g, '_').toUpperCase()}`;
@@ -42,10 +42,12 @@ const appConfig = reduce(
   rawConfig
 );
 
-export default {
+const appConfig = {
   get: (key) => {
-    if (!appConfig.hasOwnProperty(key)) throw new Error(`Invalid appConfig key: "${key}"`);
-    return appConfig[key];
+    if (!appConfigData.hasOwnProperty(key)) throw new Error(`Invalid appConfig key: "${key}"`);
+    return appConfigData[key];
   },
-  has: (key) => appConfig.hasOwnProperty(key),
+  has: (key) => appConfigData.hasOwnProperty(key),
 };
+
+export { appConfig };

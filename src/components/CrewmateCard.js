@@ -4,7 +4,7 @@ import styled, { css } from 'styled-components';
 import pick from 'lodash/pick';
 import { Crewmate } from '@influenceth/sdk';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import silhouette from '~/assets/images/silhouette.png';
 import CrewmateCardOverlay, { cardTransitionSpeed, cardTransitionFunction } from '~/components/CrewmateCardOverlay';
 import CrewClassIcon from '~/components/CrewClassIcon';

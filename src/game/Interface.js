@@ -4,7 +4,7 @@ import { Tooltip } from 'react-tooltip';
 import { Switch, Route, Redirect } from 'react-router-dom';
 import moment from 'moment';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import { InfluenceIcon, PurchaseAsteroidIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useScreenSize from '~/hooks/useScreenSize';

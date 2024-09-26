@@ -1,6 +1,6 @@
 import { Address } from '@influenceth/sdk';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import { EthIcon, SwayIcon } from '~/components/Icons';
 import { safeBigInt } from './utils';
 

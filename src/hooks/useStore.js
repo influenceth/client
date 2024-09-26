@@ -9,7 +9,7 @@ import constants from '~/lib/constants';
 import { TOKEN } from '~/lib/priceUtils';
 import { safeBigInt } from '~/lib/utils';
 import SIMULATION_CONFIG from '~/simulation/simulationConfig';
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 
 export const STORE_NAME = 'influence';
 

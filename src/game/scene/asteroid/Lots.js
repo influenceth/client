@@ -38,7 +38,7 @@ import theme from '~/theme';
 
 import frag from './shaders/delivery.frag';
 import vert from './shaders/delivery.vert';
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 
 const { MAX_LOTS_RENDERED } = constants;
 

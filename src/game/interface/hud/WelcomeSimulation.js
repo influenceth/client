@@ -4,7 +4,7 @@ import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import Loader from 'react-spinners/PuffLoader';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import { ChevronDoubleDownIcon } from '~/components/Icons';
 import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';

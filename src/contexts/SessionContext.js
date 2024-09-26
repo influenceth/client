@@ -18,7 +18,7 @@ import * as gasless from '@avnu/gasless-sdk';
 import { getStarkKey, utils } from 'micro-starknet';
 import { Address } from '@influenceth/sdk';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import LoginPrompt from '~/components/LoginPrompt';
 import Reconnecting from '~/components/Reconnecting';
 import api from '~/lib/api';

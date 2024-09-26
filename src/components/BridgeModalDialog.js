@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import BrightButton from '~/components/BrightButton';
 import IconButton from '~/components/IconButton';
 import { CloseIcon } from '~/components/Icons';

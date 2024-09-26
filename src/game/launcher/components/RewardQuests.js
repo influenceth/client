@@ -2,7 +2,7 @@ import { useState } from 'react';
 import styled from 'styled-components';
 import Loader from 'react-spinners/PuffLoader';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import Image1 from '~/assets/images/hud_headers/Asteroid.png';
 import Image2 from '~/assets/images/hud_headers/SurfaceShip.png';
 import Image3 from '~/assets/images/hud_headers/Building_9.png';

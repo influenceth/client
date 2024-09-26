@@ -1,7 +1,7 @@
 import { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import useSession from '~/hooks/useSession';
 
 const WebsocketContext = createContext();

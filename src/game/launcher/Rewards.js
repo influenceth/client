@@ -1,4 +1,4 @@
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import LauncherDialog from './components/LauncherDialog';
 import RecruitmentMenu from './components/RecruitmentMenu';
 import RewardMissions from './components/RewardMissions';

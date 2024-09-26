@@ -11,7 +11,7 @@ import useWebsocket from '~/hooks/useWebsocket';
 import { hydrateActivities } from '~/lib/activities';
 import api from '~/lib/api';
 import useSimulationState from '~/hooks/useSimulationState';
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 
 // TODO (enhancement): rather than invalidating, make optimistic updates to cache value directly
 // (i.e. update asteroid name wherever asteroid referenced rather than invalidating large query results)

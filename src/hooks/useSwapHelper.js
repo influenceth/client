@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { fetchBuildExecuteTransaction } from '@avnu/avnu-sdk';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import useStore from '~/hooks/useStore';
 import useWalletPurchasableBalances from '~/hooks/useWalletPurchasableBalances';
 import { TOKEN } from '~/lib/priceUtils';

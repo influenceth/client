@@ -1,9 +1,9 @@
 const axios = require('axios');
 const probe = require('probe-image-size');
 
-const appConfig = require('./src/appConfig');
+const { appConfig } = require('./src/appConfig');
 
-const instance = axios.create({ baseURL: `${appConfig.get('Api.influence')}/og/data` });
+const instance = axios.create({ baseURL: `${appConfig.get('Api.influence')}/og/data?t=1` });
 
 const getOpengraphTags = async (originalUrl) => {
   const urlParts = originalUrl.split('/').slice(1);

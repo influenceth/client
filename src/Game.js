@@ -6,7 +6,7 @@ import { useDetectGPU } from '@react-three/drei';
 
 import { initializeTagManager } from './gtm';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import FullpageInterstitial from '~/components/FullpageInterstitial';
 import { ActionItemProvider } from '~/contexts/ActionItemContext';
 import { ActivitiesProvider } from '~/contexts/ActivitiesContext';

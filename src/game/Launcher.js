@@ -3,7 +3,7 @@ import styled, { css, keyframes } from 'styled-components';
 import { PuffLoader as Loader } from 'react-spinners';
 import { Tooltip } from 'react-tooltip';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
 import {

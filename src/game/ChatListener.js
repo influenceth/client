@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 
 import useStore from '~/hooks/useStore';
 import useWebsocket from '~/hooks/useWebsocket';

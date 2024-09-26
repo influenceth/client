@@ -3,7 +3,7 @@ import { Asteroid, Building, Deposit, Entity, Inventory, Order, Ship } from '@in
 import esb from 'elastic-builder';
 import { executeSwap, fetchQuotes } from "@avnu/avnu-sdk";
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import useStore from '~/hooks/useStore';
 import { entityToAgreements, esbLocationQuery, esbPermissionQuery, safeBigInt, safeEntityId } from './utils';
 import { TOKEN, TOKEN_SCALE } from './priceUtils';

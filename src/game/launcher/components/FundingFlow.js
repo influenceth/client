@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { PropagateLoader as Loader } from 'react-spinners';
 import { RampInstantSDK } from '@ramp-network/ramp-instant-sdk';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import Button from '~/components/ButtonAlt';
 import { ChevronRightIcon, CloseIcon, LinkIcon, WalletIcon } from '~/components/Icons';
 import Details from '~/components/DetailsV2';

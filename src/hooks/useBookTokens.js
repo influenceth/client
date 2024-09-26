@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import useCrewContext from '~/hooks/useCrewContext';
 import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
 import formatters from '~/lib/formatters';

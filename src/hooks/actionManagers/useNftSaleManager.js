@@ -1,7 +1,7 @@
 import { useCallback, useContext, useMemo } from 'react';
 import { Entity } from '@influenceth/sdk';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrewContext from '~/hooks/useCrewContext';
 

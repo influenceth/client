@@ -3,7 +3,7 @@ import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import BarLoader from 'react-spinners/BarLoader';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import { CloseIcon as DismissIcon, EyeIcon } from '~/components/Icons';
 import { FailedIcon, RandomEventIcon, ReadyIcon } from '~/components/AnimatedIcons';
 import LiveTimer from '~/components/LiveTimer';

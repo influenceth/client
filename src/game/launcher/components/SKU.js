@@ -2,7 +2,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import styled from 'styled-components';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import AsteroidsHeroImage from '~/assets/images/sales/asteroids_hero.png';
 import CrewmatesHeroImage from '~/assets/images/sales/crewmates_hero.png';
 import SwayImage from '~/assets/images/sales/sway.png';

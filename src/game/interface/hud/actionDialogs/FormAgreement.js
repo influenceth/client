@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import Clipboard from 'react-clipboard.js';
 import numeral from 'numeral';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import { CheckIcon, CloseIcon, ExtendAgreementIcon, FormAgreementIcon, FormLotAgreementIcon, GiveNoticeIcon, LinkIcon, CancelAgreementIcon, LotControlIcon, PermissionIcon, RefreshIcon, SwayIcon, WarningOutlineIcon, WarningIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';

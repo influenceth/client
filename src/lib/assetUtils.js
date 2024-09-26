@@ -1,6 +1,6 @@
 import { Assets, Building, Product, Ship } from '@influenceth/sdk';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 
 const ASSET_CACHE = {};
 

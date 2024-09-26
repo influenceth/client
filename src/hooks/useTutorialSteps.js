@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { FaYoutube as YoutubeIcon } from 'react-icons/fa';
 import { Building, Permission, Inventory, Product } from '@influenceth/sdk';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import useCrewAgreements from '~/hooks/useCrewAgreements';
 import useCrewBuildings from '~/hooks/useCrewBuildings';
 import useCrewContext from '~/hooks/useCrewContext';

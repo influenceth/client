@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import useCrewContext from '~/hooks/useCrewContext';
 import activities, { getHydrationQueryKey } from '~/lib/activities';
 

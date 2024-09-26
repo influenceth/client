@@ -3,7 +3,7 @@ import { Crew, Entity, Lot, Order, Permission, Processor, Time } from '@influenc
 import { shortString } from 'starknet';
 import trim from 'lodash/trim';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import { ManufactureIcon, GrowIcon, AssembleIcon, RefineIcon } from '~/components/Icons';
 import { TOKEN, TOKEN_SCALE } from './priceUtils';
 

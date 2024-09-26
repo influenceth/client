@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Howler, Howl } from 'howler';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import useStore from '~/hooks/useStore';
 
 class Sound extends Howl {

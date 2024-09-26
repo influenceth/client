@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import { Building, Inventory, Lot } from '@influenceth/sdk';
 import { BiWrench as WrenchIcon } from 'react-icons/bi';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import IconButton from '~/components/IconButton';
 import {
   AsteroidSearchIcon,

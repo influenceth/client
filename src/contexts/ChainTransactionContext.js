@@ -5,7 +5,7 @@ import { hash, num, shortString, uint256 } from 'starknet';
 import { fetchBuildExecuteTransaction, fetchQuotes } from '@avnu/avnu-sdk';
 import * as gasless from '@avnu/gasless-sdk';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import useActivitiesContext from '~/hooks/useActivitiesContext';
 import useCrewContext from '~/hooks/useCrewContext';
 import useSession from '~/hooks/useSession';

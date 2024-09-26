@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import SelectHabitatDialog from '~/components/SelectHabitatDialog';
 import SelectUninitializedCrewmateDialog from '~/components/SelectUninitializedCrewmateDialog';
 import CrewAssignmentCreate from '~/game/interface/details/crewAssignments/Create';

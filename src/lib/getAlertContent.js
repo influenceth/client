@@ -1,4 +1,4 @@
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import { UpdateIcon, WarningIcon, SettingsIcon, WalletIcon, ClipboardIcon } from '~/components/Icons';
 
 const entries = {

@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 import Button from '~/components/ButtonAlt';
 import ClipCorner from '~/components/ClipCorner';
 import IconButton from '~/components/IconButton';

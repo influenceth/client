@@ -1,6 +1,6 @@
 import { useCallback, useState, } from 'react';
 
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 
 const MarketplaceLink = ({ assetType, chain, children, id }) => {
   const [referenceEl, setReferenceEl] = useState();

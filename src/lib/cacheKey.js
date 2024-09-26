@@ -1,5 +1,5 @@
 import { Entity } from '@influenceth/sdk';
-import appConfig from '~/appConfig';
+import { appConfig } from '~/appConfig';
 
 /*              CACHE KEY DICTIONARY
 non-entity based
