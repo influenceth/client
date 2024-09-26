@@ -25,9 +25,11 @@ function flattenObject(obj, parentKey = '', result = {}) {
 }
 
 // override default config with environment specific config
+const configSelection = process.env.REACT_APP_CONFIG_ENV || process.env.NODE_ENV;
+console.log('configSelection', configSelection);
 const rawConfig = {
   ...flattenObject(defaultConfig),
-  ...flattenObject((process.env.NODE_ENV === 'production' ? productionConfig : prereleaseConfig)),
+  ...flattenObject(configSelection === 'production' ? productionConfig : prereleaseConfig),
 };
 
 // override config with environment variables

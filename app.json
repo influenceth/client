@@ -6,6 +6,10 @@
     }
   ],
   "env": {
+    "REACT_APP_CONFIG_ENV": {
+      "description": "Override NODE_ENV in choosing which config to use (optional)",
+      "required": false
+    },
     "REACT_APP_API_CLIENTID_GTM": {
       "description": "Google Tag Manager ID (optional)",
       "required": false
