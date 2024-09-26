@@ -8,7 +8,8 @@ The browser game client for Influence.
     echo "BUFFER_GLOBAL=1
     SKIP_PREFLIGHT_CHECK=1
 
-    NODE_ENV=prerelease
+    NODE_ENV=development
+    REACT_APP_CONFIG_ENV=prerelease
     REACT_APP_APP_VERBOSELOGS=1" > .env
     ```
 1. Adjust or fill in any missing .env variables as needed. Most values are preset in 
