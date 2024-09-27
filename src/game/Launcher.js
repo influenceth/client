@@ -19,7 +19,6 @@ import {
   DownloadIcon
 } from '~/components/Icons';
 import InfluenceLogo from '~/components/InfluenceLogo';
-import NavIcon from '~/components/NavIcon';
 import { headerHeight, menuPadding } from '~/game/uiConstants';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import Play from './launcher/Play';
@@ -29,7 +28,7 @@ import HudMenu from './interface/hud/HudMenu';
 import SystemControls from './interface/hud/SystemControls';
 import Help from './launcher/Help';
 import Rewards from './launcher/Rewards';
-import { fireTrackingEvent, reactBool } from '~/lib/utils';
+import { fireTrackingEvent } from '~/lib/utils';
 import theme from '~/theme';
 
 const DISABLE_LAUNCHER_TRAILER = true && process.env.NODE_ENV === 'development';
@@ -71,21 +70,6 @@ const Nav = styled.div`
 
 const Icon = styled.div``;
 
-const externalItemHeight = 42;
-const mainItemHeight = 56;
-
-const NavItemBg = styled.div`
-  z-index: -1;
-  position: absolute;
-  height: ${mainItemHeight}px;
-  background: linear-gradient(to right, rgba(${p => p.theme.colors.mainRGB}, 0.25) 0%, transparent 100%);
-`;
-
-const NavItemStripe = styled.div`
-  background: ${p => p.theme.colors.main};
-  width: 4px;
-`;
-
 const initialBorder = 3;
 const hoverBorder = 4;
 const NavItem = styled.div`
@@ -94,10 +78,11 @@ const NavItem = styled.div`
   cursor: ${p => p.selected ? p.theme.cursors.default : p.theme.cursors.active};
   display: flex;
   flex-direction: row;
-  height: ${p => p.isExternal ? externalItemHeight : mainItemHeight}px;
+  height: ${p => p.isExternal ? 42 : 56}px;
   font-size: ${p => p.selected ? 26 : 18}px;
   line-height: 0;
-  margin-left: -25px;
+  margin: 2px 0 2px -25px;
+  position: relative;
   text-transform: uppercase;
 
   ${p => p.isRule && `
@@ -107,34 +92,21 @@ const NavItem = styled.div`
       content: "";
       border-top: 1px solid ${theme.colors.mainBorder};
       width: 100%;
-      margin: 0 25px 0 25px;
+      margin: 0 25px;
     }
   `}
 
-  & ${NavItemBg} {
-    opacity: ${p => p.selected ? 1 : 0};
-    width:  ${p => p.selected ? 250 : 0}px;
-    transition: width 250ms ease;
-  }
-
-  & ${NavItemStripe} {
-    opacity: ${p => p.selected ? 1 : 0};
-    height: ${p => p.selected ? mainItemHeight : 0}px;
-  }
-
-  & svg {
-    color: ${p => p.theme.colors.mainRGB};
-    opacity: ${p => (p.selected || p.isExternal) ? 1 : 1};
+  & > svg {
+    color: ${p => p.selected ? 'white' : 'inherit'};
     font-size: ${p => p.selected ? 36 : 24}px;
+    margin-left: ${p => p.selected ? 16 : 20}px;
     margin-right: 10px;
-    margin-left: 20px;
-    transition: color 250ms ease, font-size 250ms ease;
+    transition: color 250ms ease, font-size 250ms ease, margin 250ms ease;
   }
 
   ${p => p.isExternal && `
-    font-weight: 600;
+    font-weight: bold;
     font-size: 14px;
-    padding-left: 0px;
     position: relative;
     &:before {
       border: solid transparent;
@@ -150,17 +122,39 @@ const NavItem = styled.div`
     }
   `}
 
+  ${p => !p.isExternal && !p.isRule && `
+    &:before {
+      content: "";
+      background: ${p.theme.colors.main};
+      height: ${p.selected ? 100 : 0}%;
+      opacity: ${p.selected ? 1 : 0};
+      transition: height 250ms ease, opacity 250ms ease;
+      width: 4px;
+    }
+    &:after {
+      content: "";
+      background: linear-gradient(to right, rgba(${p.theme.colors.mainRGB}, 0.25) 0%, transparent 100%);
+      height: 100%;
+      opacity: ${p.selected ? 1 : 0};
+      position: absolute;
+      transition: width 250ms ease;
+      width: ${p.selected ? 250 : 0}px;
+      z-index: -1;
+    }
+  `}
+
   &:hover {
     color: white;
-    ${NavItemStripe} {
-      height: ${mainItemHeight}px;
-      opacity: 1;
-      transition: height 250ms ease
-    }
     ${p => p.isExternal && `
       &:before {
         border-left-color: white;
         border-width: ${hoverBorder}px 0 ${hoverBorder}px ${hoverBorder}px;
+      }
+    `}
+    ${p => !p.isExternal && !p.isRule && `
+      &:before {
+        height: 100%;
+        opacity: 1;
       }
     `}
   }
@@ -364,8 +358,6 @@ const ExitSimulationLink = styled.div`
   }
 `;
 
-const StyledNavIcon = () => <Icon><AssetPortalIcon /></Icon>;
-
 const Launcher = (props) => {
   const { accountAddress, authenticating, authenticated, login, walletId } = useSession(false);
   const { data: priceConstants, isLoading: priceConstantsLoading } = usePriceConstants();
@@ -476,36 +468,26 @@ const Launcher = (props) => {
             <NavItem
               onClick={() => dispatchLauncherPage('play')}
               selected={launcherPage === 'play'}>
-              <NavItemBg />
-              <NavItemStripe />
               <PlayIcon /> Play
             </NavItem>
             <NavItem
               onClick={() => dispatchLauncherPage('store')}
               selected={launcherPage === 'store'}>
-              <NavItemBg />
-              <NavItemStripe />
               <StoreIcon /> Store
             </NavItem>
             <NavItem
               onClick={() => dispatchLauncherPage('help')}
               selected={launcherPage === 'help'}>
-              <NavItemBg />
-              <NavItemStripe />
               <HelpIcon /> Help
             </NavItem>
             <NavItem
               onClick={() => dispatchLauncherPage('rewards')}
               selected={launcherPage === 'rewards'}>
-              <NavItemBg />
-              <NavItemStripe />
               <RewardsIcon /> Rewards
             </NavItem>
             <NavItem
               onClick={() => dispatchLauncherPage('settings')}
               selected={launcherPage === 'settings'}>
-              <NavItemBg />
-              <NavItemStripe />
               <SettingsIcon /> Settings
             </NavItem>
 
