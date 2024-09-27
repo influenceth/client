@@ -8,6 +8,7 @@ import usePriceConstants from '~/hooks/usePriceConstants';
 import { TOKEN_FORMAT } from '~/lib/priceUtils';
 import RangeFilter from './RangeFilter';
 import { nativeBool } from '~/lib/utils';
+import { AsteroidSwayPrice } from '../SwayPrice';
 
 const Extra = styled.div`
   & > label {
@@ -64,7 +65,7 @@ const SurfaceAreaFilter = (filterProps) => {
   }, [filterProps]);
 
   const surfaceAreaFieldNote = useCallback((value) => {
-    return priceConstants && <AsteroidUserPrice lots={value} format={TOKEN_FORMAT.SHORT} />;
+    return priceConstants && <AsteroidSwayPrice lots={value} format={TOKEN_FORMAT.SHORT} noLiquidityThreshold />;
   }, [priceConstants]);
 
   const isActive = useCallback(({ min, max }) => {

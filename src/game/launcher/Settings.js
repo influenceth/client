@@ -15,6 +15,7 @@ import constants from '~/lib/constants';
 import LauncherDialog from './components/LauncherDialog';
 import useCrewContext from '~/hooks/useCrewContext';
 import useSession from '~/hooks/useSession';
+import { TOKEN } from '~/lib/priceUtils';
 
 const { ENABLE_SHADOWS, MIN_FOV, MAX_FOV } = constants;
 
@@ -352,8 +353,10 @@ const GameplayPane = () => {
 
   const crewTutorials = useStore(s => s.crewTutorials);
   const gameplay = useStore(s => s.gameplay);
+  const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
   const toggleAutoswap = useStore(s => s.dispatchAutoswapEnabled);
   const dispatchDismissCrewTutorial = useStore(s => s.dispatchDismissCrewTutorial);
+  const dispatchPreferredUiCurrency = useStore(s => s.dispatchPreferredUiCurrency);
   const dispatchTutorialDisabled = useStore(s => s.dispatchTutorialDisabled);
   const dispatchUseSessionsSet = useStore(s => s.dispatchUseSessionsSet);
   const dispatchFeeTokenSet = useStore(s => s.dispatchFeeTokenSet);
@@ -391,6 +394,22 @@ const GameplayPane = () => {
       <Section>
         <h3>Gameplay</h3>
         <div>
+          <CheckboxRow>
+            <label>Price Display:</label>
+            <ControlGroup>
+              <Button
+                active={preferredUiCurrency === TOKEN.USDC}
+                onClick={() => dispatchPreferredUiCurrency(TOKEN.USDC)}>
+                USDC
+              </Button>
+              <Button
+                active={preferredUiCurrency === TOKEN.ETH}
+                onClick={() => dispatchPreferredUiCurrency(TOKEN.ETH)}>
+                ETH
+              </Button>
+            </ControlGroup>
+          </CheckboxRow>
+
           <CheckboxRow>
             <label>Autoswap ETH ⇌ USDC:</label>
             <div onClick={() => toggleAutoswap(!gameplay.autoswap)}>

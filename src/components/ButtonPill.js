@@ -10,7 +10,7 @@ const StyledButton = styled.button`
   border: 1px solid ${p => p.color || p.theme.colors.main};
   border-radius: 24px;
   background-color: ${p => {
-    const inactiveColor = p.lessTransparent ? `rgba(0,0,0,0.33)` : 'transparent';
+    const inactiveColor = p.lessTransparent ? `rgba(0,0,0,0.6)` : 'transparent';
     return p.active ? p.theme.colors.main : inactiveColor;
   }};
   color: ${p => p.active ? 'white' : (p.color || p.theme.colors.main)};
