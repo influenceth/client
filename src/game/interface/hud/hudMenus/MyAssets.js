@@ -186,10 +186,10 @@ const MyAssets = () => {
   const launcherPage = useStore((s) => s.launcherPage);
   const dispatchLauncherPage = useStore((s) => s.dispatchLauncherPage);
 
-  // default to wide-aperture of assets from launcher menu
-  const [allAsteroidsMode, setAllAsteroidsMode] = useState(true);
+  // default to wide-aperture of assets always (remove the `true ||` to only default on launcher page)
+  const [allAsteroidsMode, setAllAsteroidsMode] = useState(true || !!launcherPage || !origin);
   const [autoselectMode, setAutoselectMode] = useState(!!launcherPage);
-  const [allCrewsMode, setAllCrewsMode] = useState(true);
+  const [allCrewsMode, setAllCrewsMode] = useState(true || !!launcherPage);
 
   const onClickCrewAsset = useCallback((crewId, fallbackCrewId) => {
     // if in autoselect mode, switch to crewId (IF it is my crew)
