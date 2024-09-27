@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { fetchBuildExecuteTransaction } from '@avnu/avnu-sdk';
 
 import useStore from '~/hooks/useStore';
@@ -12,13 +12,18 @@ const avnuOptions = { baseUrl: process.env.REACT_APP_AVNU_API_URL };
 
 const useSwapHelper = () => {
   const { accountAddress } = useSession();
-  const { data: wallet } = useWalletPurchasableBalances();
+  const { data: walletSource } = useWalletPurchasableBalances();
   
   const priceHelper = usePriceHelper();
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
 
+  // using a ref since execute is often called from a callback from funding (and
+  // it may not reliably get re-memoized with updated wallet values within callback)
+  const walletRef = useRef();
+  walletRef.current = walletSource;
+
   const buildMultiswapFromSellAmount = useCallback(async (sellAmountUSDC, targetToken, allowableSlippage = 0.1) => {
-    const swappableTokens = Object.keys(wallet?.tokenBalances).filter((t) => t !== targetToken);
+    const swappableTokens = Object.keys(walletRef.current?.tokenBalances).filter((t) => t !== targetToken);
     swappableTokens.sort((a) => a === preferredUiCurrency ? -1 : 1);
     
     const calls = [];
@@ -28,7 +33,7 @@ const useSwapHelper = () => {
       const token = swappableTokens[i];
       const sellAmount = Math.min(
         priceHelper.from(remainingTargetUSDC, TOKEN.USDC).to(token),
-        parseInt(wallet.tokenBalances[token])
+        parseInt(walletRef.current.tokenBalances[token])
       );
       // (if remainingTarget < 0.1% of original, assume rounding error and no need to add additional swaps)
       if (sellAmount > 0 && remainingTargetUSDC > initialTargetUSDC * 0.001) {
@@ -57,7 +62,7 @@ const useSwapHelper = () => {
       return false;
     }
     return calls;
-  }, [wallet]);
+  }, [accountAddress, priceHelper]);
 
   return useMemo(
     () => ({ buildMultiswapFromSellAmount }),

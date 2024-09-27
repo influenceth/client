@@ -29,7 +29,7 @@ const useCrewManager = () => {
       }]
     });
 
-    execute('BulkPurchaseAdalians', { collection: Crewmate.COLLECTION_IDS.ADALIAN, tally });
+    return execute('BulkPurchaseAdalians', { collection: Crewmate.COLLECTION_IDS.ADALIAN, tally });
   }, [accountAddress, execute]);
 
   const getPendingCreditPurchase = useCallback(() => {

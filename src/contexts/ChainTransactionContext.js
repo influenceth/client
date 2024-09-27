@@ -585,7 +585,7 @@ export function ChainTransactionProvider({ children }) {
         // TODO: figure out why some txs require this
         
         maxFee = gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken)
-          * (process.env.REACT_APP_DEPLOYMENT === 'production' ? 3n : 100n);
+          * (process.env.REACT_APP_DEPLOYMENT === 'production' ? 3n : 1000n);
         
         // (not sure why this would ever be negative, but it is on dev at least)
         if (maxFee < 0n) maxFee *= -1n;

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
+import { PuffLoader } from 'react-spinners';
 
 import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 import useSession from '~/hooks/useSession';
@@ -8,12 +9,11 @@ import UserPrice from '~/components/UserPrice';
 import api from '~/lib/api';
 import useFaucetInfo from '~/hooks/useFaucetInfo';
 import BrightButton from '~/components/BrightButton';
-import { PuffLoader } from 'react-spinners';
 
-const EthFaucetButton = ({ onError, onProcessing, onSuccess }) => {
+const EthFaucetButton = ({ onError, onProcessing, onSuccess, noLabel }) => {
   const queryClient = useQueryClient();
   const { data: faucetInfo, isLoading: faucetInfoLoading } = useFaucetInfo();
-  const { provider } = useSession();
+  const { accountAddress, login, provider } = useSession();
 
   const [requestingEth, setRequestingEth] = useState();
 
@@ -24,6 +24,8 @@ const EthFaucetButton = ({ onError, onProcessing, onSuccess }) => {
   }, [faucetInfo]);
 
   const requestEth = useCallback(async () => {
+    if (!accountAddress) return login();
+    
     setRequestingEth(true);
 
     try {
@@ -48,14 +50,14 @@ const EthFaucetButton = ({ onError, onProcessing, onSuccess }) => {
     if (onProcessing) onProcessing(requestingEth);
   }, [onProcessing, requestingEth]);
 
-  const disabled = !ethEnabled || requestingEth || faucetInfoLoading;
+  const disabled = (accountAddress && !ethEnabled) || requestingEth || faucetInfoLoading;
   return (
     <BrightButton
       onClick={requestEth}
       disabled={nativeBool(disabled)}
       success>
-      <label>ETH Faucet (Daily)</label>
-      <span style={{ textAlign: 'right' }}>
+      {!noLabel && <label>ETH Faucet (Daily)</label>}
+      <span style={noLabel ? {} : { textAlign: 'right' }}>
         {(requestingEth || faucetInfoLoading)
           ? <span style={{ alignItems: 'center', display: 'inline-flex', width: 24, height: 24 }}><PuffLoader size="20px" color="white" /></span>
           : (
