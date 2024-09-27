@@ -2,22 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { Asteroid, Entity, Name } from '@influenceth/sdk';
 
-import useBuyAsteroid from '~/hooks/actionManagers/useBuyAsteroid';
-import useChangeName from '~/hooks/actionManagers/useChangeName';
-import useControlAsteroid from '~/hooks/actionManagers/useControlAsteroid';
-import useNameAvailability from '~/hooks/useNameAvailability';
-import usePriceConstants from '~/hooks/usePriceConstants';
-import useSession from '~/hooks/useSession';
-import useWalletPurchasableBalances from '~/hooks/useWalletPurchasableBalances';
-import useWebWorker from '~/hooks/useWebWorker';
-
-import constants from '~/lib/constants';
-import exportGLTF from '~/lib/graphics/exportGLTF';
-import formatters from '~/lib/formatters';
-import { asteroidPrice } from '~/lib/priceUtils';
-import { fireTrackingEvent, nativeBool, reactBool, safeBigInt } from '~/lib/utils';
-import { renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
-
 import AddressLink from '~/components/AddressLink';
 import AsteroidGraphic from './components/AsteroidGraphic';
 import Button from '~/components/ButtonAlt';
@@ -27,7 +11,6 @@ import MarketplaceLink from '~/components/MarketplaceLink';
 import StaticForm from '~/components/StaticForm';
 import Text from '~/components/Text';
 import TextInput from '~/components/TextInput';
-import { AsteroidUserPrice } from '~/components/UserPrice';
 import {
   CheckCircleIcon,
   EccentricityIcon,
@@ -38,8 +21,24 @@ import {
   SemiMajorAxisIcon,
   SurfaceAreaIcon
 } from '~/components/Icons';
-
+import { AsteroidSwayPrice } from '~/components/SwayPrice';
+import PurchaseButtonInner from '~/components/PurchaseButtonInner';
+import { renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
+import useBuyAsteroid from '~/hooks/actionManagers/useBuyAsteroid';
+import useChangeName from '~/hooks/actionManagers/useChangeName';
+import useControlAsteroid from '~/hooks/actionManagers/useControlAsteroid';
+import useFundingFlow from '~/hooks/useFundingFlow';
+import useNameAvailability from '~/hooks/useNameAvailability';
+import usePriceConstants from '~/hooks/usePriceConstants';
+import useSession from '~/hooks/useSession';
+import useWebWorker from '~/hooks/useWebWorker';
+import constants from '~/lib/constants';
+import exportGLTF from '~/lib/graphics/exportGLTF';
+import formatters from '~/lib/formatters';
+import { asteroidPrice, TOKEN_FORMAT } from '~/lib/priceUtils';
+import { fireTrackingEvent, nativeBool, reactBool } from '~/lib/utils';
 import EntityActivityLog from '../EntityActivityLog';
+import usePriceHelper from '~/hooks/usePriceHelper';
 
 const paneStackBreakpoint = 720;
 
@@ -274,7 +273,8 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
   const { controlAsteroid, takingControl } = useControlAsteroid(Number(asteroid.id));
   const { changeName, changingName } = useChangeName({ id: Number(asteroid.id), label: Entity.IDS.ASTEROID });
   const { data: priceConstants } = usePriceConstants();
-  const { data: walletBalances } = useWalletPurchasableBalances();
+  const priceHelper = usePriceHelper();
+  const { fundingPrompt, onVerifyFunds } = useFundingFlow();
   const webWorkerPool = useWebWorker();
 
   const [exportingModel, setExportingModel] = useState(false);
@@ -314,13 +314,7 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
     return asteroidPrice(lots, priceConstants);
   }, [asteroid, priceConstants]);
 
-  const sufficientFunds = useMemo(() => {
-    if (!price || !priceConstants || !walletBalances) return false;
-    const balance = safeBigInt(walletBalances?.combinedBalance?.to(priceConstants.ASTEROID_PURCHASE_TOKEN));
-    return price <= balance;
-  }, [price, priceConstants, walletBalances]);
-
-  const attemptBuyAsteroid = useCallback(async () => {
+  const onBuyAsteroid = useCallback(async () => {
     const limited = await checkForLimit();
     if (limited) return;
 
@@ -335,6 +329,13 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
       }]
     });
   }, [accountAddress, buyAsteroid, checkForLimit]);
+
+  const attemptBuyAsteroid = useCallback(() => {
+    onVerifyFunds(
+      priceHelper.from(price, priceConstants?.ASTEROID_PURCHASE_TOKEN),
+      onBuyAsteroid
+    );
+  }, [onBuyAsteroid, onVerifyFunds, price, priceConstants, priceHelper]);
 
   return (
     <Wrapper>
@@ -467,15 +468,25 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
               )}
 
               {priceConstants && !asteroid.Nft?.owner && (
-                <Button
-                  data-tooltip-content={sufficientFunds ? "Purchase development rights" : "Additional funds required from Store"}
-                  data-tooltip-id="globalTooltip"
-                  disabled={nativeBool(!authenticated || buying || !sufficientFunds)}
-                  isTransaction
-                  loading={reactBool(buying)}
-                  onClick={attemptBuyAsteroid}>
-                  Purchase -&nbsp;<AsteroidUserPrice lots={Asteroid.getSurfaceArea(undefined, asteroid.Celestial.radius)} />
-                </Button>
+                <>
+                  <Button
+                    data-tooltip-content="Purchase development rights"
+                    data-tooltip-id="globalTooltip"
+                    disabled={nativeBool(!authenticated || buying)}
+                    isTransaction
+                    loading={reactBool(buying)}
+                    onClick={attemptBuyAsteroid}>
+                    <PurchaseButtonInner>
+                      Purchase
+                      <span>
+                        <AsteroidSwayPrice
+                          lots={Asteroid.getSurfaceArea(undefined, asteroid.Celestial.radius)}
+                          format={TOKEN_FORMAT.SHORT} />
+                      </span>
+                    </PurchaseButtonInner>
+                  </Button>
+                  {fundingPrompt}
+                </>
               )}
               {asteroid.Nft?.owner && (
                 <MarketplaceLink

@@ -23,25 +23,25 @@ import IconButton from '~/components/IconButton';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import TextInput from '~/components/TextInput';
 import TriangleTip from '~/components/TriangleTip';
+import { CrewmateUserPrice } from '~/components/UserPrice';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
+import FundingFlow from '~/game/launcher/store/FundingFlow';
+import { StarterPack } from '~/game/launcher/store/StarterPackSKU';
 import useBookSession, { bookIds, getBookCompletionImage } from '~/hooks/useBookSession';
 import useCrewManager from '~/hooks/actionManagers/useCrewManager';
 import useCrewContext from '~/hooks/useCrewContext';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import usePriceConstants from '~/hooks/usePriceConstants';
-import useStore from '~/hooks/useStore';
-import formatters from '~/lib/formatters';
-import { reactBool, safeBigInt } from '~/lib/utils';
-import theme from '~/theme';
 import usePriceHelper from '~/hooks/usePriceHelper';
-import useWalletPurchasableBalances from '~/hooks/useWalletPurchasableBalances';
-import { TOKEN } from '~/lib/priceUtils';
-import { CrewmateUserPrice } from '~/components/UserPrice';
-import FundingFlow from '~/game/launcher/components/FundingFlow';
-import { AdvancedStarterPack, BasicStarterPack, IntroStarterPack } from '~/game/launcher/components/StarterPack';
-import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
 import useSimulationEnabled from '~/hooks/useSimulationEnabled';
+import useStore from '~/hooks/useStore';
+import useWalletPurchasableBalances from '~/hooks/useWalletPurchasableBalances';
+import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
+import formatters from '~/lib/formatters';
+import { TOKEN } from '~/lib/priceUtils';
+import { reactBool, safeBigInt } from '~/lib/utils';
 import SIMULATION_CONFIG from '~/simulation/simulationConfig';
+import theme from '~/theme';
 
 const CollectionImages = {
   1: Collection1,
@@ -1625,9 +1625,9 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
               </p>
               <Selector><div>Select</div></Selector>
               <div style={{ color: 'white', display: 'flex', flexDirection: 'row', marginBottom: 20 }}>
-                <IntroStarterPack asButton onIsPurchasing={setIsPurchasingPack} style={{ marginRight: 15 }} />
-                <BasicStarterPack asButton onIsPurchasing={setIsPurchasingPack} style={{ marginRight: 15 }} />
-                <AdvancedStarterPack asButton onIsPurchasing={setIsPurchasingPack} />
+                <StarterPack packLabel="intro" asButton setIsPurchasing={setIsPurchasingPack} style={{ marginRight: 15 }} />
+                <StarterPack packLabel="basic" asButton setIsPurchasing={setIsPurchasingPack} style={{ marginRight: 15 }} />
+                <StarterPack packLabel="advanced" asButton setIsPurchasing={setIsPurchasingPack} />
               </div>
             </PromptBody>
           )}

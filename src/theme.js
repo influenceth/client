@@ -48,7 +48,7 @@ const success = '#00fff0';
 const successDark = '#00a299';
 
 const green = '#88e675';
-const glowGreen = '#59b366';
+const glowGreen = '#3bbd87';
 const darkGreen = '#59b366';
 const gray = '#bbbbbb';
 const teal = '#69ebf4';

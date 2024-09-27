@@ -25,7 +25,7 @@ const simulationNftConfig = {
 const CrewContext = createContext();
 
 export function CrewProvider({ children }) {
-  const { accountAddress, authenticated, blockTime, provider, token, isBlockMissing } = useSession();
+  const { accountAddress, authenticated, blockNumber, blockTime, provider, token, isBlockMissing } = useSession();
   const simulationState = useSimulationState();
 
   const queryClient = useQueryClient();
@@ -265,7 +265,7 @@ export function CrewProvider({ children }) {
         });
       }
     }
-  }, [actionTypeTriggered, selectedCrew?.Crew?.actionType, selectedCrew?.Crew?.actionRound, provider]);
+  }, [actionTypeTriggered, blockNumber, provider, selectedCrew?.Crew?.actionType, selectedCrew?.Crew?.actionRound]);
 
   // add final data to selected crew
   const finalSelectedCrew = useMemo(() => {
