@@ -497,7 +497,7 @@ export function ChainTransactionProvider({ children }) {
   const activities = useActivitiesContext();
   const { crew, pendingTransactions } = useCrewContext();
   const { data: walletSource } = useWalletPurchasableBalances();
-  const { data: swayBalance } = useSwayBalance();
+  const { data: swayBalanceSource } = useSwayBalance();
   const { data: usdcPerEth } = useUsdcPerEth();
   const simulationEnabled = useSimulationEnabled();
 
@@ -505,6 +505,9 @@ export function ChainTransactionProvider({ children }) {
   // it may not reliably get re-memoized with updated wallet values within callback)
   const walletRef = useRef();
   walletRef.current = walletSource;
+
+  const swayRef = useRef();
+  swayRef.current = swayBalanceSource;
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const gameplay = useStore(s => s.gameplay);
@@ -559,7 +562,7 @@ export function ChainTransactionProvider({ children }) {
     const txOptions = {};
 
     // Check and store the gasless compatibility status
-    if (payGasWithSwayIfPossible && swayBalance > 0n) {
+    if (payGasWithSwayIfPossible && swayRef.current > 0n) {
       let canPayGasWithSway = false;
       let gasToken;
       let maxFee;
@@ -576,7 +579,7 @@ export function ChainTransactionProvider({ children }) {
         console.log('fetchGasTokenPrices', tokens);
         gasToken = tokens.find((t) => Address.areEqual(t.tokenAddress, TOKEN.SWAY));
         console.log('gasToken', gasToken);
-        console.log('swayBalance', swayBalance);
+        console.log('swayBalance', swayRef.current);
 
         // Triple the fee estimation and check for sufficient funds to ensure transaction success
         // TODO: figure out why some txs require this
@@ -589,7 +592,7 @@ export function ChainTransactionProvider({ children }) {
         
         console.log('maxFee', maxFee);
 
-        canPayGasWithSway = (swayBalance >= maxFee);
+        canPayGasWithSway = (swayRef.current >= maxFee);
       } catch (e) {
         console.warn('Could not pay gas with sway! Trying with eth/strk...', e);
       }
@@ -635,7 +638,6 @@ export function ChainTransactionProvider({ children }) {
     payGasWithSwayIfPossible,
     nonce,
     starknetSession,
-    swayBalance,
     walletAccount
   ]);
 

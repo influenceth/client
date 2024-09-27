@@ -119,14 +119,14 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
   const stats = useMemo(() => ([
     {
       label: 'Time until Orbit',
-      value: formatTimer(launchTime.total),
-      direction: launchTime.total > 0 ? getBonusDirection(hopperBonus) : 0,
+      value: formatTimer(launchTime?.total || 0),
+      direction: launchTime?.total > 0 ? getBonusDirection(hopperBonus) : 0,
       isTimeStat: true,
-      tooltip: hopperBonus.totalBonus !== 1 && launchTime.total > 0 && (
+      tooltip: hopperBonus.totalBonus !== 1 && launchTime?.total > 0 && (
         <TimeBonusTooltip
           bonus={hopperBonus}
           title="Time until Orbit"
-          totalTime={launchTime.total}
+          totalTime={launchTime?.total || 0}
           crewRequired="duration" />
       )
     },
@@ -156,7 +156,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
       ),
       direction: 0,
     },
-  ]), [escapeVelocity, hopperBonus, launchTime.total, exhaustBonus, propellantRequirement, ship]);
+  ]), [escapeVelocity, hopperBonus, launchTime?.total, exhaustBonus, propellantRequirement, ship]);
 
   const onLaunch = useCallback(() => {
     undockShip(!powered);

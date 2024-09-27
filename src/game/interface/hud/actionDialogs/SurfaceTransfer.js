@@ -269,14 +269,14 @@ const SurfaceTransfer = ({
   const stats = useMemo(() => ([
     {
       label: 'Task Duration',
-      value: formatTimer(transportTime.total),
+      value: formatTimer(transportTime?.total || 0),
       direction: getBonusDirection(crewTravelBonus),
       isTimeStat: true,
       tooltip: (
         <TimeBonusTooltip
           bonus={crewTravelBonus}
           title="Transport Time"
-          totalTime={transportTime.total}
+          totalTime={transportTime?.total || 0}
           crewRequired="start" />
       )
     },
@@ -295,7 +295,7 @@ const SurfaceTransfer = ({
       value: `${formatVolume(totalVolume)}`,
       direction: 0
     },
-  ]), [totalMass, totalVolume, transportDistance, transportTime.total]);
+  ]), [totalMass, totalVolume, transportDistance, transportTime?.total]);
 
   const willBeOverCapacity = useMemo(() => {
     if (![actionStage.NOT_STARTED, actionStage.STARTING].includes(stage)) return false;

@@ -1,7 +1,7 @@
 import { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { isEqual, uniq } from 'lodash';
-import { Entity } from '@influenceth/sdk';
+import { Address, Entity } from '@influenceth/sdk';
 
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -42,7 +42,15 @@ const isMismatch = (updateValue, queryCacheValue) => {
 }
 
 export function ActivitiesProvider({ children }) {
-  const { token, blockNumber, blockNumberIsProvisional, setBlockNumber, setIsBlockMissing } = useSession();
+  const {
+    accountAddress,
+    blockNumber,
+    blockNumberIsProvisional,
+    payGasWithSwayIfPossible,
+    setBlockNumber,
+    setIsBlockMissing,
+    token,
+  } = useSession();
   const { crew, pendingTransactions, refreshReadyAt } = useCrewContext();
   const simulation = useSimulationState();
   const getActivityConfig = useGetActivityConfig();
@@ -135,7 +143,7 @@ export function ActivitiesProvider({ children }) {
           if (!activityConfig) continue;
 
           const pendingTransaction = (pendingTransactions || []).find((p) => p.txHash === activity.event?.transactionHash);
-          const extraInvalidations = await activityConfig.onBeforeReceived(pendingTransaction);
+          const extraInvalidations = (await activityConfig.onBeforeReceived(pendingTransaction)) || [];
 
           if (debugInvalidation) console.log('extraInvalidations', extraInvalidations);
           shouldRefreshReadyAt = shouldRefreshReadyAt || !!activityConfig.requiresCrewTime;
@@ -147,6 +155,14 @@ export function ActivitiesProvider({ children }) {
           // any activityConfig that requiresCrewTime should invalidate the current crew's busyItems
           if (activityConfig.requiresCrewTime) {
             activityInvalidations.push([ 'activities', crew?.label, crew?.id, 'busy' ]);
+          }
+
+          // sway gas invalidation
+          // (if no caller or if caller matches my account)
+          if (payGasWithSwayIfPossible && accountAddress) {
+            if (!activity.event?.returnValues?.caller || Address.areEqual(accountAddress, activity.event.returnValues.caller)) {
+              extraInvalidations.push(['walletBalance', 'sway', accountAddress]);
+            }
           }
 
           // walk through all invalidation configs to build out specific queries to invalidate
@@ -295,7 +311,7 @@ export function ActivitiesProvider({ children }) {
       }
 
     }, 2500);
-  }, [crew, getActivityConfig, pendingTransactions, refreshReadyAt]);
+  }, [accountAddress, crew, getActivityConfig, payGasWithSwayIfPossible, pendingTransactions, refreshReadyAt]);
 
   // try to process WS activities grouped by block
   const processPendingWSBatch = useCallback(async () => {

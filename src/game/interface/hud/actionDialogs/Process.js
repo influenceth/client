@@ -315,11 +315,11 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
   const { leasePayment, desiredLeaseTerm, actualLeaseTerm } = useMemo(() => {
     return getProcessorLeaseSelections(
       prepaidLeaseConfig,
-      taskTimeRequirement.total,
+      taskTimeRequirement?.total || 0,
       crew?.Crew?.readyAt,
       blockTime
     );
-  }, [blockTime, crew?.Crew?.readyAt, prepaidLeaseConfig, taskTimeRequirement.total]);
+  }, [blockTime, crew?.Crew?.readyAt, prepaidLeaseConfig, taskTimeRequirement?.total]);
 
   const onFinishProcess = useCallback(() => {
     finishProcess();
@@ -582,7 +582,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             startTime={currentProcess?.startTime}
             stage={stage}
             title="Progress"
-            totalTime={taskTimeRequirement.total}
+            totalTime={taskTimeRequirement?.total || 0}
             width="100%"
           />
         )}

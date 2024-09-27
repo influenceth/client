@@ -418,7 +418,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
             startTime={currentSamplingAction?.startTime}
             stage={stage}
             title="Progress"
-            totalTime={taskTimeRequirement.total}
+            totalTime={taskTimeRequirement?.total || 0}
           />
         )}
 

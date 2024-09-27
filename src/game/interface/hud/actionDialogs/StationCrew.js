@@ -95,14 +95,14 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
   const stats = useMemo(() => ([
     {
       label: 'Travel Time',
-      value: formatTimer(travelTime.total),
+      value: formatTimer(travelTime?.total || 0),
       direction: getBonusDirection(crewTravelBonus),
       isTimeStat: true,
       tooltip: (
         <TimeBonusTooltip
           bonus={crewTravelBonus}
           title="Transport Time"
-          totalTime={travelTime.total}
+          totalTime={travelTime?.total || 0}
           crewRequired="start" />
       )
     },
@@ -111,7 +111,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
       value: crew?._crewmates?.length || 0,
       direction: 0,
     },
-  ]), [crewTravelBonus, travelTime.total]);
+  ]), [crewTravelBonus, travelTime?.total]);
 
   const onStation = useCallback(() => {
     stationCrew();
