@@ -903,10 +903,9 @@ const activities = {
           updatedValues: { stationUuid: safeEntityId(returnValues.station)?.uuid }
         }
       },
-      { ...returnValues.station }, // v0
-      { ...returnValues.originStation }, // v1
-      { ...returnValues.destinationStation }, // v1
-      // TODO: previous station
+      returnValues.station ? { ...returnValues.station } : null, // v0
+      returnValues.originStation ? { ...returnValues.originStation } : null, // v1
+      returnValues.destinationStation ? { ...returnValues.destinationStation } : null, // v1
     ]),
 
     getLogContent: ({ event: { returnValues } }) => {
