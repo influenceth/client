@@ -40,6 +40,7 @@ import AddRationsSVG from '~/assets/icons/AddRationsIcon.svg';
 import AgreementSVG from '~/assets/icons/AgreementIcon.svg';
 import ArgentXSVG from '~/assets/icons/ArgentXIcon.svg';
 import ArvadSVG from '~/assets/icons/ArvadIcon.svg';
+import AssetPortalSVG from '~/assets/icons/AssetPortalIcon.svg';
 import AssignmentsSVG from '~/assets/icons/AssignmentsIcon.svg';
 import AsteroidSearchSVG from '~/assets/icons/AsteroidSearchIcon.svg';
 import AsteroidSVG from '~/assets/icons/AsteroidIcon.svg';
@@ -66,6 +67,7 @@ import CrewStorySVG from '~/assets/icons/CrewStoryIcon.svg';
 import DeltaVSVG from '~/assets/icons/DeltaVIcon.svg';
 import DiscordSVG from '~/assets/icons/DiscordIcon.svg';
 import DockedShipsSVG from '~/assets/icons/DockedShipsIcon.svg';
+import DownloadSVG from '~/assets/icons/DownloadIcon.svg';
 import EccentricitySVG from '~/assets/icons/EccentricityIcon.svg';
 import EventSVG from '~/assets/icons/EventIcon.svg';
 import FavoriteSVG from '~/assets/icons/FavoriteIcon.svg';
@@ -75,6 +77,7 @@ import FinishAllSVG from '~/assets/icons/FinishAllIcon.svg';
 import FoodSVG from '~/assets/icons/FoodIcon.svg';
 import GasSVG from '~/assets/icons/GasIcon.svg';
 import GenesisSVG from '~/assets/icons/GenesisIcon.svg';
+import HelpSVG from '~/assets/icons/HelpIcon.svg';
 import HeliocentricSVG from '~/assets/icons/HeliocentricIcon.svg';
 import HexagonSVG from '~/assets/icons/HexagonIcon.svg';
 import InclinationSVG from '~/assets/icons/InclinationIcon.svg';
@@ -105,6 +108,7 @@ import OwnerSettingsSVG from '~/assets/icons/OwnerSettingsIcon.svg';
 import PassengerSVG from '~/assets/icons/PassengerIcon.svg';
 import PassengersSVG from '~/assets/icons/PassengersIcon.svg';
 import PermissionSVG from '~/assets/icons/PermissionIcon.svg';
+import PlaySVG from '~/assets/icons/PlayIcon.svg';
 import ProductSVG from '~/assets/icons/ProductIcon.svg';
 import ProductsSVG from '~/assets/icons/ProductsIcon.svg';
 import ProductionSVG from '~/assets/icons/ProductionIcon.svg';
@@ -113,6 +117,7 @@ import RadioEmptySVG from '~/assets/icons/RadioEmptyIcon.svg';
 import RadioSelectedSVG from '~/assets/icons/RadioSelectedIcon.svg';
 import RadiusSVG from '~/assets/icons/RadiusIcon.svg';
 import RecruitCrewmateSVG from '~/assets/icons/RecruitCrewmateIcon.svg';
+import RewardsSVG from '~/assets/icons/RewardsIcon.svg';
 import UpdateSVG from '~/assets/icons/UpdateIcon.svg';
 import ResetCameraSVG from '~/assets/icons/ResetCameraIcon.svg';
 import ResourceSVG from '~/assets/icons/ResourceIcon.svg';
@@ -120,6 +125,7 @@ import RocketSVG from '~/assets/icons/RocketIcon.svg';
 import RouteSVG from '~/assets/icons/RouteIcon.svg';
 import SearchSVG from '~/assets/icons/SearchIcon.svg';
 import SemiMajorAxisSVG from '~/assets/icons/SemiMajorAxisIcon.svg';
+import SettingsSVG from '~/assets/icons/SettingsIcon.svg';
 import ShipSVG from '~/assets/icons/ShipIcon.svg';
 import StoreSVG from '~/assets/icons/StoreIcon.svg';
 import SurfaceAreaSVG from '~/assets/icons/SurfaceAreaIcon.svg';
@@ -232,6 +238,7 @@ export const AgreementIcon = () => <AgreementSVG className="icon" />;
 export const ArgentXIcon = () => <ArgentXSVG className="icon" />;
 export const ArvadIcon = () => <ArvadSVG className="icon" style={{ width: '1.94em' }} />;
 export const AssignmentsIcon = () => <AssignmentsSVG className="icon" />;
+export const AssetPortalIcon = () => <AssetPortalSVG className="icon" />;
 export const AsteroidIcon = () => <AsteroidSVG className="icon" />;
 export const AsteroidSearchIcon = () => <AsteroidSearchSVG className="icon" />;
 export const BraavosIcon = () => <BraavosSVG className="icon" />;
@@ -259,6 +266,7 @@ export const CrewStoryIcon = () => <CrewStorySVG className="icon" />;
 export const DeltaVIcon = () => <DeltaVSVG className="icon" />;
 export const DiscordIcon = () => <DiscordSVG className="icon" />;
 export const DockedShipsIcon = () => <DockedShipsSVG className="icon" />;
+export const DownloadIcon = () => <DownloadSVG className="icon" />;
 export const EccentricityIcon = () => <EccentricitySVG className="icon" />;
 export const EmergencyModeEnterIcon = () => <EModeEnterSVG className="icon" />;
 export const EmergencyModeExitIcon = () => <EModeExitSVG className="icon" />;
@@ -271,6 +279,7 @@ export const FinishAllIcon = () => <FinishAllSVG className="icon" />;
 export const FoodIcon = () => <FoodSVG className="icon" />;
 export const GasIcon = () => <GasSVG className="icon" />;
 export const GenesisIcon = () => <GenesisSVG className="icon" />;
+export const HelpIcon = () => <HelpSVG className="icon" />;
 export const HeliocentricIcon = () => <HeliocentricSVG className="icon" />;
 export const HexagonIcon = () => <HexagonSVG className="icon" />;
 export const InclinationIcon = () => <InclinationSVG className="icon" />;
@@ -302,6 +311,7 @@ export const OwnerSettingsIcon = () => <OwnerSettingsSVG className="icon" />;
 export const PassengerIcon = () => <PassengerSVG className="icon" />;
 export const PassengersIcon = () => <PassengersSVG className="icon" />;
 export const PermissionIcon = () => <PermissionSVG className="icon" />;
+export const PlayIcon = () => <PlaySVG className="icon" />;
 export const ProductIcon = () => <ProductSVG className="icon" />;
 export const ProductsIcon = () => <ProductsSVG className="icon" />;
 export const ProductionIcon = () => <ProductionSVG className="icon" />;
@@ -314,10 +324,12 @@ export const RefineIcon = () => <RefineSVG className="icon" />;
 export const UpdateIcon = () => <UpdateSVG className="icon" />;
 export const ResetCameraIcon = () => <ResetCameraSVG className="icon" />;
 export const ResourceIcon = () => <ResourceSVG className="icon" />;
+export const RewardsIcon = () => <RewardsSVG className="icon" />;
 export const RocketIcon = () => <RocketSVG className="icon" />;
 export const RouteIcon = () => <RouteSVG className="icon" />;
 export const SearchIcon = () => <SearchSVG className="icon" />;
 export const SemiMajorAxisIcon = () => <SemiMajorAxisSVG className="icon" />;
+export const SettingsIcon = () => <SettingsSVG className="icon" />;
 export const ShipIcon = () => <ShipSVG className="icon" />;
 export const StoreIcon = () => <StoreSVG className="icon" />;
 export const SurfaceAreaIcon = () => <SurfaceAreaSVG className="icon" />;
@@ -414,7 +426,6 @@ export {
   BsSliders as SlidersIcon,
   BsStopwatch as TimerIcon,
   BsThreeDots as DotsIcon,
-  FiDownload as DownloadIcon,
   FaBan as BanIcon,
   FaCogs as ProcessIcon,
   FaCopy as CopyIcon,
@@ -428,7 +439,6 @@ export {
   HiChevronDoubleLeft as BackIcon,
   HiChevronDoubleRight as ForwardIcon,
   HiClock as TimeIcon,
-  HiCog as SettingsIcon,
   MdAdd as PlusIcon,
   MdBlock as BlockIcon,
   MdChevronRight as ChevronRightIcon,
@@ -445,7 +455,6 @@ export {
   MdNavigateBefore as PreviousIcon,
   MdNavigateNext as NextIcon,
   MdPause as PauseIcon,
-  MdPlayArrow as PlayIcon,
   MdHourglassBottom as ScheduleFullIcon,
   MdStop as StopIcon,
   RiLayoutGridFill as GridIcon,

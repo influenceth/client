@@ -9,9 +9,17 @@ import useStore from '~/hooks/useStore';
 import {
   ChevronDoubleRightIcon,
   UserIcon,
+  PlayIcon,
+  StoreIcon,
+  HelpIcon,
+  RewardsIcon,
+  SettingsIcon,
+  AssetPortalIcon,
+  WalletIcon,
+  BugIcon,
+  DownloadIcon
 } from '~/components/Icons';
 import InfluenceLogo from '~/components/InfluenceLogo';
-import NavIcon from '~/components/NavIcon';
 import { headerHeight, menuPadding } from '~/game/uiConstants';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import Play from './launcher/Play';
@@ -21,7 +29,7 @@ import HudMenu from './interface/hud/HudMenu';
 import SystemControls from './interface/hud/SystemControls';
 import Help from './launcher/Help';
 import Rewards from './launcher/Rewards';
-import { fireTrackingEvent, reactBool } from '~/lib/utils';
+import { fireTrackingEvent } from '~/lib/utils';
 import theme from '~/theme';
 
 const DISABLE_LAUNCH_TRAILER = appConfig.get('App.disableLaunchTrailer');
@@ -71,33 +79,35 @@ const NavItem = styled.div`
   cursor: ${p => p.selected ? p.theme.cursors.default : p.theme.cursors.active};
   display: flex;
   flex-direction: row;
-  font-size: ${p => p.selected ? 24 : 17}px;
-  height: 38px;
+  height: ${p => p.isExternal ? 42 : 56}px;
+  font-size: ${p => p.selected ? 26 : 18}px;
+  line-height: 0;
+  margin: 2px 0 2px -25px;
+  position: relative;
   text-transform: uppercase;
-  transition: color 250ms ease, font-size 250ms ease;
 
   ${p => p.isRule && `
-    height: 24px;
+    height: 36px;
     color: white;
     &:before {
       content: "";
-      border-top: 1px solid #444;
-      margin-left: 25px;
+      border-top: 1px solid ${theme.colors.mainBorder};
       width: 100%;
+      margin: 0 25px;
     }
   `}
 
-  & ${Icon} {
-    color: ${p => p.theme.colors.main};
-    font-size: 17px;
-    margin-right: 12px;
-    opacity: ${p => p.selected ? 1 : 0};
-    transition: opacity 250ms ease;
+  & > svg {
+    color: ${p => p.selected ? 'white' : 'inherit'};
+    font-size: ${p => p.selected ? 36 : 24}px;
+    margin-left: ${p => p.selected ? 16 : 20}px;
+    margin-right: 10px;
+    transition: color 250ms ease, font-size 250ms ease, margin 250ms ease;
   }
 
   ${p => p.isExternal && `
-    margin-left: -25px;
-    padding-left: 25px;
+    font-weight: bold;
+    font-size: 14px;
     position: relative;
     &:before {
       border: solid transparent;
@@ -113,12 +123,39 @@ const NavItem = styled.div`
     }
   `}
 
+  ${p => !p.isExternal && !p.isRule && `
+    &:before {
+      content: "";
+      background: ${p.theme.colors.main};
+      height: ${p.selected ? 100 : 0}%;
+      opacity: ${p.selected ? 1 : 0};
+      transition: height 250ms ease, opacity 250ms ease;
+      width: 4px;
+    }
+    &:after {
+      content: "";
+      background: linear-gradient(to right, rgba(${p.theme.colors.mainRGB}, 0.25) 0%, transparent 100%);
+      height: 100%;
+      opacity: ${p.selected ? 1 : 0};
+      position: absolute;
+      transition: width 250ms ease;
+      width: ${p.selected ? 250 : 0}px;
+      z-index: -1;
+    }
+  `}
+
   &:hover {
     color: white;
     ${p => p.isExternal && `
       &:before {
         border-left-color: white;
         border-width: ${hoverBorder}px 0 ${hoverBorder}px ${hoverBorder}px;
+      }
+    `}
+    ${p => !p.isExternal && !p.isRule && `
+      &:before {
+        height: 100%;
+        opacity: 1;
       }
     `}
   }
@@ -322,8 +359,6 @@ const ExitSimulationLink = styled.div`
   }
 `;
 
-const StyledNavIcon = () => <Icon><NavIcon selected selectedColor="#777" /></Icon>;
-
 const Launcher = (props) => {
   const { accountAddress, authenticating, authenticated, login, walletId } = useSession(false);
   const { data: priceConstants, isLoading: priceConstantsLoading } = usePriceConstants();
@@ -434,52 +469,52 @@ const Launcher = (props) => {
             <NavItem
               onClick={() => dispatchLauncherPage('play')}
               selected={launcherPage === 'play'}>
-              <StyledNavIcon /> Play
+              <PlayIcon /> Play
             </NavItem>
             <NavItem
               onClick={() => dispatchLauncherPage('store')}
               selected={launcherPage === 'store'}>
-              <StyledNavIcon /> Store
+              <StoreIcon /> Store
             </NavItem>
             <NavItem
               onClick={() => dispatchLauncherPage('help')}
               selected={launcherPage === 'help'}>
-              <StyledNavIcon /> Help
+              <HelpIcon /> Help
             </NavItem>
             <NavItem
               onClick={() => dispatchLauncherPage('rewards')}
               selected={launcherPage === 'rewards'}>
-              <StyledNavIcon /> Rewards
+              <RewardsIcon /> Rewards
             </NavItem>
             <NavItem
               onClick={() => dispatchLauncherPage('settings')}
               selected={launcherPage === 'settings'}>
-              <StyledNavIcon /> Settings
+              <SettingsIcon /> Settings
             </NavItem>
 
             <NavItem isRule />
 
             {appConfig.get('Url.bridge') && (
               <NavItem onClick={openAssetsPortal} isExternal>
-                <StyledNavIcon /> Assets Portal
+                <AssetPortalIcon /> Assets Portal
               </NavItem>
             )}
 
             {walletId === 'argentWebWallet' && (
               <NavItem onClick={openWebWalletDashboard} isExternal>
-                <StyledNavIcon /> Wallet Dashboard
+                <WalletIcon /> Wallet Dashboard
               </NavItem>
             )}
 
             {appConfig.get('Url.bugReport') && (
               <NavItem onClick={openHelpChannel} isExternal>
-                <StyledNavIcon /> Bug Report
+                <BugIcon /> Bug Report
               </NavItem>
             )}
 
             {!!window.installPrompt && (
               <NavItem onClick={onInstallApp} isExternal>
-                <StyledNavIcon /> Desktop App
+                <DownloadIcon /> Desktop App
               </NavItem>
             )}
 

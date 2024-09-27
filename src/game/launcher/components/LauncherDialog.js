@@ -3,9 +3,11 @@ import styled from 'styled-components';
 
 import ClipCorner from '~/components/ClipCorner';
 import NavIcon from '~/components/NavIcon';
-import { LinkIcon } from '~/components/Icons';
+import { CloseIcon, LinkIcon } from '~/components/Icons';
 import { reactBool } from '~/lib/utils';
 import theme from '~/theme';
+import IconButton from '~/components/IconButton';
+import useStore from '~/hooks/useStore';
 
 const borderColor = '#222;'
 
@@ -95,9 +97,20 @@ const Tab = styled.div`
   }
 `;
 
+const CloseButton = styled(IconButton)`
+  margin-right: 0;
+  position: absolute !important;
+  top: 17px;
+  right: 20px;
+  z-index: 2;
+  ${p => p.hasBackground ? 'background: rgba(0, 0, 0, 0.75);' : ''}
+`;
+
 const BottomLeft = styled.div``;
 
 const LauncherDialog = ({ panes = [], preselect, singlePane, bottomLeftMenu }) => {
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
+
   const [selected, setSelected] = useState();
 
   useEffect(() => {
@@ -114,10 +127,15 @@ const LauncherDialog = ({ panes = [], preselect, singlePane, bottomLeftMenu }) =
     }
   }, []);
 
+  const onClose = useCallback(() => {
+    dispatchLauncherPage('play');
+  }, []);
+
   return (
     <DialogWrapper id="DialogWrapper">
       <Padding>
         <Dialog>
+          <CloseButton borderless hasBackground onClick={onClose}><CloseIcon /></CloseButton>
           {!singlePane && (
             <TabWrapper>
               {panes.map((pane) => (
