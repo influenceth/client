@@ -2,14 +2,14 @@ import { useCallback, useState } from 'react';
 import styled, { css, keyframes } from 'styled-components';
 import { Asteroid, Entity } from '@influenceth/sdk';
 
-import AsteroidComposition from './AsteroidComposition';
-import AsteroidRendering from '../../../../../components/AsteroidRendering';
-import AsteroidSpinner from './AsteroidSpinner';
-import formatters from '~/lib/formatters';
+import AsteroidRendering from '~/components/AsteroidRendering';
 import { WarningOutlineIcon } from '~/components/Icons';
-import theme from '~/theme';
-import useScanManager from '~/hooks/actionManagers/useScanManager';
 import useSale from '~/hooks/useSale';
+import useScanManager from '~/hooks/actionManagers/useScanManager';
+import formatters from '~/lib/formatters';
+import theme from '~/theme';
+import AsteroidComposition from './AsteroidComposition';
+import AsteroidSpinner from './AsteroidSpinner';
 
 const OPACITY_ANIMATION = 400;
 

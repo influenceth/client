@@ -323,7 +323,7 @@ export const cleanseTxHash = function (txOrTxHash) {
   if (txOrTxHash.transaction_hash) unformatted = txOrTxHash.transaction_hash;
   if (txOrTxHash.transactionHash) unformatted = txOrTxHash.transactionHash;
 
-  return `0x${BigInt(unformatted).toString(16).padStart(64, '0')}`;
+  return `0x${safeBigInt(unformatted).toString(16).padStart(64, '0')}`;
 };
 
 export const fireTrackingEvent = function (event, eventProps = {}) {
@@ -383,9 +383,34 @@ export const ordersToFills = (mode, orders, amountToFill, takerFee, feeReduction
 };
 
 export const safeBigInt = (unsafe) => {
-  if (typeof unsafe === 'BigInt') return unsafe;
-  if (unsafe === null || isNaN(Number(unsafe))) console.error(`safeBigInt error: "${unsafe}" is not a number`);
-  return BigInt(Math.round(Number(unsafe || 0)));
+  if (typeof unsafe === 'bigint') {
+    return unsafe;
+  }
+  if (unsafe === null || isNaN(Number(unsafe))) {
+    console.error(`safeBigInt warning: "${unsafe}" is not a number, returning 0n`);
+    return 0n;
+  }
+  if (typeof unsafe === 'string') {
+    try {
+      return BigInt(unsafe);
+    } catch (e) {
+      console.warn(`safeBigInt warning: could not cast from string... trying as number (precision may be lost)`);
+    }
+  }
+    
+  try {
+    return BigInt(Number(unsafe));
+  } catch (e) {
+    console.warn(`safeBigInt warning: "${unsafe}" will be rounded`);
+  }
+  
+  try {
+    return BigInt(Math.round(Number(unsafe)));
+  } catch (e) {
+    console.error(`safeBigInt failure: "${unsafe}" will be returned as 0n`);
+  }
+
+  return 0n;
 }
 
 export const openAccessJSTime = `${appConfig.get('Starknet.chainId')}` === `0x534e5f4d41494e` ? 1719495000e3 : 0;

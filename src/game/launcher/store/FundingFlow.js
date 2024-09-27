@@ -16,7 +16,7 @@ import UserPrice from '~/components/UserPrice';
 import { TOKEN, TOKEN_FORMAT, TOKEN_FORMATTER } from '~/lib/priceUtils';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import useStore from '~/hooks/useStore';
-import EthFaucetButton from './EthFaucetButton';
+import EthFaucetButton from './components/EthFaucetButton';
 import { areChainsEqual, fireTrackingEvent, resolveChainId, safeBigInt } from '~/lib/utils';
 
 const layerSwapChains = {
