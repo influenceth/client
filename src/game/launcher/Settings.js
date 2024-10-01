@@ -4,18 +4,20 @@ import screenfull from 'screenfull';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
 import { useDetectGPU } from '@react-three/drei';
 
-import useStore from '~/hooks/useStore';
-import useScreenSize from '~/hooks/useScreenSize';
-import DataReadout from '~/components/DataReadout';
 import Button from '~/components/ButtonPill';
+import DataReadout from '~/components/DataReadout';
 import IconButton from '~/components/IconButton';
+import NotificationSettings from '~/components/NotificationSettings';
 import NumberInput from '~/components/NumberInput';
 import Range from '~/components/Range';
-import constants from '~/lib/constants';
-import LauncherDialog from './components/LauncherDialog';
 import useCrewContext from '~/hooks/useCrewContext';
+import useScreenSize from '~/hooks/useScreenSize';
 import useSession from '~/hooks/useSession';
+import useStore from '~/hooks/useStore';
+import constants from '~/lib/constants';
 import { TOKEN } from '~/lib/priceUtils';
+import LauncherDialog from './components/LauncherDialog';
+
 
 const { ENABLE_SHADOWS, MIN_FOV, MAX_FOV } = constants;
 
@@ -77,6 +79,10 @@ const StyledDataReadout = styled(DataReadout)`
       ? 'width: auto; white-space: nowrap;'
       : 'width: 200px;'
     }
+    ${p => p.labelTop && `
+      align-self: flex-start;  
+      margin-top: 6px;
+    `}
   }
 
   & span {
@@ -394,8 +400,13 @@ const GameplayPane = () => {
       <Section>
         <h3>Gameplay</h3>
         <div>
-          <CheckboxRow>
-            <label>Price Display:</label>
+          <StyledDataReadout label="Notifications" labelTop>
+            <ControlGroup>
+              <NotificationSettings style={{ marginBottom: 10 }} />
+            </ControlGroup>
+          </StyledDataReadout>
+
+          <StyledDataReadout label="Price Display">
             <ControlGroup>
               <Button
                 active={preferredUiCurrency === TOKEN.USDC}
@@ -408,7 +419,7 @@ const GameplayPane = () => {
                 ETH
               </Button>
             </ControlGroup>
-          </CheckboxRow>
+          </StyledDataReadout>
 
           <CheckboxRow>
             <label>Autoswap ETH ⇌ USDC:</label>
