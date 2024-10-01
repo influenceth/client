@@ -186,6 +186,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
       </ActionDialogBody>
 
       <ActionDialogFooter
+        crewAvailableTime={crewTimeRequirement}
         disabled={!buildingType}
         goLabel="Create Site"
         onGo={() => planConstruction(buildingType)}

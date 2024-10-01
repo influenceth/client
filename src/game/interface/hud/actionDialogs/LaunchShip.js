@@ -288,6 +288,8 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
       </ActionDialogBody>
 
       <ActionDialogFooter
+        crewAvailableTime={launchTime}
+        taskCompleteTime={launchTime}
         disabled={isDeliveryPending || isGuestCrewBusy || (powered && (propellantRequirement > propellantLoaded)) || !simLaunchTypeAllowed}
         goLabel="Launch"
         onGo={onLaunch}

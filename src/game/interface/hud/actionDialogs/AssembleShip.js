@@ -474,6 +474,8 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
       </ActionDialogBody>
 
       <ActionDialogFooter
+        crewAvailableTime={crewTimeRequirement}
+        taskCompleteTime={taskTimeRequirement}
         disabled={!(
           (
             stage === actionStages.NOT_STARTED

@@ -254,6 +254,8 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
       </ActionDialogBody>
 
       <ActionDialogFooter
+        crewAvailableTime={timeRequirement}
+        taskCompleteTime={timeRequirement}
         disabled={!allowAction}
         goLabel="Eject"
         onGo={onEject}

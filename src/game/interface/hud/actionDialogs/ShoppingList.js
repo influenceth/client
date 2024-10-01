@@ -846,6 +846,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
         goLabel="Purchase"
         onGo={handlePurchase}
         stage={stage}
+        taskCompleteTime={taskTimeRequirement}
         {...props} />
 
       {stage === actionStage.NOT_STARTED && (

@@ -84,7 +84,12 @@ const api = {
   },
 
   updateUser: async (data) => {
-    const response = await instance.post(`/${apiVersion}/user`, data);
+    const response = await instance.patch(`/${apiVersion}/user`, data);
+    return response.data;
+  },
+
+  updateUserNotifications: async (data) => {
+    const response = await instance.patch(`/${apiVersion}/user/notifications`, data);
     return response.data;
   },
 

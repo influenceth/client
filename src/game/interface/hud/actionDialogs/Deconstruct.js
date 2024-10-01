@@ -133,6 +133,7 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
       </ActionDialogBody>
 
       <ActionDialogFooter
+        crewAvailableTime={crewTimeRequirement}
         goLabel="Deconstruct"
         onGo={deconstruct}
         stage={stage}

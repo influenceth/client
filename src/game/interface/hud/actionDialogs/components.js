@@ -5343,6 +5343,7 @@ const NotificationSettingsPrompt = ({ onFinished }) => {
 
 export const ActionDialogFooter = ({
   buttonsLoading,
+  crewAvailableTime,
   disabled,
   finalizeLabel,
   goLabel,
@@ -5353,6 +5354,7 @@ export const ActionDialogFooter = ({
   onFinalize,
   onGo,
   stage,
+  taskCompleteTime,
   waitForCrewReady,
   wide
 }) => {
@@ -5361,7 +5363,6 @@ export const ActionDialogFooter = ({
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [promptForNotifications, setPromptForNotifications] = useState(false);
 
-  const crewTime = 1, taskTime = 0;
   const allowedOrLaunched = useMemo(() => requireLaunched ? isLaunched : true, [isLaunched, requireLaunched]);
 
   const finalizeActions = useMemo(() => {
@@ -5376,16 +5377,19 @@ export const ActionDialogFooter = ({
 
   // only show notification option if i've disabled all and this would have one
   const showNotificationOption = useMemo(() => {
-    if (!userIsLoading && (!user?.notificationMethod || (!user?.notificationSubscriptions?.crew && !user?.notificationSubscriptions?.task))) {
-      if (crewTime > 0 || taskTime > 0) {
-        // TODO: ship delivery also?
-        if (stage === actionStage.NOT_STARTED) {
-          return true;
-        }
+    if (stage === actionStage.NOT_STARTED) {
+      if (!userIsLoading) {
+        // if not subscribed to one of the things that takes time
+        // TODO: does this cover ship delivery? can we also show in form_agreement?
+        return (
+          (!user?.notificationSubscriptions?.crew && crewAvailableTime?.total > 0) 
+          || (!user?.notificationSubscriptions?.task && taskCompleteTime?.total > 0) 
+          || (!user?.emailAddress && (crewAvailableTime?.total > 0 || taskCompleteTime?.total > 0))
+        );
       }
     }
     return false;
-  }, [crewTime, stage, taskTime, userIsLoading, user?.notificationSubscriptions]);
+  }, [crewAvailableTime?.total, stage, taskCompleteTime?.total, userIsLoading, user?.emailAddress, user?.notificationSubscriptions]);
 
   const onBeforeGo = useCallback(async () => {
     if (showNotificationOption && notificationsEnabled) {

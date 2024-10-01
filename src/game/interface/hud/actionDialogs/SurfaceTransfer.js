@@ -613,6 +613,7 @@ const SurfaceTransfer = ({
         goLabel="Transfer"
         onGo={onStartDelivery}
         stage={stage}
+        taskCompleteTime={transportTime}
         {...finalizeActions}
         {...props} />
 

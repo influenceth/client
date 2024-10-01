@@ -401,7 +401,7 @@ const GameplayPane = () => {
         <h3>Gameplay</h3>
         <div>
           <StyledDataReadout label="Notifications" labelTop>
-            <ControlGroup>
+            <ControlGroup style={{ width: '100%' }}>
               <NotificationSettings style={{ marginBottom: 10 }} />
             </ControlGroup>
           </StyledDataReadout>
