@@ -4889,7 +4889,6 @@ export const MultiSourceInputBlock = ({
   }
 
   // if off-surface, just present inventory...
-  console.log({ props })
   return (
     <InventoryInputBlock
       {...props}
@@ -5378,7 +5377,7 @@ export const ActionDialogFooter = ({
   // only show notification option if i've disabled all and this would have one
   const showNotificationOption = useMemo(() => {
     if (stage === actionStage.NOT_STARTED) {
-      if (!userIsLoading) {
+      if (!crew?._isSimulation && !userIsLoading) {
         // if not subscribed to one of the things that takes time
         // TODO: does this cover ship delivery? can we also show in form_agreement?
         return (
