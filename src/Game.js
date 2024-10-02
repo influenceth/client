@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { ThemeProvider, createGlobalStyle } from 'styled-components';
-import { BrowserRouter as Router, Switch, Route, useHistory } from 'react-router-dom';
+import { BrowserRouter as Router, Switch, Route, useHistory, useLocation } from 'react-router-dom';
 import { useDetectGPU } from '@react-three/drei';
 
 import { initializeTagManager } from './gtm';
@@ -64,6 +64,28 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 const DISABLE_LAUNCHER_LANDING = appConfig.get('App.disableLauncherLanding');
+
+const CrewSwitcher = () => {
+  const history = useHistory();
+  const location = useLocation();
+
+  const dispatchCrewSelected = useStore(s => s.dispatchCrewSelected);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const crewId = searchParams.get('cid');
+    if (crewId) {
+      dispatchCrewSelected(Number(crewId));
+      searchParams.delete('cid');
+      history.replace({
+        pathname: location.pathname,
+        search: searchParams.toString(),
+      });
+    }
+  }, [location.search]);
+
+  return null;
+};
 
 const LauncherRedirect = () => {
   const { authenticated } = useSession();
@@ -198,6 +220,7 @@ const Game = () => {
               <ChatListener />
               <Router>
                 <Referral />
+                <CrewSwitcher />
                 <Switch>
 
                   {/* for socialmedia links that need to pull opengraph tags (will redirect to discord or main app) */}
