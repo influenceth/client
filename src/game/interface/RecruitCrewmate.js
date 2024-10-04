@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 
+import { appConfig } from '~/appConfig';
 import SelectHabitatDialog from '~/components/SelectHabitatDialog';
 import SelectUninitializedCrewmateDialog from '~/components/SelectUninitializedCrewmateDialog';
 import CrewAssignmentCreate from '~/game/interface/details/crewAssignments/Create';
@@ -41,7 +42,7 @@ const RecruitCrewmate = () => {
   useEffect(() => {
     if (!authenticated) history.push('/');
     // Select a random habitat out of the first 100
-    const habitat = process.env.REACT_APP_DEPLOYMENT === 'production' ? Math.ceil(Math.random() * 100) : 1;
+    const habitat = appConfig.get('App.deployment') === 'production' ? Math.ceil(Math.random() * 100) : 1;
     if (!locationId) history.push(`/recruit/${crewId}/${habitat}`);
   }, [authenticated, crewId, locationId]);
 

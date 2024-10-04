@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import { Building, Inventory, Lot } from '@influenceth/sdk';
 import { BiWrench as WrenchIcon } from 'react-icons/bi';
 
+import { appConfig } from '~/appConfig';
 import IconButton from '~/components/IconButton';
 import {
   AsteroidSearchIcon,
@@ -599,7 +600,7 @@ const HudMenu = () => {
         }
       );
 
-      if (process.env.REACT_APP_ENABLE_DEV_TOOLS && showDevTools) {
+      if (appConfig.get('App.enableDevTools') && showDevTools) {
         menuButtons.push({
           key: 'DEV_TOOLS',
           label: 'Dev Tools',

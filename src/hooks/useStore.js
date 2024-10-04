@@ -9,6 +9,7 @@ import constants from '~/lib/constants';
 import { TOKEN } from '~/lib/priceUtils';
 import { safeBigInt } from '~/lib/utils';
 import SIMULATION_CONFIG from '~/simulation/simulationConfig';
+import { appConfig } from '~/appConfig';
 
 export const STORE_NAME = 'influence';
 
@@ -49,6 +50,7 @@ const simulationStateDefault = {
 
 const useStore = create(subscribeWithSelector(persist((set, get) => ({
     actionDialog: {},
+    ageVerified: false,
     launcherPage: null,
     launcherSubpage: null,
     openHudMenu: null,
@@ -148,8 +150,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     },
 
     sounds: {
-      music: process.env.NODE_ENV === 'development' ? 0 : 100,
-      effects: process.env.NODE_ENV === 'development' ? 0 : 100,
+      music: appConfig.get('App.defaultMuted') ? 0 : 100,
+      effects: appConfig.get('App.defaultMuted') ? 0 : 100,
     },
 
     failedTransactions: [],
@@ -764,6 +766,10 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       if (!state.crewTutorials[crewId].dismissedSteps.includes(step)) {
         state.crewTutorials[crewId].dismissedSteps.push(step);
       }
+    })),
+
+    dispatchAgeVerified: () => set(produce(state => {
+      state.ageVerified = true;
     })),
 
     //

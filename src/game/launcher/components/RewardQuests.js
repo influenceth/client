@@ -2,6 +2,7 @@ import { useState } from 'react';
 import styled from 'styled-components';
 import Loader from 'react-spinners/PuffLoader';
 
+import { appConfig } from '~/appConfig';
 import Image1 from '~/assets/images/hud_headers/Asteroid.png';
 import Image2 from '~/assets/images/hud_headers/SurfaceShip.png';
 import Image3 from '~/assets/images/hud_headers/Building_9.png';
@@ -192,7 +193,7 @@ const quests = [
 
 const Quest = ({ quest }) => {
   return (
-    <RewardBox onClick={() => window.open(process.env.REACT_APP_SOCIAL_QUESTS_URL)}>
+    <RewardBox onClick={() => window.open(appConfig.get('Url.socialQuests'))}>
       <QuestWrapper bg={quest.bg}>
         <div></div>
         <div>{quest.icon}</div>
@@ -217,7 +218,7 @@ const RewardQuests = () => {
         {isLaunched && !error && !loading && (
           <>
             <label>
-              Individual quests. View quest status on <a href={process.env.REACT_APP_SOCIAL_QUESTS_URL} target="_blank">Starknet Quest</a>.
+              Individual quests. View quest status on <a href={appConfig.get('Url.socialQuests')} target="_blank">Starknet Quest</a>.
             </label>
             <RewardsWrapper gap={30} widthTarget={200}>
               {quests.map((quest) => <Quest key={quest.id} quest={quest} />)}

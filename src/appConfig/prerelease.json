@@ -1,0 +1,48 @@
+{
+  "App": {
+    "deployment": "prerelease",
+    "enableDevTools": 1,
+    "verboseLogs": true
+  },
+  "Api": {
+    "argent": "https://api.hydrogen.argent47.net/v1",
+    "argentWebWallet": "https://web-v2.hydrogen.argent47.net",
+    "avnu": "https://sepolia.api.avnu.fi",
+    "influence": "https://api-prerelease.influenceth.io",
+    "influenceImage": "https://images-prerelease.influenceth.io",
+    "ipfs": "https://influence.infura-ipfs.io/ipfs",
+    "ramp": "https://app.demo.ramp.network"
+  },
+  "Cloudfront": {
+    "imageUrl": "https://d2xo5vocah3zyk.cloudfront.net",
+    "otherUrl": "https://d1c1daundk1ax0.cloudfront.net/influence/prerelease",
+    "bucket": "unstoppablegames"
+  },
+  "Ethereum": {
+    "Address": {
+      "asteroidToken": "0xA986C6D24222700f78c617ed49E0D78983D0f9AF",
+      "crewmateToken": "0xE5700883cf429bB63B69424447C7F86C8fdD1786"
+    }
+  },
+  "Starknet": {
+    "chainId": "0x534e5f5345504f4c4941",
+    "provider": "https://free-rpc.nethermind.io/sepolia-juno/v0_7",
+    "Address": {
+      "ethToken": "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+      "usdcToken": "0x053b40a647cedfca6ca84f542a0fe36736031905a9639a7f19a3c1e66bfd5080",
+      "asteroidToken": "0x0680710b95255a852ed9ead04d4c1ffcf4f0695e29fb5c327abe2b8cb305ba25",
+      "crewmateToken": "0x026b26dc1cd021d7a1e78615cdf9f8f7d19ddbec73a4187e37af1d57f9bcfdc6",
+      "dispatcher": "0x0517567ac7026ce129c950e6e113e437aa3c83716cd61481c6bb8c5057e6923e",
+      "escrow": "0x04541d894b5c0476d620e62c3a9be4719ba2dc652df84148be382a89619864e2",
+      "shipToken": "0x061645ea472d543200c28291c92d54066b1088de67069c1ff0ad2c4c05ef2ed8",
+      "swayToken": "0x0030058f19ed447208015f6430f0102e8ab82d6c291566d7e73fe8e613c3d2ed"
+    }
+  },
+  "Url": {
+    "bridge": "https://assets-prerelease.influenceth.io",
+    "ethereumExplorer": "https://sepolia.etherscan.io",
+    "ethereumNftMarket": "https://testnets.opensea.io",
+    "starknetExplorer": "https://sepolia.starkscan.co",
+    "starknetNftMarket": "https://pyramid.market"
+  }
+}

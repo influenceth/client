@@ -5,6 +5,7 @@ import { MdFullscreen as FullscreenIcon, MdFullscreenExit as ExitFullscreenIcon 
 import { ResetCameraIcon } from '~/components/Icons';
 import screenfull from 'screenfull';
 
+import { appConfig } from '~/appConfig';
 import { BackIcon } from '~/components/Icons';
 import PrereleaseLogoSVG from '~/assets/images/logo-prerelease.svg';
 import useStore from '~/hooks/useStore';
@@ -200,12 +201,12 @@ const MainMenu = () => {
               <BackIcon />
             </HudIconButton>
           )}
-          {!onClickBack && process.env.REACT_APP_CHAIN_ID !== '0x534e5f5345504f4c4941' && (
+          {!onClickBack && appConfig.get('Starknet.chainId') !== '0x534e5f5345504f4c4941' && (
             <img
               src={`${process.env.PUBLIC_URL}/maskable-logo-48x48.png`}
               style={{ height: 38, marginLeft: 3 }} />
           )}
-          {!onClickBack && process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && (
+          {!onClickBack && appConfig.get('Starknet.chainId') === '0x534e5f5345504f4c4941' && (
             <StyledPreReleaseIcon />
           )}
         </LeftHudButtonArea>

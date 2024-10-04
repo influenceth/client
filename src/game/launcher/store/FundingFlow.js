@@ -4,8 +4,9 @@ import { createPortal } from 'react-dom';
 import { PropagateLoader as Loader } from 'react-spinners';
 import { RampInstantSDK } from '@ramp-network/ramp-instant-sdk';
 
+import { appConfig } from '~/appConfig';
 import Button from '~/components/ButtonAlt';
-import { ChevronRightIcon, CloseIcon, LinkIcon, WalletIcon } from '~/components/Icons';
+import { CheckedIcon, ChevronRightIcon, CloseIcon, WalletIcon } from '~/components/Icons';
 import Details from '~/components/DetailsV2';
 import useSession from '~/hooks/useSession';
 import BrightButton from '~/components/BrightButton';
@@ -228,18 +229,37 @@ const WaitingWrapper = styled.div`
 
 const RampWrapper = styled.div`
   background: linear-gradient(225deg, black, rgba(${p => p.theme.colors.mainRGB}, 0.3));
+  position: relative;
   ${p => !p.display && `
     height: 0;
     overflow: hidden;
     width: 0;
   `}
-  & > div {
+  & > div:last-child {
     height: 600px;
     width: 900px;
   }
 `;
 
-const RAMP_PREPEND = process.env.NODE_ENV === 'production' ? '' : 'demo.';
+const AgeVerification = styled.div`
+  align-items: center;
+  background: rgba(${p => p.theme.hexToRGB(p.theme.colors.backgroundMain)}, 0.9);
+  backdrop-filter: blur(2px);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2000;
+  & > h4 {
+    margin: 0 0 20px;
+  }
+`;
+
 const RAMP_PURCHASE_STATUS = {
   INITIALIZED: {
     statusText: 'The purchase has been initialized.',
@@ -299,6 +319,8 @@ const RAMP_PURCHASE_STATUS = {
 };
 
 export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
+  const dispatchAgeVerified = useStore(s => s.dispatchAgeVerified);
+  const ageVerified = useStore(s => s.ageVerified);
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const { accountAddress, chainId, walletId } = useSession();
@@ -409,7 +431,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
   const checkRampPurchase = useCallback(async (purchase) => {
     try {
       const response = await fetch(
-        `https://api.${RAMP_PREPEND}ramp.network/api/host-api/purchase/${purchase.id}?secret=${purchase.purchaseViewToken}`,
+        `${appConfig.get('Api.ramp')}/api/host-api/purchase/${purchase.id}?secret=${purchase.purchaseViewToken}`,
         {
           method: 'GET',
           headers: {
@@ -449,12 +471,12 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
       const embeddedRamp = new RampInstantSDK({
         hostAppName: 'Influence',
         hostLogoUrl: window.location.origin + '/maskable-logo-192x192.png',
-        hostApiKey: process.env.REACT_APP_RAMP_API_KEY,
+        hostApiKey: appConfig.get('Api.ClientId.ramp'),
         userAddress: accountAddress,
         swapAsset: 'STARKNET_ETH',  // TODO: STARKNET_USDC once enabled
         fiatCurrency: 'USD',
         fiatValue: Math.ceil(amount / 1e6),
-        url: process.env.NODE_ENV === 'production' ? undefined : `https://app.${RAMP_PREPEND}ramp.network`,
+        url: appConfig.get('Api.ramp'),
 
         variant: 'embedded-desktop',
         containerNode: document.getElementById('ramp-container')
@@ -483,7 +505,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
     setLayerswapUrl(
       `https://layerswap.io/app/?${
         new URLSearchParams({
-          clientId: process.env.REACT_APP_LAYERSWAP_CLIENT_ID,
+          clientId: appConfig.get('Api.ClientId.layerswap'),
           amount,
           to: layerSwapChains[resolveChainId(chainId)]?.starknet,
           toAsset: 'USDC',
@@ -581,7 +603,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
             {walletId === 'argentWebWallet' && (
               <FundingButtons>
 
-                {process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && (
+                {appConfig.get('Starknet.chainId') === '0x534e5f5345504f4c4941' && (
                   <>
                     <h4>
                       <span>Request Free ETH</span>
@@ -638,7 +660,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
 
             {walletId !== 'argentWebWallet' && (
               <FundingButtons>
-                {process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && (
+                {appConfig.get('Starknet.chainId') === '0x534e5f5345504f4c4941' && (
                   <EthFaucetButton
                     onError={onFaucetError}
                     onProcessing={(started) => setWaiting(!!started)} />
@@ -664,9 +686,20 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
         {ramping && (
           <>
             <RampWrapper display>
+              {!ageVerified && (
+                <AgeVerification>
+                  <h4>You must be over 18 years or older to make a purchase.</h4>
+                  <BrightButton
+                    innerProps={{ style: { alignItems: 'center', display: 'flex' } }}
+                    onClick={() => dispatchAgeVerified()}
+                    success>
+                    <CheckedIcon /><span style={{ marginLeft: 6 }}>Confirm Age</span>
+                  </BrightButton>
+                </AgeVerification>
+              )}
               <div id="ramp-container" />
             </RampWrapper>
-            <div style={{ padding: '8px 0' }}>
+            <div style={{ alignItems: 'center', display: 'flex', padding: '8px 0' }}>
               <Button onClick={() => setRamping()}>Back</Button>
             </div>
           </>

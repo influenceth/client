@@ -89,13 +89,13 @@ const Loader = styled.div`
   `}
 `;
 
-const BrightButton = ({ attention, children, loading, ...props }) => {
+const BrightButton = ({ attention, children, loading, innerProps = {}, ...props }) => {
   return (
     <>
       {attention && <Backdrop />}
       <Button attention={attention} {...props}>
         {loading && <Loader loaderOnly={!children}><LoadingIcon color="white" size={24} /></Loader>}
-        <div>{children}</div>
+        <div {...innerProps}>{children}</div>
       </Button>
     </>
   );

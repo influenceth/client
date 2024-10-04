@@ -383,7 +383,7 @@
 //             </CardWrapper>
 
 //             <RecruitSection>
-//               {!process.env.REACT_APP_HIDE_SOCIAL && (
+//               {!appConfig.get('App.hideSocial') && (
 //                 <TwitterButton onClick={shareOnTwitter}>
 //                   <span>Share on Twitter</span>
 //                   <TwitterIcon />

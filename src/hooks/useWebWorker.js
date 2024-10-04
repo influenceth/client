@@ -4,7 +4,7 @@ import Worker from 'worker-loader!../worker'; // eslint-disable-line
 
 let workerIds = 0;
 
-// TODO: remove debug
+// TODO: remove debug 
 // let taskTotal = 0;
 // let taskTally = 0;
 // let resetPending = true;

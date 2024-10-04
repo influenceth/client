@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { FaYoutube as YoutubeIcon } from 'react-icons/fa';
 import { Building, Permission, Inventory, Product } from '@influenceth/sdk';
 
+import { appConfig } from '~/appConfig';
 import useCrewAgreements from '~/hooks/useCrewAgreements';
 import useCrewBuildings from '~/hooks/useCrewBuildings';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -302,7 +303,7 @@ const useTutorialSteps = () => {
           <>
             It seems as though you have your space legs under you now, but if you ever need further help along
             the way, the Prime Council has created many resources for new Adalians to learn: visit our
-            {' '}<a href="https://wiki.influenceth.io/en/docs/user-guides" target="_blank" rel="noopener noreferrer">Wiki</a>,
+            {' '}<a href={`${appConfig.get('Url.wiki')}/en/docs/user-guides`} target="_blank" rel="noopener noreferrer">Wiki</a>,
             {' '}<a href="https://www.youtube.com/channel/UCocm9rPd_axPU8LBJ8rvzTw" target="_blank" rel="noopener noreferrer">Youtube</a>
             {' '}or <a href="https://discord.com/invite/influenceth" target="_blank" rel="noopener noreferrer">Discord</a> to learn more!
           </>

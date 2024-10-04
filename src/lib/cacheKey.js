@@ -1,4 +1,5 @@
 import { Entity } from '@influenceth/sdk';
+import { appConfig } from '~/appConfig';
 
 /*              CACHE KEY DICTIONARY
 non-entity based
@@ -103,7 +104,7 @@ const validFilterKeys = {
 }
 
 export const entitiesCacheKey = (label, filters) => {
-  if (process.env.NODE_ENV === 'development') {
+  if (appConfig.get('App.verboseLogs')) {
     if (typeof filters === 'object') {
       (Object.keys(filters).find((k) => {
         if (!validFilterKeys[label].includes(k)) {

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Howler, Howl } from 'howler';
 
+import { appConfig } from '~/appConfig';
 import useStore from '~/hooks/useStore';
 
 class Sound extends Howl {
@@ -15,7 +16,7 @@ class Sound extends Howl {
   }
 }
 
-const basePath = process.env.REACT_APP_CLOUDFRONT_OTHER_URL;
+const basePath = appConfig.get('Cloudfront.otherUrl');
 const sounds = {
   ambient: [
     new Sound({ src: [ `${basePath}/music/ambient1.mp3` ], html5: true, preload: false, volume: 1.0 }),

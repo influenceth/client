@@ -1,7 +1,8 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
-import { Crewmate, Entity, Inventory, Permission, Ship, System } from '@influenceth/sdk';
+import { Crewmate, Entity, Permission, Ship, System } from '@influenceth/sdk';
 
+import { appConfig } from '~/appConfig';
 import api from '~/lib/api';
 import useSession from '~/hooks/useSession';
 import useConstants from '~/hooks/useConstants';
@@ -232,7 +233,7 @@ export function CrewProvider({ children }) {
           System.getRunSystemCall(
             'CheckForRandomEvent',
             { caller_crew: { id: selectedCrew.id, label: selectedCrew.label }},
-            process.env.REACT_APP_STARKNET_DISPATCHER
+            appConfig.get('Starknet.Address.dispatcher')
           )
         )
         .then((response) => {

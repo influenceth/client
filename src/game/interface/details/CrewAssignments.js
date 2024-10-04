@@ -600,7 +600,7 @@ const CrewAssignments = () => {
                       collection for these assignments
 
                     <div>
-                      <a href={`${process.env.REACT_APP_ETHEREUM_NFT_MARKET_URL}/collection/influence-crew`} target="_blank" rel="noreferrer">Click here</a>
+                      <a href={`${appConfig.get('Url.ethereumNftMarket')}/collection/influence-crew`} target="_blank" rel="noreferrer">Click here</a>
                       {' '}to acquire crewmates through trade, or <Link to="/crew">click here</Link> to mint your own.
                     </div>
                     */}

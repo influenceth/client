@@ -3,6 +3,7 @@ import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import BarLoader from 'react-spinners/BarLoader';
 
+import { appConfig } from '~/appConfig';
 import { CloseIcon as DismissIcon, EyeIcon } from '~/components/Icons';
 import { FailedIcon, RandomEventIcon, ReadyIcon } from '~/components/AnimatedIcons';
 import LiveTimer from '~/components/LiveTimer';
@@ -259,7 +260,7 @@ const ActionItem = ({ data, getActivityConfig }) => {
       }, dialogDelay)
     }
 
-    if (type === 'failed' && item.txHash && process.env.REACT_APP_STARKNET_EXPLORER_URL) {
+    if (type === 'failed' && item.txHash && appConfig.get('Url.starknetExplorer')) {
       try {
         navigator.clipboard.writeText(JSON.stringify(data));
         createAlert({
@@ -268,7 +269,7 @@ const ActionItem = ({ data, getActivityConfig }) => {
         });
       } catch (e) {}
 
-      window.open(`${process.env.REACT_APP_STARKNET_EXPLORER_URL}/tx/${item.txHash}`, '_blank');
+      window.open(`${appConfig.get('Url.starknetExplorer')}/tx/${item.txHash}`, '_blank');
     }
   }, [
     goToAction,
