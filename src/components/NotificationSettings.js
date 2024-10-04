@@ -90,18 +90,18 @@ const NotificationSettings = ({ onLoading, onValid, ...props }) => {
   const [hideEmail, setHideEmail] = useState(false);
   const [notifStatus, setNotifStatus] = useState('');
   const [subscriptions, setSubscriptions] = useState({
-    crew: true,
-    lease: true,
-    task: true,
+    crewAlert: true,
+    leaseExpiration: true,
+    activity: true,
   });
 
   useEffect(() => {
     if (user) {
       setEmailAddress(user.emailAddress || '');
       setSubscriptions(user.notificationSubscriptions || {
-        crew: true,
-        lease: true,
-        task: true,
+        crewAlert: true,
+        leaseExpiration: true,
+        activity: true,
       });
       setHideEmail(user.emailAddress && props.standalone);
     }
@@ -154,9 +154,9 @@ const NotificationSettings = ({ onLoading, onValid, ...props }) => {
 
   useEffect(() => {
     if (user && (
-      subscriptions.crew !== user.notificationSubscriptions?.crew
-      || subscriptions.lease !== user.notificationSubscriptions?.lease
-      || subscriptions.task !== user.notificationSubscriptions?.task
+      subscriptions.crewAlert !== user.notificationSubscriptions?.crewAlert
+      || subscriptions.leaseExpiration !== user.notificationSubscriptions?.leaseExpiration
+      || subscriptions.activity !== user.notificationSubscriptions?.activity
     )) {
       setNotifStatus('saving');
       api.updateUser({ notificationSubscriptions: subscriptions })
@@ -205,20 +205,20 @@ const NotificationSettings = ({ onLoading, onValid, ...props }) => {
         </Details>      
       )}
       <Checkboxes>
-        <CheckboxRow onClick={() => setSubscriptions((n) => ({ ...n, crew: !n.crew }))}>
-          {subscriptions.crew ? <CheckedIcon /> : <UncheckedIcon />}
+        <CheckboxRow onClick={() => setSubscriptions((n) => ({ ...n, crewAlert: !n.crewAlert }))}>
+          {subscriptions.crewAlert ? <CheckedIcon /> : <UncheckedIcon />}
           <span>
             Crew Alerts
           </span>
         </CheckboxRow>
-        <CheckboxRow onClick={() => setSubscriptions((n) => ({ ...n, task: !n.task }))}>
-          {subscriptions.task ? <CheckedIcon /> : <UncheckedIcon />}
+        <CheckboxRow onClick={() => setSubscriptions((n) => ({ ...n, activity: !n.activity }))}>
+          {subscriptions.activity ? <CheckedIcon /> : <UncheckedIcon />}
           <span>
             Task Alerts
           </span>
         </CheckboxRow>
-        <CheckboxRow onClick={() => setSubscriptions((n) => ({ ...n, lease: !n.lease }))}>
-          {subscriptions.lease ? <CheckedIcon /> : <UncheckedIcon />}
+        <CheckboxRow onClick={() => setSubscriptions((n) => ({ ...n, leaseExpiration: !n.leaseExpiration }))}>
+          {subscriptions.leaseExpiration ? <CheckedIcon /> : <UncheckedIcon />}
           <span>
             Lease is Expiring (3 days)
           </span>

@@ -5381,8 +5381,8 @@ export const ActionDialogFooter = ({
         // if not subscribed to one of the things that takes time
         // TODO: does this cover ship delivery? can we also show in form_agreement?
         return (
-          (!user?.notificationSubscriptions?.crew && crewAvailableTime?.total > 0) 
-          || (!user?.notificationSubscriptions?.task && taskCompleteTime?.total > 0) 
+          (!user?.notificationSubscriptions?.crewAlert && crewAvailableTime?.total > 0) 
+          || (!user?.notificationSubscriptions?.activity && taskCompleteTime?.total > 0) 
           || (!user?.emailAddress && (crewAvailableTime?.total > 0 || taskCompleteTime?.total > 0))
         );
       }
