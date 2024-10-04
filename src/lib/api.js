@@ -88,11 +88,6 @@ const api = {
     return response.data;
   },
 
-  updateUserNotifications: async (data) => {
-    const response = await instance.patch(`/${apiVersion}/user/notifications`, data);
-    return response.data;
-  },
-
   getEntityActivities: async (entity, query = {}) => {
     const response = await instance.get(`/${apiVersion}/entities/${Entity.packEntity(entity)}/activity?${buildQuery(query)}`);
     return response.data;
