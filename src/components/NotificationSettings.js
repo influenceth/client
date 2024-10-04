@@ -208,13 +208,13 @@ const NotificationSettings = ({ onLoading, onValid, ...props }) => {
         <CheckboxRow onClick={() => setSubscriptions((n) => ({ ...n, crew: !n.crew }))}>
           {subscriptions.crew ? <CheckedIcon /> : <UncheckedIcon />}
           <span>
-            Crew is Ready
+            Crew Alerts
           </span>
         </CheckboxRow>
         <CheckboxRow onClick={() => setSubscriptions((n) => ({ ...n, task: !n.task }))}>
           {subscriptions.task ? <CheckedIcon /> : <UncheckedIcon />}
           <span>
-            Task is Complete / Ready to Complete
+            Task Alerts
           </span>
         </CheckboxRow>
         <CheckboxRow onClick={() => setSubscriptions((n) => ({ ...n, lease: !n.lease }))}>
