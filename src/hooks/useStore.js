@@ -50,6 +50,7 @@ const simulationStateDefault = {
 
 const useStore = create(subscribeWithSelector(persist((set, get) => ({
     actionDialog: {},
+    ageVerified: false,
     launcherPage: null,
     launcherSubpage: null,
     openHudMenu: null,
@@ -765,6 +766,10 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       if (!state.crewTutorials[crewId].dismissedSteps.includes(step)) {
         state.crewTutorials[crewId].dismissedSteps.push(step);
       }
+    })),
+
+    dispatchAgeVerified: () => set(produce(state => {
+      state.ageVerified = true;
     })),
 
     //

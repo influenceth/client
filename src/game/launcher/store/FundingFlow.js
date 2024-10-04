@@ -6,7 +6,7 @@ import { RampInstantSDK } from '@ramp-network/ramp-instant-sdk';
 
 import { appConfig } from '~/appConfig';
 import Button from '~/components/ButtonAlt';
-import { ChevronRightIcon, CloseIcon, LinkIcon, WalletIcon } from '~/components/Icons';
+import { CheckedIcon, ChevronRightIcon, CloseIcon, WalletIcon } from '~/components/Icons';
 import Details from '~/components/DetailsV2';
 import useSession from '~/hooks/useSession';
 import BrightButton from '~/components/BrightButton';
@@ -229,14 +229,34 @@ const WaitingWrapper = styled.div`
 
 const RampWrapper = styled.div`
   background: linear-gradient(225deg, black, rgba(${p => p.theme.colors.mainRGB}, 0.3));
+  position: relative;
   ${p => !p.display && `
     height: 0;
     overflow: hidden;
     width: 0;
   `}
-  & > div {
+  & > div:last-child {
     height: 600px;
     width: 900px;
+  }
+`;
+
+const AgeVerification = styled.div`
+  align-items: center;
+  background: rgba(${p => p.theme.hexToRGB(p.theme.colors.backgroundMain)}, 0.9);
+  backdrop-filter: blur(2px);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2000;
+  & > h4 {
+    margin: 0 0 20px;
   }
 `;
 
@@ -299,6 +319,8 @@ const RAMP_PURCHASE_STATUS = {
 };
 
 export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
+  const dispatchAgeVerified = useStore(s => s.dispatchAgeVerified);
+  const ageVerified = useStore(s => s.ageVerified);
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const { accountAddress, chainId, walletId } = useSession();
@@ -664,9 +686,20 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
         {ramping && (
           <>
             <RampWrapper display>
+              {!ageVerified && (
+                <AgeVerification>
+                  <h4>You must be over 18 years or older to make a purchase.</h4>
+                  <BrightButton
+                    innerProps={{ style: { alignItems: 'center', display: 'flex' } }}
+                    onClick={() => dispatchAgeVerified()}
+                    success>
+                    <CheckedIcon /><span style={{ marginLeft: 6 }}>Confirm Age</span>
+                  </BrightButton>
+                </AgeVerification>
+              )}
               <div id="ramp-container" />
             </RampWrapper>
-            <div style={{ padding: '8px 0' }}>
+            <div style={{ alignItems: 'center', display: 'flex', padding: '8px 0' }}>
               <Button onClick={() => setRamping()}>Back</Button>
             </div>
           </>
