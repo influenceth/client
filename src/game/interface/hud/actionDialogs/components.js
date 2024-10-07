@@ -3748,6 +3748,10 @@ const TimePill = ({ children, type, details }) => {
   );
 };
 
+const PillTime = styled(Monospace)`
+  font-size: 85%;
+  line-height: 18px;
+`;
 export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, delayUntil, location, onClose, overrideColor, stage, taskCompleteTime, wide }) => {
   const simulationEnabled = useSimulationEnabled();
   return (
@@ -3781,21 +3785,21 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, dela
                   if (isTimer) {
                     pills.push(
                       <TimePill key="delay" type="delay">
-                        <ScheduleFullIcon /><label>Delay</label> {formattedTime}
+                        <ScheduleFullIcon /><label>Delay</label> <PillTime>{formattedTime}</PillTime>
                       </TimePill>
                     );
                   }
                   if (crewAvailableTime?.total > 0) {
                     pills.push(
                       <TimePill key="crew" type="crew" details={isTimer && crewAvailableTime.details ? [[delayDuration, 'Crew Unavailable'], ...crewAvailableTime.details] : crewAvailableTime.details}>
-                        <CrewIcon isPaused /><label>Crew</label> {formatTimer(delayDuration + crewAvailableTime.total, 2)}
+                        <CrewIcon isPaused /><label>Crew</label> <PillTime>{formatTimer(delayDuration + crewAvailableTime.total, 2)}</PillTime>
                       </TimePill>
                     );
                   }
                   if (taskCompleteTime?.total > 0) {
                     pills.push(
                       <TimePill key="total" type="total" details={isTimer && taskCompleteTime.details ? [[delayDuration, 'Crew Unavailable'], ...taskCompleteTime.details] : taskCompleteTime.details}>
-                        <AlertIcon /><label>Action</label> {formatTimer(delayDuration + taskCompleteTime.total, 2)}
+                        <AlertIcon /><label>Action</label> <PillTime>{formatTimer(delayDuration + taskCompleteTime.total, 2)}</PillTime>
                       </TimePill>
                     )
                   }

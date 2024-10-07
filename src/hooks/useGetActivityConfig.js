@@ -41,6 +41,8 @@ const getActivityConfig = (queryClient, defaultViewingAs) => (activity, override
   // TODO: support L1? __t is in event record, but is not included in activity record...
   //  `${appConfig.get('Url.ethereumExplorer')}/tx/${activity.event?.transactionHash}`
   
+  const visitedLot = config?.getVisitedLot ? config.getVisitedLot(activity.event, prepopped) : null;
+
   const requiresCrewTime = !!config?.requiresCrewTime;
 
   const triggerAlert = !!config?.triggerAlert;
@@ -60,7 +62,8 @@ const getActivityConfig = (queryClient, defaultViewingAs) => (activity, override
     onBeforeReceived,
     busyItem,
     requiresCrewTime,
-    triggerAlert
+    triggerAlert,
+    visitedLot
   };
 }
 

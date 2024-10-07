@@ -372,6 +372,9 @@ export function CrewProvider({ children }) {
     }
   }, [!!finalSelectedCrew, onBlur, onFocus]);
 
+  const [crewMovementActivity, setCrewMovementActivity] = useState(null);
+  useEffect(() => setCrewMovementActivity(null), [selectedCrew?.id]);
+
   // handle game launch (on a timeout rather than blocktime)
   const [gameIsLaunched, setGameIsLaunched] = useState(openAccessJSTime < Date.now());
   useEffect(() => {
@@ -394,12 +397,14 @@ export function CrewProvider({ children }) {
       captain,
       crew: finalSelectedCrew,
       crewCan,
+      crewMovementActivity,
       crews,
       crewmateMap,
       loading: !crewsAndCrewmatesReady,
       pendingTransactions,
       refreshReadyAt,
       selectCrew: dispatchCrewSelected,  // TODO: this might be redundant
+      setCrewMovementActivity,
       isLaunched: gameIsLaunched
     }}>
       {children}

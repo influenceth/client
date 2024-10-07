@@ -326,6 +326,12 @@ const activities = {
       icon: <LimitBuyIcon />,
       label: `Place Buy Order`,
     }),
+
+    getVisitedLot: ({}, { exchange = {} }) => {
+      const _location = locationsArrToObj(exchange?.Location?.locations || []) || {};
+      return _location.lotId;
+    },
+
     requiresCrewTime: true
   },
   BuyOrderFilled: {
@@ -415,6 +421,10 @@ const activities = {
       icon: <PlanBuildingIcon />,
       label: `Plan ${Building.TYPES[building?.Building?.buildingType]?.name || 'Building'} Site`,
     }),
+    getVisitedLot: ({}, { building = {} }) => {
+      const _location = locationsArrToObj(building?.Location?.locations || []) || {};
+      return _location.lotId;
+    },
     requiresCrewTime: true
   },
 
@@ -501,6 +511,10 @@ const activities = {
     getPrepopEntities: ({ event: { returnValues } }) => ({
       building: returnValues.building,
     }),
+    getVisitedLot: ({}, { building = {} }) => {
+      const _location = locationsArrToObj(building?.Location?.locations || []) || {};
+      return _location.lotId;
+    },
     requiresCrewTime: true
   },
 
@@ -581,6 +595,10 @@ const activities = {
       icon: <DeconstructIcon />,
       label: `Deconstruct ${Building.TYPES[building?.Building?.buildingType]?.name || 'Building'}`,
     }),
+    getVisitedLot: ({}, { building = {} }) => {
+      const _location = locationsArrToObj(building?.Location?.locations || []) || {};
+      return _location.lotId;
+    },
     requiresCrewTime: true
   },
 
@@ -893,6 +911,10 @@ const activities = {
       icon: <EjectMyCrewIcon />,
       label: `Eject Crew`,
     }),
+    getVisitedLot: ({}, { building = {} }) => {
+      // TODO: ...?
+      return null;
+    },
     requiresCrewTime: true
   },
 
@@ -909,13 +931,17 @@ const activities = {
       returnValues.destinationStation ? { ...returnValues.destinationStation } : null, // v1
     ]),
 
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      originStation: returnValues.originStation
+    }),
+
     getLogContent: ({ event: { returnValues } }) => {
       return {
         icon: <StationCrewIcon />,
         content: (
           <>
           <EntityLink {...returnValues.callerCrew} />
-          {' '}stationed in <EntityLink {...returnValues.station} />
+          {' '}stationed in <EntityLink {...(returnValues.destinationStation || returnValues.station)} />
         </>
         ),
       };
@@ -925,6 +951,10 @@ const activities = {
       icon: <StationCrewIcon />,
       label: `Restation Crew`,
     }),
+    getVisitedLot: ({}, { originStation = {} }) => {
+      const _location = locationsArrToObj(originStation?.Location?.locations || []) || {};
+      return _location.lotId;
+    },
     requiresCrewTime: true
   },
 
@@ -1299,6 +1329,10 @@ const activities = {
     //   };
     // },
 
+    getVisitedLot: ({}, { building = {} }) => {
+      const _location = locationsArrToObj(building?.Location?.locations || []) || {};
+      return _location.lotId;
+    },
     requiresCrewTime: true
   },
   MaterialProcessingFinished: {
@@ -1468,7 +1502,11 @@ const activities = {
     //     ),
     //   };
     // },
-
+    getVisitedLot: ({}, { extractor = {} }) => {
+      console.log('extractor', extractor);
+      const _location = locationsArrToObj(extractor?.Location?.locations || []) || {};
+      return _location.lotId;
+    },
     requiresCrewTime: true
   },
 
@@ -1633,6 +1671,7 @@ const activities = {
     //     ),
     //   };
     // },
+    getVisitedLot: ({ returnValues }) => returnValues.lot?.id,
     requiresCrewTime: true
   },
 
@@ -1683,6 +1722,10 @@ const activities = {
       icon: <LimitSellIcon />,
       label: `Place Sell Order`,
     }),
+    getVisitedLot: ({}, { exchange = {} }) => {
+      const _location = locationsArrToObj(exchange?.Location?.locations || []) || {};
+      return _location.lotId;
+    },
     requiresCrewTime: true
   },
 
@@ -1832,7 +1875,10 @@ const activities = {
     //     ),
     //   };
     // },
-
+    getVisitedLot: ({}, { building = {} }) => {
+      const _location = locationsArrToObj(building?.Location?.locations || []) || {};
+      return _location.lotId;
+    },
     requiresCrewTime: true
   },
   ShipAssemblyFinished: {
@@ -1923,6 +1969,10 @@ const activities = {
       icon: <LandShipIcon />,
       label: `Land Ship`,
     }),
+    getVisitedLot: ({}, { dock = {} }) => {
+      const _location = locationsArrToObj(dock?.Location?.locations || []) || {};
+      return _location.lotId; // TODO: ?
+    },
     requiresCrewTime: true, // only true currently if !powered
     triggerAlert: true
   },
@@ -1972,6 +2022,10 @@ const activities = {
       icon: <LaunchShipIcon />,
       label: `Launch Ship`,
     }),
+    // getVisitedLot: ({}, { extractor = {} }) => { TODO: ?
+    //   const _location = locationsArrToObj(extractor?.Location?.locations || []) || {};
+    //   return _location.lotId;
+    // },
     requiresCrewTime: true, // only true currently if !powered
     triggerAlert: true
   },
