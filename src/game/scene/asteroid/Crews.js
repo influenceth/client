@@ -5,15 +5,21 @@ import {
   BufferGeometry,
   Color,
   CubicBezierCurve3,
+  Group,
   Line,
   Mesh,
   MeshBasicMaterial,
   ShaderMaterial,
   SphereGeometry,
+  Sprite,
+  SpriteMaterial,
+  TextureLoader,
   Vector3
 } from 'three';
 import { Asteroid, Crewmate, Lot, Time } from '@influenceth/sdk';
 
+import { appConfig } from '~/appConfig';
+import { BLOOM_LAYER } from '~/game/Postprocessor';
 import useActionCrew from '~/hooks/useActionCrew';
 import useCrewContext from '~/hooks/useCrewContext';
 import useGetActivityConfig from '~/hooks/useGetActivityConfig';
@@ -23,7 +29,12 @@ import theme from '~/theme';
 import frag from './shaders/delivery.frag';
 import vert from './shaders/delivery.vert';
 
-const Crews = ({ attachTo: overrideAttachTo, asteroidId, radius, getLotPosition }) => {
+const arcColor = new Color(theme.colors.glowGreen);
+const hopperColor = new Color(theme.colors.glowGreen);
+const spriteBorderColor = new Color(theme.colors.glowGreen);
+
+const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotPosition, radius }) => {
+  const { camera, scene } = useThree();
   const getActivityConfig = useGetActivityConfig();
   const { crew: liveCrew, crewMovementActivity } = useCrewContext();
 
@@ -32,9 +43,32 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, radius, getLotPosition 
     startTime: crewMovementActivity._startTime || crewMovementActivity.event.timestamp
   } : null);
 
+  const arcs = useRef([]);
+  const arcUniforms = useRef({
+    uTime: { value: 0 },
+    uAlpha: { value: 1.0 },
+    uCount: { value: 51 },
+    uCol: { type: 'c', value: arcColor },
+  });
+  const arcMaterial = useRef(
+    new ShaderMaterial({
+      uniforms: arcUniforms.current,
+      fragmentShader: frag,
+      vertexShader: vert,
+      transparent: true,
+      depthWrite: false
+    })
+  );
+
+  const curve = useRef();
+
+  const hopperMarker = useRef();
+  const crewMarker = useRef();
+
   const crew = useMemo(() => actionCrew || liveCrew || {}, [liveCrew, actionCrew]);
 
   const [crewTravelBonus, crewDistBonus] = useMemo(() => {
+    console.log('rememo crew');
     const bonusIds = [
       Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
       Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE,
@@ -44,7 +78,6 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, radius, getLotPosition 
   }, [crew]);
 
   const travel = useMemo(() => {
-    console.log('crewMovementActivity', crewMovementActivity);
     if (!crewMovementActivity) return {};
 
     const station = crew?._location;
@@ -77,13 +110,13 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, radius, getLotPosition 
       }
 
       // first leg of round trip + time on site
-      console.log({ nowSec, start: crewMovementActivity._startTime, finish: crewMovementActivity._finishTime, travelTime });
       if (nowSec < crewMovementActivity._finishTime - travelTime) {
         return {
           origin: station.lotIndex,
           destination: visitedLotIndex,
           departure: crewMovementActivity._startTime,
           travelTime: travelTime,
+          hideHopper: (nowSec > crewMovementActivity._startTime + travelTime),
         }
 
       // second leg of round trip
@@ -101,29 +134,9 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, radius, getLotPosition 
     return null;
   }, [crewMovementActivity, crewDistBonus, crewTravelBonus]);
 
-  const { scene } = useThree();
   const attachTo = useMemo(() => overrideAttachTo || scene, [overrideAttachTo, scene]);
 
-  const arcs = useRef([]);
-  const arcUniforms = useRef({
-    uTime: { value: 0 },
-    uAlpha: { value: 1.0 },
-    uCount: { value: 51 },
-    uCol: { type: 'c', value: new Color(theme.colors.success) },
-  });
-  const curve = useRef();
-  const crewMarker = useRef();
-
-  const material = useRef(
-    new ShaderMaterial({
-      uniforms: arcUniforms.current,
-      fragmentShader: frag,
-      vertexShader: vert,
-      transparent: true,
-      depthWrite: false
-    })
-  );
-
+  
 
   // Calculates the control point for the bezier curve
   const calculateControlPoint = useCallback((origin, dest, distance, frac = 0.5) => {
@@ -135,6 +148,10 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, radius, getLotPosition 
     if (!travel) return;
     
     try {
+
+      //
+      // calculate the curve, use it to draw the arc
+      // 
       const origin = new Vector3(...getLotPosition(travel.origin));
       const destination = new Vector3(...getLotPosition(travel.destination));
       const distance = Asteroid.getLotDistance(asteroidId, travel.origin, travel.destination) * 1000;
@@ -150,14 +167,62 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, radius, getLotPosition 
       const order = new Float32Array(Array(51).fill().map((_, i) => i+1));
       geometry.setAttribute('order', new BufferAttribute(order, 1));
 
-      const curveGeom = new Line(geometry, material.current);
-      attachTo.add(curveGeom);
+      const curveGeom = new Line(geometry, arcMaterial.current);
       arcs.current.push(curveGeom);
+      attachTo.add(curveGeom);
 
-      crewMarker.current = new Mesh(
-        new SphereGeometry(1000, 32, 32),
-        new MeshBasicMaterial({ color: theme.colors.success })
+      //
+      // place the hopper on the curve
+      //
+      if (!travel.hideHopper) {
+        hopperMarker.current = new Mesh(
+          new SphereGeometry(100, 32, 32),
+          new MeshBasicMaterial({ color: hopperColor, })
+        );
+        hopperMarker.current.layers.enable(BLOOM_LAYER);
+        attachTo.add(hopperMarker.current);
+      }
+
+      //
+      // place the crew indicator
+      //
+
+      const textureLoader = new TextureLoader();
+      const crewImageTexture = textureLoader.load(`${appConfig.get('Api.influenceImage')}/v2/crews/${crew.id}/captain/image.png?bustOnly=true`);
+      const crewBackgroundTexture = textureLoader.load(`${process.env.PUBLIC_URL}/textures/crew-marker.png`);
+
+      const bgSprite = new Sprite(
+        new SpriteMaterial({
+          color: spriteBorderColor,
+          map: crewBackgroundTexture,
+          // depthTest: true,
+          depthTest: false,
+          depthWrite: false,
+          // transparent: true
+        })
       );
+      bgSprite.scale.set(850, 1159, 1);
+      bgSprite.layers.enable(BLOOM_LAYER);
+      bgSprite.renderOrder = 999;
+
+      const sprite = new Sprite(
+        new SpriteMaterial({
+          color: 0xffffff,
+          map: crewImageTexture,
+          depthTest: false,
+          depthWrite: false,
+          // depthTest: true,
+          // depthWrite: true,
+          // transparent: false
+        })
+      );
+      sprite.scale.set(750, 1000, 0);
+      sprite.position.set(0, 0, 80);
+      sprite.renderOrder = 1000000;
+
+      crewMarker.current = new Group();
+      crewMarker.current.add(bgSprite);
+      crewMarker.current.add(sprite);
       attachTo.add(crewMarker.current);
 
     } catch (e) {
@@ -166,14 +231,30 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, radius, getLotPosition 
 
     return () => {
       curve.current = null;
-      arcs.current?.forEach((arc) => attachTo.remove(arc));
+      arcs.current?.forEach((arc) => {
+        // TODO: dispose anything?
+        attachTo.remove(arc)
+      });
       arcs.current = [];
 
-      crewMarker.current?.geometry.dispose();
-      crewMarker.current?.material.dispose();
-      attachTo.remove(crewMarker.current);
+      if (hopperMarker.current) {
+        attachTo.remove(hopperMarker.current);
+        hopperMarker.current.geometry.dispose();
+        hopperMarker.current.material.dispose();
+      }
+
+      if (crewMarker.current) {
+        attachTo.remove(crewMarker.current);
+        crewMarker.current.traverse((child) => {
+          if (child.material) child.material.dispose();
+          child = null;
+        });
+        crewMarker.current = null;
+      }
     };
   }, [asteroidId, attachTo, getLotPosition, travel]);
+
+  const crewMarkerScale = useMemo(() => Math.max(1, Math.sqrt(cameraAltitude / 7500)), [cameraAltitude]);
 
   useFrame((state, delta) => {
     // if arcs present, animate them
@@ -182,11 +263,21 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, radius, getLotPosition 
       arcUniforms.current.uTime.value = time + 1;
     }
 
-    if (crewMarker.current && curve.current && travel) {
+    // move hopper and crew markers along with progress
+    let progressPosition;
+    if (travel) {
       const progress = ((Date.now() / 1000) - travel.departure) / travel.travelTime;
-      crewMarker.current.position.copy(
-        curve.current.getPointAt(Math.min(Math.max(0, progress), 1))
-      );
+      progressPosition = curve.current.getPointAt(Math.min(Math.max(0, progress), 1)).clone();
+    }
+
+    if (hopperMarker.current && curve.current) {
+      hopperMarker.current.position.copy(progressPosition);
+    }
+
+    if (crewMarker.current && curve.current) {
+      crewMarker.current.scale.set(crewMarkerScale, crewMarkerScale, crewMarkerScale);
+      const abovePosition = progressPosition.clone().add(camera.up.clone().setLength(800 * crewMarkerScale));
+      crewMarker.current.position.copy(abovePosition);
     }
   }, 0.5);
 
