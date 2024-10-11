@@ -1503,7 +1503,6 @@ const activities = {
     //   };
     // },
     getVisitedLot: ({}, { extractor = {} }) => {
-      console.log('extractor', extractor);
       const _location = locationsArrToObj(extractor?.Location?.locations || []) || {};
       return _location.lotId;
     },
@@ -2022,10 +2021,10 @@ const activities = {
       icon: <LaunchShipIcon />,
       label: `Launch Ship`,
     }),
-    getVisitedLot: ({}, { dock = {} }) => {
-      const _location = locationsArrToObj(dock?.Location?.locations || []) || {};
-      return _location.lotId;
-    },
+    // getVisitedLot: ({}, { dock = {} }) => {
+    //   const _location = locationsArrToObj(dock?.Location?.locations || []) || {};
+    //   return _location.lotId;
+    // },
     requiresCrewTime: true, // only true currently if !powered
     triggerAlert: true
   },

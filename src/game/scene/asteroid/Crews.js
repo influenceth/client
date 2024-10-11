@@ -1,14 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import {
+  ArrowHelper,
   BufferAttribute,
   BufferGeometry,
   Color,
   CubicBezierCurve3,
+  DoubleSide,
   Group,
   Line,
+  LineBasicMaterial,
+  Matrix4,
   Mesh,
   MeshBasicMaterial,
+  Raycaster,
   ShaderMaterial,
   SphereGeometry,
   Sprite,
@@ -17,12 +22,14 @@ import {
   Vector3
 } from 'three';
 import { Asteroid, Crewmate, Entity, Lot, Time } from '@influenceth/sdk';
+import { useHistory } from 'react-router-dom';
+import { useQuery, useQueryClient } from 'react-query';
 
 import { appConfig } from '~/appConfig';
 import { BLOOM_LAYER } from '~/game/Postprocessor';
-import useActionCrew from '~/hooks/useActionCrew';
-import useCrewContext from '~/hooks/useCrewContext';
+import useBlockTime from '~/hooks/useBlockTime';
 import useGetActivityConfig from '~/hooks/useGetActivityConfig';
+// import useInterval from '~/hooks/useInterval';
 import activities, { hydrateActivities } from '~/lib/activities';
 import api from '~/lib/api';
 import { getCrewAbilityBonuses, locationsArrToObj } from '~/lib/utils';
@@ -30,44 +37,33 @@ import theme from '~/theme';
 
 import frag from './shaders/delivery.frag';
 import vert from './shaders/delivery.vert';
-import { useTexture } from '@react-three/drei';
-import useBlockTime from '~/hooks/useBlockTime';
-import { useQuery, useQueryClient } from 'react-query';
 
+const hoverColor = new Color(0xffffff);
 const arcColor = new Color(theme.colors.glowGreen);
 const hopperColor = new Color(theme.colors.glowGreen);
 const spriteBorderColor = new Color(theme.colors.glowGreen);
 
 const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotPosition, radius }) => {
-  const { camera, scene } = useThree();
   const blockTime = useBlockTime();
   const getActivityConfig = useGetActivityConfig();
   const queryClient = useQueryClient();
+  const history = useHistory();
+  const { camera, controls, gl, scene } = useThree();
 
   const { data: ongoing, isLoading } = useQuery(
     [ 'activities', 'ongoing', asteroidId ],
     async () => {
-      const activities = await api.getOngoingActivities(
+      const ongoingActivities = await api.getOngoingActivities(
         Entity.packEntity({ label: Entity.IDS.ASTEROID, id: asteroidId }),
         Object.keys(activities).filter((k) => !!activities[k].getVisitedLot)
       );
-      await hydrateActivities(activities, queryClient)
-      return activities;
+      await hydrateActivities(ongoingActivities, queryClient)
+      return ongoingActivities;
     },
     {
       enabled: !!asteroidId
     }
   );
-
-  // const { crewMovementActivity } = useCrewContext();
-  // const ongoing = useMemo(() => [crewMovementActivity].filter(Boolean), [crewMovementActivity]);
-
-  // const [ongoing, setOngoing] = useState([]);
-  // useEffect(() => {
-  //   hydrateActivities(ongoingRaw, queryClient).then(() => {
-  //     setOngoing(ongoingRaw);
-  //   });
-  // }, []);
 
   const attachTo = useMemo(() => overrideAttachTo || scene, [overrideAttachTo, scene]);
   const textureLoader = useRef(new TextureLoader());
@@ -78,14 +74,87 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
     return origin.clone().lerp(dest, frac).multiplyScalar(Math.min(ratio, 3.5));
   }, [radius]);
 
+  // static resources to be shared (and dismantled on unmount)
+  const arcUniforms = useRef();
+  const arcHoverMaterial = useRef();
+  const main = useRef();
+  const arcMaterial = useRef();
+  const hopperGeometry = useRef();
+  const hopperMaterial = useRef();
+  const spriteBgMaterial = useRef();
+  const spriteHoverBgMaterial = useRef();
   const crewMaterials = useRef({});
+  useEffect(() => {
+    main.current = new Group();
+    arcUniforms.current = {
+      uTime: { value: 0 },
+      uAlpha: { value: 1.0 },
+      uCount: { value: 51 },
+      uCol: { type: 'c', value: arcColor },
+    };
+    arcMaterial.current = new ShaderMaterial({
+      uniforms: arcUniforms.current,
+      fragmentShader: frag,
+      vertexShader: vert,
+      transparent: true,
+      depthWrite: false
+    });
+    arcHoverMaterial.current = new LineBasicMaterial({ color: hoverColor, opacity: 0.8, transparent: true });
+    hopperGeometry.current = new SphereGeometry(100, 32, 32);
+    hopperMaterial.current = new MeshBasicMaterial({ color: hopperColor });
 
+    const spriteBgTexture = textureLoader.current.load(`${process.env.PUBLIC_URL}/textures/crew-marker.png`);
+    spriteBgMaterial.current = new SpriteMaterial({
+      color: spriteBorderColor,
+      map: spriteBgTexture,
+      // depthTest: false,
+      depthWrite: false,
+    });
+    spriteHoverBgMaterial.current = new SpriteMaterial({
+      color: hoverColor,
+      map: spriteBgTexture,
+      // depthTest: false,
+      depthWrite: false,
+    });
+
+    attachTo.add(main.current);
+
+    return () => {
+      Object.values(crewMaterials.current).forEach((material) => {
+        material.map.dispose();
+        material.dispose();
+      });
+
+      if (arcMaterial.current) {
+        arcMaterial.current.dispose();
+      }
+      if (hopperGeometry.current) {
+        hopperGeometry.current.dispose();
+      }
+      if (hopperMaterial.current) {
+        hopperMaterial.current.dispose();
+      }
+      if (spriteBgTexture) {
+        spriteBgTexture.dispose();
+      }
+      if (spriteBgMaterial.current) {
+        spriteBgMaterial.current.dispose();
+      }
+      if (spriteBgMaterial.current) {
+        spriteBgMaterial.current.dispose();
+      }
+
+      attachTo.remove(main.current);
+    }
+  }, []);
+
+
+  // define the travel params from the ongoing activities
   const ongoingTravel = useMemo(() => {
     const crews = {};
     ongoing?.forEach((activity) => {
       const crew = activity.data.crew;
       const { visitedLot } = getActivityConfig(activity);
-      console.log('visitedLot', visitedLot);
       if (crew && visitedLot) {
         const startTime = Math.max(activity.event.timestamp, crew.Crew.lastReadyAt);
         const finishTime = crew.Crew.readyAt;
@@ -139,12 +208,13 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
               travelTime: travelTime,
             }
           }
+        } else {
+          // console.log('out of range', blockTime, `${startTime} - ${finishTime}`);
         }
       } else {
-        console.log('skip', activity);
+        // console.log('skip', activity);
       }
     });
-    console.log(crews);
     
     // add curve and texture to crews
     Object.keys(crews).forEach((crewId) => {
@@ -161,83 +231,38 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
         crewMaterials.current[crewId] = new SpriteMaterial({
           color: 0xffffff,
           map: textureLoader.current.load(`${appConfig.get('Api.influenceImage')}/v2/crews/${crewId}/captain/image.png?bustOnly=true`),
-          depthTest: false,
+          // depthTest: false,
           depthWrite: false,
-        })
+        });
       }
     });
 
     return crews;
   }, [asteroidId, blockTime, ongoing]);
 
-  const arcs = useRef([]);
-  const hoppers = useRef([]);
-  const crewIndicators = useRef([]);
-  const arcUniforms = useRef({
-    uTime: { value: 0 },
-    uAlpha: { value: 1.0 },
-    uCount: { value: 51 },
-    uCol: { type: 'c', value: arcColor },
-  });
-  const arcMaterial = useRef(
-    new ShaderMaterial({
-      uniforms: arcUniforms.current,
-      fragmentShader: frag,
-      vertexShader: vert,
-      transparent: true,
-      depthWrite: false
-    })
-  );
-  const hopperGeometry = useRef(new SphereGeometry(100, 32, 32));
-  const hopperMaterial = useRef(new MeshBasicMaterial({ color: hopperColor }));
-  const spriteBgMaterial = useRef(
-    new SpriteMaterial({
-      color: spriteBorderColor,
-      map: textureLoader.current.load(`${process.env.PUBLIC_URL}/textures/crew-marker.png`),
-      depthTest: false,
-      depthWrite: false,
-    })
-  );
-
-  // unload of static resources
-  useEffect(() => {
-    return () => {
-      Object.values(crewMaterials.current).forEach((material) => {
-        material.map.dispose();
-        material.dispose();
-      });
-
-      if (arcMaterial.current) {
-        hopperGeometry.current.dispose();
-      }
-      if (hopperGeometry.current) {
-        hopperGeometry.current.dispose();
-      }
-      if (hopperMaterial.current) {
-        hopperMaterial.current.dispose();
-      }
-      if (spriteBgMaterial.current) {
-        spriteBgMaterial.current.map.dispose();
-        spriteBgMaterial.current.dispose();
-      }
-    }
-  }, []);
-
-  const markers = useRef({});
+  // actually put the scene elements in place
+  const arcs = useRef({});
+  const hoppers = useRef({});
+  const crewIndicators = useRef({});
   useEffect(() => {
     const order = new Float32Array(Array(51).fill().map((_, i) => i + 1));
     Object.keys(ongoingTravel).forEach((crewId) => {
       const travel = ongoingTravel[crewId];
       const geometry = new BufferGeometry().setFromPoints(travel.curve.getPoints(50));
-      const marker = {};
       geometry.setAttribute('order', new BufferAttribute(order, 1));
+
+      // define group (+ attach userdata)
+      const marker = new Group();
+      marker.userData = { crewId };
 
       // 
       // add arcs
       //
-      const curveGeom = new Line(geometry, arcMaterial.current);
-      arcs.current.push(curveGeom);
-      attachTo.add(curveGeom);
+      const arc = new Line(geometry, arcMaterial.current);
+      marker.add(arc);
+
+      arcs.current[crewId] = arc;
+
 
       //
       // place the hoppers on the curve
@@ -245,10 +270,11 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
       if (!travel.hideHopper) {
         const hopperMarker = new Mesh(hopperGeometry.current, hopperMaterial.current);
         hopperMarker.layers.enable(BLOOM_LAYER);
-        attachTo.add(hopperMarker);
+        marker.add(hopperMarker);
 
         hoppers.current[crewId] = hopperMarker;
       }
+
 
       //
       // place the crew indicators
@@ -257,74 +283,161 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
       // (backgrounds could technically be instanced mesh, but adds a lot of complexity)
       if (crewMaterials.current[crewId]) {
         const bgSprite = new Sprite(spriteBgMaterial.current);
-        bgSprite.scale.set(850, 1159, 1);
+        bgSprite.scale.set(850, 1159, 0);
         bgSprite.layers.enable(BLOOM_LAYER);
-        bgSprite.renderOrder = 999;
+        bgSprite.renderOrder = 1001;
 
         const sprite = new Sprite(crewMaterials.current[crewId]);
         sprite.scale.set(750, 1000, 0);
-        sprite.position.set(0, 0, 80);
-        sprite.renderOrder = 1000;
+        // sprite.position.set(50, 79, 0);
+        sprite.renderOrder = 1002;
 
         const crewMarker = new Group();
         crewMarker.add(bgSprite);
         crewMarker.add(sprite);
-        attachTo.add(crewMarker);
+        marker.add(crewMarker);
 
         crewIndicators.current[crewId] = crewMarker;
       }
+
+      main.current.add(marker)
     });
 
     return () => {
-      if (arcs.current) {
-        arcs.current.forEach((arc) => {
-          arc.geometry.dispose();
-          attachTo.remove(arc);
-        });
+      for(let i = main.current.children.length - 1; i >= 0; i--) {
+        const marker = main.current.children[i];
+        for(let j = marker.children.length - 1; j >= 0; j--) {
+          const child = marker.children[j];
+          // dispose arc geometry
+          if (child.isLine && child.geometry) child.geometry?.dispose();
+          // TODO: dispose of sprite textures? remove sprite-group children individually?
+          marker.remove(child);
+        }
+        main.current.remove(marker);
       }
-      if (hoppers.current) {
-        Object.values(hoppers.current).forEach((hopper) => {
-          attachTo.remove(hopper);
-        });
-      }
-      if (crewIndicators.current) {
-        Object.values(crewIndicators.current).forEach((crewIndicatorGroup) => {
-          // (keeps throwing error so commented out for now)
-          // crewIndicatorGroup.traverse((child) => {
-          //   crewIndicatorGroup.remove(child);
-          // });
-
-          attachTo.remove(crewIndicatorGroup);
-        });
-      }
+      arcs.current = {};
+      hoppers.current = {};
+      crewIndicators.current = {};
     };
   }, [ongoingTravel]);
 
-  const crewMarkerScale = useMemo(() => Math.max(1, Math.sqrt(cameraAltitude / 7500)), [cameraAltitude]);
+  const [hovered, setHovered] = useState();
+  useEffect(() => {
+    if (hovered) {
+      if (arcs.current[hovered]) {
+        arcs.current[hovered].material = arcHoverMaterial.current;
+      }
+      if (crewIndicators.current[hovered]?.children?.[0]) {
+        crewIndicators.current[hovered].children[0].material = spriteHoverBgMaterial.current;
+        crewIndicators.current[hovered].children[0].material.needsUpdate = true;
+      }
+      return () => {
+        if (arcs.current[hovered]) {
+          arcs.current[hovered].material = arcMaterial.current;
+        }
+        if (crewIndicators.current[hovered]?.children?.[0]) {
+          crewIndicators.current[hovered].children[0].material = spriteBgMaterial.current;
+        }
+      };
+    }
+  }, [hovered]);
 
-  useFrame((state, delta) => {
+  // listen for click events
+  // NOTE: if just use onclick, then fires on drag events too :(
+  useEffect(() => {
+    if (hovered) {
+      const onClick = (e) => {
+        history.push(`/crew/${hovered}`);
+      };
+      gl.domElement.addEventListener('pointerup', onClick, true);
+      return () => {
+        gl.domElement.removeEventListener('pointerup', onClick, true);
+      };
+    }
+  }, [hovered]);
+
+  const raycaster = useRef(new Raycaster());
+  const crewMarkerScale = useMemo(() => Math.max(1, Math.sqrt(cameraAltitude / 7500)), [cameraAltitude]);
+  const cameraDirection = useRef(new Vector3());
+  const crewIndicatorOffset = useRef(new Vector3());
+  const progressPosition = useRef(new Vector3());
+  const inverseMatrix = useRef(new Matrix4());
+  // const timing = useRef({ total: 0, tally: 0 });
+  // useInterval(() => {
+  //   console.log(`over ${timing.current.tally} iterations: ${(timing.current.total / timing.current.tally).toFixed(3)}ms`);
+  // }, 1000);
+  useFrame((state) => {
     // if arcs present, animate them
-    if (arcs.current && arcs.current.length) {
+    if (Object.keys(arcs.current).length) {
       const time = arcUniforms.current.uTime.value;
       arcUniforms.current.uTime.value = time + 1;
     }
 
-    Object.keys(ongoingTravel).forEach((crewId) => {
-      const travel = ongoingTravel[crewId];
-      const progress = ((Date.now() / 1000) - travel.departure) / travel.travelTime;
-      const progressPosition = travel.curve.getPointAt(Math.min(Math.max(0, progress), 1)).clone();
+    // move things along according to timing progress
+    if (Object.keys(ongoingTravel).length) {
+      // TODO: vvv this could probably be improved by thinking about screenspace vectors better
+      // (i.e. could we just attach the sprites to the root scene and avoid all these transforms)
+      // this takes ~0.15ms per frame, perhaps that is tolerable
+      const s = performance.now();
+      attachTo.updateMatrixWorld();
+      inverseMatrix.current.copy(attachTo.matrixWorld).invert();
 
-      if (hoppers.current[crewId]) {
-        hoppers.current[crewId].position.copy(progressPosition);
-      }
+      const screenUp = new Vector3(0, 1, 0).applyQuaternion(controls.object.quaternion).normalize();
+      const localUp = screenUp.applyMatrix4(inverseMatrix.current);
 
-      if (crewIndicators.current[crewId]) {
-        crewIndicators.current[crewId].scale.set(crewMarkerScale, crewMarkerScale, crewMarkerScale);
+      controls.object.getWorldDirection(cameraDirection.current);
+      const localOut = cameraDirection.current.applyMatrix4(inverseMatrix.current);
+
+      crewIndicatorOffset.current.addVectors(
+        localUp.setLength(800 * crewMarkerScale), // "up" from hopper
+        localOut.setLength(-500) // towards camera (above surface)
+      );
       
-        const abovePosition = progressPosition.clone().add(camera.up.clone().setLength(800 * crewMarkerScale));
-        crewIndicators.current[crewId].position.copy(abovePosition);
+      // timing.current.total += performance.now() - s;
+      // timing.current.tally++;
+      // ^^^
+      
+      Object.keys(ongoingTravel).forEach((crewId) => {
+        const travel = ongoingTravel[crewId];
+        const progress = ((Date.now() / 1000) - travel.departure) / travel.travelTime;
+        travel.curve.getPointAt(Math.min(Math.max(0, progress), 1), progressPosition.current);
+
+        if (hoppers.current[crewId]) {
+          hoppers.current[crewId].position.copy(progressPosition.current);
+        }
+
+        if (crewIndicators.current[crewId]) {
+          crewIndicators.current[crewId].scale.set(crewMarkerScale, crewMarkerScale, crewMarkerScale);
+          crewIndicators.current[crewId].position.addVectors(progressPosition.current, crewIndicatorOffset.current);
+        }
+      });
+    }
+
+    // handle mouseovers
+    if (main.current.children.length > 0 && state.raycaster) {
+      let shouldBeHovered;
+
+      // not sure why useFrame's raycaster isn't working, probably because it's used more than once in the useFrame loop...
+      // it catches intersections but then stops detecting the same ones without moving mouse... so we use a fallback 
+      // raycaster while highlighted (but not all the time because it's expensive)
+      let safeRaycaster = state.raycaster;
+      if (hovered && raycaster.current) {
+        raycaster.current.setFromCamera(state.pointer, state.camera);
+        safeRaycaster = raycaster.current;
       }
-    });
+
+      const intersections = safeRaycaster.intersectObject(main.current);
+      if (intersections.length > 0) {
+        let target = intersections[0].object;
+        while(target.parent && !target.userData.crewId) {
+          target = target.parent;
+        }
+        shouldBeHovered = target.userData.crewId;
+      }
+      if (hovered !== shouldBeHovered) {
+        setHovered(shouldBeHovered);
+      }
+    }
   }, 0.5);
 
   return null;
