@@ -85,25 +85,25 @@ const NotificationSettings = ({ onLoading, onValid, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const [focused, setFocused] = useState(false);
-  const [emailAddress, setEmailAddress] = useState('');
+  const [email, setEmail] = useState('');
   const [emailStatus, setEmailStatus] = useState('');
   const [hideEmail, setHideEmail] = useState(false);
   const [notifStatus, setNotifStatus] = useState('');
   const [subscriptions, setSubscriptions] = useState({
-    crewAlert: true,
-    leaseExpiration: true,
-    activity: true,
+    CREW: true,
+    LEASE: true,
+    TASK: true,
   });
 
   useEffect(() => {
     if (user) {
-      setEmailAddress(user.emailAddress || '');
+      setEmail(user.email || '');
       setSubscriptions(user.notificationSubscriptions || {
-        crewAlert: true,
-        leaseExpiration: true,
-        activity: true,
+        CREW: true,
+        LEASE: true,
+        TASK: true,
       });
-      setHideEmail(user.emailAddress && props.standalone);
+      setHideEmail(user.email && props.standalone);
     }
   }, [user]);
 
@@ -112,23 +112,23 @@ const NotificationSettings = ({ onLoading, onValid, ...props }) => {
   }, [isLoading]);
 
   const emailIsValid = useMemo(
-    () => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(emailAddress),
-    [emailAddress]
+    () => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email),
+    [email]
   );
 
   useEffect(() => {
     if (!onValid) return;
-    onValid((!emailAddress || emailIsValid) && !(emailStatus === 'saving' || notifStatus === 'saving'))
-  }, [emailStatus, notifStatus, user?.emailAddress, onValid]);
+    onValid((!email || emailIsValid) && !(emailStatus === 'saving' || notifStatus === 'saving'))
+  }, [emailStatus, notifStatus, user?.email, onValid]);
 
   useEffect(() => {
     if (!focused) {
-      if (emailAddress) {
+      if (email) {
         if (emailIsValid) {
-          if (emailAddress !== user?.emailAddress) {
+          if (email !== user?.email) {
             setEmailStatus('saving');
-            api.updateUser({ emailAddress })
-              .then(() => queryClient.setQueryData(['user', token], (u) => ({ ...u, emailAddress })) )
+            api.updateUser({ email })
+              .then(() => queryClient.setQueryData(['user', token], (u) => ({ ...u, email })) )
               .catch((e) => {
                 setEmailStatus('error');
                 createAlert({
@@ -150,13 +150,13 @@ const NotificationSettings = ({ onLoading, onValid, ...props }) => {
     } else {
       setEmailStatus('');
     }
-  }, [focused, user?.emailAddress]);
+  }, [focused, user?.email]);
 
   useEffect(() => {
     if (user && (
-      subscriptions.crewAlert !== user.notificationSubscriptions?.crewAlert
-      || subscriptions.leaseExpiration !== user.notificationSubscriptions?.leaseExpiration
-      || subscriptions.activity !== user.notificationSubscriptions?.activity
+      subscriptions.CREW !== user.notificationSubscriptions?.CREW
+      || subscriptions.LEASE !== user.notificationSubscriptions?.LEASE
+      || subscriptions.TASK !== user.notificationSubscriptions?.TASK
     )) {
       setNotifStatus('saving');
       api.updateUser({ notificationSubscriptions: subscriptions })
@@ -176,7 +176,7 @@ const NotificationSettings = ({ onLoading, onValid, ...props }) => {
   }, [subscriptions]);
 
   const handleChange = useCallback((e) => {
-    setEmailAddress(e.currentTarget.value || '');
+    setEmail(e.currentTarget.value || '');
   }, []);
 
   // TODO: if standalone, hide email if already set
@@ -201,7 +201,7 @@ const NotificationSettings = ({ onLoading, onValid, ...props }) => {
               marginRight: 0,
               width: '100%'
             }}
-            value={emailAddress} />
+            value={email} />
         </Details>      
       )}
       <Checkboxes>

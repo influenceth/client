@@ -5381,14 +5381,14 @@ export const ActionDialogFooter = ({
         // if not subscribed to one of the things that takes time
         // TODO: does this cover ship delivery? can we also show in form_agreement?
         return (
-          (!user?.notificationSubscriptions?.crewAlert && crewAvailableTime?.total > 0) 
-          || (!user?.notificationSubscriptions?.activity && taskCompleteTime?.total > 0) 
-          || (!user?.emailAddress && (crewAvailableTime?.total > 0 || taskCompleteTime?.total > 0))
+          (!user?.notificationSubscriptions?.CREW && crewAvailableTime?.total > 0) 
+          || (!user?.notificationSubscriptions?.TASK && taskCompleteTime?.total > 0) 
+          || (!user?.email && (crewAvailableTime?.total > 0 || taskCompleteTime?.total > 0))
         );
       }
     }
     return false;
-  }, [crewAvailableTime?.total, stage, taskCompleteTime?.total, userIsLoading, user?.emailAddress, user?.notificationSubscriptions]);
+  }, [crewAvailableTime?.total, stage, taskCompleteTime?.total, userIsLoading, user?.email, user?.notificationSubscriptions]);
 
   const onBeforeGo = useCallback(async () => {
     if (showNotificationOption && notificationsEnabled) {
