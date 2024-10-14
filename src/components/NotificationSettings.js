@@ -205,20 +205,20 @@ const NotificationSettings = ({ onLoading, onValid, ...props }) => {
         </Details>      
       )}
       <Checkboxes>
-        <CheckboxRow onClick={() => setSubscriptions((n) => ({ ...n, crewAlert: !n.crewAlert }))}>
-          {subscriptions.crewAlert ? <CheckedIcon /> : <UncheckedIcon />}
+        <CheckboxRow onClick={() => setSubscriptions((n) => ({ ...n, CREW: !n.CREW }))}>
+          {subscriptions.CREW ? <CheckedIcon /> : <UncheckedIcon />}
           <span>
             Crew Alerts
           </span>
         </CheckboxRow>
-        <CheckboxRow onClick={() => setSubscriptions((n) => ({ ...n, activity: !n.activity }))}>
-          {subscriptions.activity ? <CheckedIcon /> : <UncheckedIcon />}
+        <CheckboxRow onClick={() => setSubscriptions((n) => ({ ...n, TASK: !n.TASK }))}>
+          {subscriptions.TASK ? <CheckedIcon /> : <UncheckedIcon />}
           <span>
             Task Alerts
           </span>
         </CheckboxRow>
-        <CheckboxRow onClick={() => setSubscriptions((n) => ({ ...n, leaseExpiration: !n.leaseExpiration }))}>
-          {subscriptions.leaseExpiration ? <CheckedIcon /> : <UncheckedIcon />}
+        <CheckboxRow onClick={() => setSubscriptions((n) => ({ ...n, LEASE: !n.LEASE }))}>
+          {subscriptions.LEASE ? <CheckedIcon /> : <UncheckedIcon />}
           <span>
             Lease is Expiring (3 days)
           </span>
