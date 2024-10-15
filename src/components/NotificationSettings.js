@@ -124,7 +124,7 @@ const NotificationSettings = ({ onLoading, onValid, ...props }) => {
   useEffect(() => {
     if (!focused) {
       if (email) {
-        if (emailIsValid) {
+        if (!email || emailIsValid) {
           if (email !== user?.email) {
             setEmailStatus('saving');
             api.updateUser({ email })

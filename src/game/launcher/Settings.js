@@ -353,6 +353,23 @@ const SoundPane = () => {
   );
 }
 
+const NotificationsPane = () => {
+  return (
+    <StyledSettings>
+      <Section>
+        <h3>Notification Preferences</h3>
+        <div>
+          <StyledDataReadout label="Notifications" labelTop>
+            <ControlGroup style={{ width: '100%' }}>
+              <NotificationSettings style={{ marginBottom: 10 }} />
+            </ControlGroup>
+          </StyledDataReadout>
+        </div>
+      </Section>
+    </StyledSettings>
+  );
+};
+
 const GameplayPane = () => {
   const { authenticated, shouldUseSessionKeys, starknetSession, upgradeToSessionKey, walletId } = useSession();
   const { crew } = useCrewContext();
@@ -400,12 +417,6 @@ const GameplayPane = () => {
       <Section>
         <h3>Gameplay</h3>
         <div>
-          <StyledDataReadout label="Notifications" labelTop>
-            <ControlGroup style={{ width: '100%' }}>
-              <NotificationSettings style={{ marginBottom: 10 }} />
-            </ControlGroup>
-          </StyledDataReadout>
-
           <StyledDataReadout label="Price Display">
             <ControlGroup>
               <Button
@@ -590,6 +601,10 @@ const panes = [
   {
     label: 'Gameplay',
     pane: <GameplayPane />
+  },
+  {
+    label: 'Notifications',
+    pane: <NotificationsPane />
   },
   {
     label: 'Keyboard Shortcuts',
