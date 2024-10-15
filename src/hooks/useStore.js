@@ -131,6 +131,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     draggables: {},
 
     gameplay: {
+      activeCrewsDisplay: 'all', // selected, delegated, all
       autoswap: true,
       dismissTutorial: false,
       feeToken: null,
@@ -746,6 +747,10 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     dispatchFeeTokenSet: (which) => set(produce(state => {
       state.gameplay.feeToken = which;
+    })),
+
+    dispatchActiveCrewsDisplaySet: (which) => set(produce(state => {
+      state.gameplay.activeCrewsDisplay = which;
     })),
 
     dispatchDismissCrewTutorial: (crewId, which) => set(produce(state => {
