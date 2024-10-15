@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import styled from 'styled-components';
 import { Lot } from '@influenceth/sdk';
 
+import { appConfig } from '~/appConfig';
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import { statuses } from '~/lib/actionItem';
@@ -133,9 +134,9 @@ const useColumns = () => {
         align: 'center',
         bodyStyle: { fontSize: '24px' },
         selector: row => {
-          if (row.type === 'failed' && row.txHash && process.env.REACT_APP_STARKNET_EXPLORER_URL) {
+          if (row.type === 'failed' && row.txHash && appConfig.get('Url.starknetExplorer')) {
             return (
-              <a href={`${process.env.REACT_APP_STARKNET_EXPLORER_URL}/tx/${row.txHash}`}
+              <a href={`${appConfig.get('Url.starknetExplorer')}/tx/${row.txHash}`}
                 target="_blank"
                 rel="noopener noreferrer">
                 <LinkIcon />

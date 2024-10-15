@@ -9,6 +9,7 @@ import constants from '~/lib/constants';
 import { TOKEN } from '~/lib/priceUtils';
 import { safeBigInt } from '~/lib/utils';
 import SIMULATION_CONFIG from '~/simulation/simulationConfig';
+import { appConfig } from '~/appConfig';
 
 export const STORE_NAME = 'influence';
 
@@ -148,8 +149,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     },
 
     sounds: {
-      music: process.env.NODE_ENV === 'development' ? 0 : 100,
-      effects: process.env.NODE_ENV === 'development' ? 0 : 100,
+      music: appConfig.get('App.defaultMuted') ? 0 : 100,
+      effects: appConfig.get('App.defaultMuted') ? 0 : 100,
     },
 
     failedTransactions: [],

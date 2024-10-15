@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { PropagateLoader as Loader } from 'react-spinners';
 import { RampInstantSDK } from '@ramp-network/ramp-instant-sdk';
 
+import { appConfig } from '~/appConfig';
 import Button from '~/components/ButtonAlt';
 import { ChevronRightIcon, CloseIcon, LinkIcon, WalletIcon } from '~/components/Icons';
 import Details from '~/components/DetailsV2';
@@ -239,7 +240,6 @@ const RampWrapper = styled.div`
   }
 `;
 
-const RAMP_PREPEND = process.env.NODE_ENV === 'production' ? '' : 'demo.';
 const RAMP_PURCHASE_STATUS = {
   INITIALIZED: {
     statusText: 'The purchase has been initialized.',
@@ -409,7 +409,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
   const checkRampPurchase = useCallback(async (purchase) => {
     try {
       const response = await fetch(
-        `https://api.${RAMP_PREPEND}ramp.network/api/host-api/purchase/${purchase.id}?secret=${purchase.purchaseViewToken}`,
+        `${appConfig.get('Api.ramp')}/api/host-api/purchase/${purchase.id}?secret=${purchase.purchaseViewToken}`,
         {
           method: 'GET',
           headers: {
@@ -449,12 +449,12 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
       const embeddedRamp = new RampInstantSDK({
         hostAppName: 'Influence',
         hostLogoUrl: window.location.origin + '/maskable-logo-192x192.png',
-        hostApiKey: process.env.REACT_APP_RAMP_API_KEY,
+        hostApiKey: appConfig.get('Api.ClientId.ramp'),
         userAddress: accountAddress,
         swapAsset: 'STARKNET_ETH',  // TODO: STARKNET_USDC once enabled
         fiatCurrency: 'USD',
         fiatValue: Math.ceil(amount / 1e6),
-        url: process.env.NODE_ENV === 'production' ? undefined : `https://app.${RAMP_PREPEND}ramp.network`,
+        url: appConfig.get('Api.ramp'),
 
         variant: 'embedded-desktop',
         containerNode: document.getElementById('ramp-container')
@@ -483,7 +483,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
     setLayerswapUrl(
       `https://layerswap.io/app/?${
         new URLSearchParams({
-          clientId: process.env.REACT_APP_LAYERSWAP_CLIENT_ID,
+          clientId: appConfig.get('Api.ClientId.layerswap'),
           amount,
           to: layerSwapChains[resolveChainId(chainId)]?.starknet,
           toAsset: 'USDC',
@@ -581,7 +581,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
             {walletId === 'argentWebWallet' && (
               <FundingButtons>
 
-                {process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && (
+                {appConfig.get('Starknet.chainId') === '0x534e5f5345504f4c4941' && (
                   <>
                     <h4>
                       <span>Request Free ETH</span>
@@ -638,7 +638,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
 
             {walletId !== 'argentWebWallet' && (
               <FundingButtons>
-                {process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && (
+                {appConfig.get('Starknet.chainId') === '0x534e5f5345504f4c4941' && (
                   <EthFaucetButton
                     onError={onFaucetError}
                     onProcessing={(started) => setWaiting(!!started)} />

@@ -1,3 +1,4 @@
+import { appConfig } from '~/appConfig';
 import LauncherDialog from './components/LauncherDialog';
 import RecruitmentMenu from './components/RecruitmentMenu';
 import RewardMissions from './components/RewardMissions';
@@ -9,11 +10,11 @@ const panes = [
     label: 'Colonization Missions',
     pane: <RewardMissions mode="colonization" />
   },
-  false && process.env.REACT_APP_COMMUNITY_MISSIONS_URL && {
+  false && appConfig.get('Url.communityMissions') && {
     label: 'Community Missions',
     pane: <RewardMissions mode="community" />
   },
-  process.env.REACT_APP_SOCIAL_QUESTS_URL && {
+  appConfig.get('Url.socialQuests') && {
     label: 'Social Quests',
     pane: <RewardQuests />
   },

@@ -15,6 +15,7 @@ import FaucetSKU from './store/FaucetSKU';
 import StarterPackSKU from './store/StarterPackSKU';
 import SwaySKU from './store/SwaySKU';
 import SKULayout from './store/components/SKULayout';
+import { appConfig } from '~/appConfig';
 
 const storeAssets = {
   packs: 'Starter Packs',
@@ -22,7 +23,7 @@ const storeAssets = {
   crewmates: 'Crewmates',
   asteroids: 'Asteroids',
 };
-if (process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941') {
+if (appConfig.get('Starknet.chainId') === '0x534e5f5345504f4c4941') {
   storeAssets.faucets = 'Faucets';
 }
 

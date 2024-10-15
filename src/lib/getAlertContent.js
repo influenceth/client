@@ -1,3 +1,4 @@
+import { appConfig } from '~/appConfig';
 import { UpdateIcon, WarningIcon, SettingsIcon, WalletIcon, ClipboardIcon } from '~/components/Icons';
 
 const entries = {
@@ -70,7 +71,7 @@ const entries = {
     return {
       icon,
       content,
-      txLink: txHash ? `${process.env.REACT_APP_STARKNET_EXPLORER_URL}/tx/${txHash}` : null,
+      txLink: txHash ? `${appConfig.get('Url.starknetExplorer')}/tx/${txHash}` : null,
     }
   },
 };

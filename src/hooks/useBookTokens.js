@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { appConfig } from '~/appConfig';
 import useCrewContext from '~/hooks/useCrewContext';
 import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
 import formatters from '~/lib/formatters';
@@ -8,7 +9,7 @@ import { safeBigInt } from '~/lib/utils';
 
 const useBookTokens = (bookId) => {
   const { captain, isLoading: crewIsLoading } = useCrewContext();
-  const { data: dispatcherBalance, isLoading: swayIsLoading } = useSwayBalance(process.env.REACT_APP_STARKNET_DISPATCHER);
+  const { data: dispatcherBalance, isLoading: swayIsLoading } = useSwayBalance(appConfig.get('Starknet.Address.dispatcher'));
 
   const swayAmount = useMemo(() => {
     if (swayIsLoading) return null;

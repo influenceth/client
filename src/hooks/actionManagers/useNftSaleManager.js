@@ -1,11 +1,12 @@
 import { useCallback, useContext, useMemo } from 'react';
 import { Entity } from '@influenceth/sdk';
 
+import { appConfig } from '~/appConfig';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrewContext from '~/hooks/useCrewContext';
 
 const tokens = {
-  [Entity.IDS.SHIP]: process.env.REACT_APP_STARKNET_SHIP_TOKEN,
+  [Entity.IDS.SHIP]: appConfig.get('Starknet.Address.shipToken'),
   // TODO: add any nft tokens want to support...
 };
 

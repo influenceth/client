@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import Loader from 'react-spinners/PuffLoader';
 
+import { appConfig } from '~/appConfig';
 import { PlayIcon } from '~/components/Icons';
 import LauncherDialog from './components/LauncherDialog';
 import SupportMenu from './components/SupportMenu';
@@ -124,7 +125,7 @@ const YoutubeFeed = ({ playlistId, title }) => {
     if (playlistId) {
       setLoading(true);
       try {
-        fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${process.env.REACT_APP_GOOGLE_API_KEY}`).then(async (response) => {
+        fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${appConfig.get('Api.ClientId.google')}`).then(async (response) => {
           const data = await response.json();
           setVideos(data.items.filter((v) => !!v.snippet?.videoOwnerChannelId)); // (this filters out private videos)
           setLoading(false);
@@ -191,7 +192,7 @@ const panes = [
   },
   {
     label: 'Game Wiki',
-    link: 'https://wiki.influenceth.io/'
+    link: appConfig.get('Url.wiki')
   }
 ];
 

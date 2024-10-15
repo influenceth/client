@@ -4,7 +4,9 @@ import { Tooltip } from 'react-tooltip';
 import { Switch, Route, Redirect } from 'react-router-dom';
 import moment from 'moment';
 
+import { appConfig } from '~/appConfig';
 import { InfluenceIcon, PurchaseAsteroidIcon } from '~/components/Icons';
+import useCrewContext from '~/hooks/useCrewContext';
 import useScreenSize from '~/hooks/useScreenSize';
 import useStore from '~/hooks/useStore';
 import { openAccessJSTime } from '~/lib/utils';
@@ -33,7 +35,6 @@ import Cutscene from './Cutscene';
 import Launcher from './Launcher';
 import QueryLoader from './QueryLoader';
 import theme from '~/theme';
-import useCrewContext from '~/hooks/useCrewContext';
 
 const StyledInterface = styled.div`
   align-items: stretch;
@@ -75,7 +76,7 @@ const MainContainer = styled.div`
   }
 `;
 
-const DISABLE_INTRO_ANIMATION = true && process.env.NODE_ENV === 'development';
+const DISABLE_INTRO_ANIMATION = appConfig.get('App.disableIntroAnimation');
 
 const Interface = () => {
   const { isLaunched } = useCrewContext();
