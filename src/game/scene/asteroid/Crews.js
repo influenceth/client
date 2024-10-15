@@ -41,19 +41,19 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useSession from '~/hooks/useSession';
 
 // TODO: remove this when done testing
-import debugData from './debugData';
-const now = Math.floor(Date.now() / 1000);
-const debug = debugData
-  .filter((d) => !!d.data.crew.Crew)
-  .slice(0, 250)
-  .map((d) => {
-    const behind = Math.floor(Math.random() * 10 * 3600);
-    const ahead = Math.floor(Math.random() * 10 * 3600);
-    d.event.timestamp = now - behind;
-    d.data.crew.Crew.lastReadyAt = now - behind;
-    d.data.crew.Crew.readyAt = now + ahead;
-    return d;
-  });
+// import debugData from './debugData';
+// const now = Math.floor(Date.now() / 1000);
+// const debug = debugData
+//   .filter((d) => !!d.data.crew.Crew)
+//   .slice(0, 250)
+//   .map((d) => {
+//     const behind = Math.floor(Math.random() * 10 * 3600);
+//     const ahead = Math.floor(Math.random() * 10 * 3600);
+//     d.event.timestamp = now - behind;
+//     d.data.crew.Crew.lastReadyAt = now - behind;
+//     d.data.crew.Crew.readyAt = now + ahead;
+//     return d;
+//   });
 // console.log(debugData);
 
 const hopperRadius = 400;
@@ -90,12 +90,10 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
   const { data: ongoing, isLoading } = useQuery(
     [ 'activities', 'ongoing', asteroidId ],
     async () => {
-      // const ongoingActivities = await api.getOngoingActivities(
-      //   Entity.packEntity({ label: Entity.IDS.ASTEROID, id: asteroidId }),
-      //   Object.keys(activities).filter((k) => !!activities[k].getVisitedLot)
-      // );
-      // TODO: remove below, reinstate above when done testing
-      const ongoingActivities = cloneDeep(debug);
+      const ongoingActivities = await api.getOngoingActivities(
+        Entity.packEntity({ label: Entity.IDS.ASTEROID, id: asteroidId }),
+        Object.keys(activities).filter((k) => !!activities[k].getVisitedLot)
+      );
       await hydrateActivities(ongoingActivities, queryClient)
       return ongoingActivities;
     },
@@ -314,21 +312,23 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
       if (hopperMaterial.current) {
         hopperMaterial.current.dispose();
       }
-      main.current.traverse((node) => {
-        if (node) {
-          if (node.material) {
-            if (node.material.map) {
-              node.material.map.dispose();
+      if (main.current) {
+        main.current.children.traverse((node) => {
+          if (node) {
+            if (node.material) {
+              if (node.material.map) {
+                node.material.map.dispose();
+              }
+              node.material.dispose();
             }
-            node.material.dispose();
+            if (node.geometry) {
+              node.geometry.dispose();
+            }
+            main.current.remove(node);
           }
-          if (node.geometry) {
-            node.geometry.dispose();
-          }
-          main.current.remove(node);
-        }
-      });
-      attachTo.remove(main.current);
+        });
+        attachTo.remove(main.current);
+      }
     };
   }, []);
 
@@ -480,108 +480,108 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
   //   console.log(`over ${timing.current.tally} iterations: ${(timing.current.total / timing.current.tally).toFixed(3)}ms`);
   // }, 1000);
   useFrame((state) => {
+    if (!Object.keys(ongoingTravel).length) return;
+    if (!hoppersMesh.current) return;
+
     // if arcs present, animate them
     if (arcTime.current) {
       arcTime.current.value += 1;
     }
+    
+    // TODO: vvv this could probably be improved by thinking about screenspace vectors better
+    // (i.e. could we just attach the sprites to the root scene and avoid all these transforms)
+    // this takes ~0.15ms per frame, perhaps that is tolerable
+    // const s = performance.now();
+    attachTo.updateMatrixWorld();
+    inverseMatrix.current.copy(attachTo.matrixWorld).invert();
 
-    // move things along according to timing progress
-    if (Object.keys(ongoingTravel).length) {
-      // TODO: vvv this could probably be improved by thinking about screenspace vectors better
-      // (i.e. could we just attach the sprites to the root scene and avoid all these transforms)
-      // this takes ~0.15ms per frame, perhaps that is tolerable
-      // const s = performance.now();
-      attachTo.updateMatrixWorld();
-      inverseMatrix.current.copy(attachTo.matrixWorld).invert();
+    const screenUp = new Vector3(0, 1, 0).applyQuaternion(controls.object.quaternion).normalize();
+    const localUp = screenUp.applyMatrix4(inverseMatrix.current);
 
-      const screenUp = new Vector3(0, 1, 0).applyQuaternion(controls.object.quaternion).normalize();
-      const localUp = screenUp.applyMatrix4(inverseMatrix.current);
+    controls.object.getWorldDirection(cameraDirection.current);
+    const localOut = cameraDirection.current.applyMatrix4(inverseMatrix.current);
 
-      controls.object.getWorldDirection(cameraDirection.current);
-      const localOut = cameraDirection.current.applyMatrix4(inverseMatrix.current);
+    crewIndicatorOffset.current.addVectors(
+      localUp.setLength(3 * hopperRadius * crewMarkerScale), // "north" from hopper
+      localOut.setLength(-650) // towards camera (above surface)
+    );
+    
+    // timing.current.total += performance.now() - s;
+    // timing.current.tally++;
+    // ^^^
+    
+    const hopperScale = crewMarkerScale * 0.25; // TODO: play with this
+    const updateColors = shouldBeActiveCrewHopperIndex !== activeCrewHopperIndex.current;
+    const crewsWithHoppers = Object.keys(ongoingTravel).filter((c) => !ongoingTravel[c].hideHopper);
+    if (crewsWithHoppers.length > 0) {
+      crewsWithHoppers.forEach((crewId, hopperIndex) => {
+        const travel = ongoingTravel[crewId];
+        const progress = ((Date.now() / 1000) - travel.departure) / travel.travelTime;
+        travel.curve.getPointAt(Math.min(Math.max(0, progress), 1), progressPosition.current);
 
-      crewIndicatorOffset.current.addVectors(
-        localUp.setLength(3 * hopperRadius * crewMarkerScale), // "north" from hopper
-        localOut.setLength(-500) // towards camera (above surface)
-      );
-      
-      // timing.current.total += performance.now() - s;
-      // timing.current.tally++;
-      // ^^^
-      
-      const hopperScale = crewMarkerScale * 0.25; // TODO: play with this
-      const updateColors = shouldBeActiveCrewHopperIndex !== activeCrewHopperIndex.current;
-      const crewsWithHoppers = Object.keys(ongoingTravel).filter((c) => !ongoingTravel[c].hideHopper);
-      if (crewsWithHoppers.length > 0) {
-        crewsWithHoppers.forEach((crewId, hopperIndex) => {
-          const travel = ongoingTravel[crewId];
-          const progress = ((Date.now() / 1000) - travel.departure) / travel.travelTime;
-          travel.curve.getPointAt(Math.min(Math.max(0, progress), 1), progressPosition.current);
-
-          instanceDummy.current.position.copy(progressPosition.current);
-          instanceDummy.current.scale.set(hopperScale, hopperScale, hopperScale);
-          instanceDummy.current.updateMatrix();
-          hoppersMesh.current.setMatrixAt(hopperIndex, instanceDummy.current.matrix);
-
-          if (updateColors) {
-            const color = hopperIndex === shouldBeActiveCrewHopperIndex ? activeCrewColor : hopperColor;
-            hopperColors.current[3 * hopperIndex + 0] = color.r;
-            hopperColors.current[3 * hopperIndex + 1] = color.g;
-            hopperColors.current[3 * hopperIndex + 2] = color.b;
-          }
-
-          if (Number(crewId) === crew?.id) {
-            if (activeCrewMarker.current) {
-              activeCrewMarker.current.scale.set(crewMarkerScale, crewMarkerScale, crewMarkerScale);
-              activeCrewMarker.current.position.addVectors(progressPosition.current, crewIndicatorOffset.current);
-            }
-          }
-          if (highlightedCrewMarker.current) {
-            if (Number(crewId) === Number(highlightedCrewId)) {
-              highlightedCrewMarker.current.scale.set(crewMarkerScale, crewMarkerScale, crewMarkerScale);
-              highlightedCrewMarker.current.position.addVectors(progressPosition.current, crewIndicatorOffset.current);
-            }
-          }
-        });
+        instanceDummy.current.position.copy(progressPosition.current);
+        instanceDummy.current.scale.set(hopperScale, hopperScale, hopperScale);
+        instanceDummy.current.updateMatrix();
+        hoppersMesh.current.setMatrixAt(hopperIndex, instanceDummy.current.matrix);
 
         if (updateColors) {
-          hoppersMesh.current.geometry.attributes.aInstanceColor.needsUpdate = true;
-          activeCrewHopperIndex.current = shouldBeActiveCrewHopperIndex;
-        }
-        hoppersMesh.current.instanceMatrix.needsUpdate = true;
-      }
-
-      // handle mouseovers
-      if (main.current?.children?.length > 0 && state.raycaster) {
-
-        // not sure why useFrame's raycaster isn't working, probably because it's used more than once in the useFrame loop...
-        // it catches intersections but then stops detecting the same ones without moving mouse... so we use a fallback 
-        // raycaster while highlighted (but not all the time because it's expensive)
-        let safeRaycaster = state.raycaster;
-        if (hovered && raycaster.current) {
-          raycaster.current.setFromCamera(state.pointer, state.camera);
-          safeRaycaster = raycaster.current;
+          const color = hopperIndex === shouldBeActiveCrewHopperIndex ? activeCrewColor : hopperColor;
+          hopperColors.current[3 * hopperIndex + 0] = color.r;
+          hopperColors.current[3 * hopperIndex + 1] = color.g;
+          hopperColors.current[3 * hopperIndex + 2] = color.b;
         }
 
-        const intersections = safeRaycaster.intersectObject(hoppersMesh.current);
-        const shouldBeHovered = intersections.length > 0 && crewsWithHoppers[intersections[0].instanceId];
-        if (hovered !== shouldBeHovered) {
-          if (shouldBeHovered) {
-            clearTimeout(unselector.current);
-            unselector.current = null;
-
-            setHovered(shouldBeHovered);
-          } else if (!unselector.current) {
-            unselector.current = setTimeout(() => {
-              setHovered();
-              unselector.current = null;
-            }, 500);
+        if (Number(crewId) === crew?.id) {
+          if (activeCrewMarker.current) {
+            activeCrewMarker.current.scale.set(crewMarkerScale, crewMarkerScale, crewMarkerScale);
+            activeCrewMarker.current.position.addVectors(progressPosition.current, crewIndicatorOffset.current);
           }
         }
+        if (highlightedCrewMarker.current) {
+          if (Number(crewId) === Number(highlightedCrewId)) {
+            highlightedCrewMarker.current.scale.set(crewMarkerScale, crewMarkerScale, crewMarkerScale);
+            highlightedCrewMarker.current.position.addVectors(progressPosition.current, crewIndicatorOffset.current);
+          }
+        }
+      });
 
-        const cardIntersections = safeRaycaster.intersectObject(highlightedCrewMarker.current);
-        setCardHovered(cardIntersections.length > 0);
+      if (updateColors) {
+        hoppersMesh.current.geometry.attributes.aInstanceColor.needsUpdate = true;
+        activeCrewHopperIndex.current = shouldBeActiveCrewHopperIndex;
       }
+      hoppersMesh.current.instanceMatrix.needsUpdate = true;
+    }
+
+    // handle mouseovers
+    if (main.current?.children?.length > 0 && state.raycaster) {
+
+      // not sure why useFrame's raycaster isn't working, probably because it's used more than once in the useFrame loop...
+      // it catches intersections but then stops detecting the same ones without moving mouse... so we use a fallback 
+      // raycaster while highlighted (but not all the time because it's expensive)
+      let safeRaycaster = state.raycaster;
+      if (hovered && raycaster.current) {
+        raycaster.current.setFromCamera(state.pointer, state.camera);
+        safeRaycaster = raycaster.current;
+      }
+
+      const intersections = safeRaycaster.intersectObject(hoppersMesh.current);
+      const shouldBeHovered = intersections.length > 0 && crewsWithHoppers[intersections[0].instanceId];
+      if (hovered !== shouldBeHovered) {
+        if (shouldBeHovered) {
+          clearTimeout(unselector.current);
+          unselector.current = null;
+
+          setHovered(shouldBeHovered);
+        } else if (!unselector.current) {
+          unselector.current = setTimeout(() => {
+            setHovered();
+            unselector.current = null;
+          }, 500);
+        }
+      }
+
+      const cardIntersections = safeRaycaster.intersectObject(highlightedCrewMarker.current);
+      setCardHovered(cardIntersections.length > 0);
     }
   }, 0.5);
 
