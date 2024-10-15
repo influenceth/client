@@ -271,6 +271,8 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
       </ActionDialogBody>
 
       <ActionDialogFooter
+        crewAvailableTime={launchTime}
+        taskCompleteTime={launchTime}
         disabled={(powered && propellantRequirement > propellantLoaded) || (destinationLot?.building && !crewCan(Permission.IDS.DOCK_SHIP, destinationLot.building))}
         goLabel="Land"
         onGo={onLand}

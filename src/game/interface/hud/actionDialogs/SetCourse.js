@@ -503,6 +503,8 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
       </ActionDialogBody>
 
       <ActionDialogFooter
+        crewAvailableTime={travelTime}
+        taskCompleteTime={travelTime}
         disabled={propellantMassLoaded < travelSolution.usedPropellantMass}
         goLabel="Schedule"
         onGo={onDepart}

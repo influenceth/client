@@ -429,6 +429,8 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
       </ActionDialogBody>
 
       <ActionDialogFooter
+        crewAvailableTime={crewTimeRequirement}
+        taskCompleteTime={taskTimeRequirement}
         disabled={stage === actionStage.NOT_STARTED && (!selectedSample || !drillSource)}
         goLabel={isPurchase ? 'Purchase & Optimize' : 'Optimize'}
         onGo={onImprove}

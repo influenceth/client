@@ -30,8 +30,8 @@ export function CrewProvider({ children }) {
   const simulationState = useSimulationState();
 
   const queryClient = useQueryClient();
+
   const allPendingTransactions = useStore(s => s.pendingTransactions);
-  
   const selectedCrewId = useStore(s => s.selectedCrewId);
   const dispatchCrewSelected = useStore(s => s.dispatchCrewSelected);
 
@@ -211,11 +211,17 @@ export function CrewProvider({ children }) {
 
   const selectedCrew = useMemo(() => {
     if (crews && crews.length > 0) {
+      // use previously selected crew if still exists
       if (selectedCrewId) {
         const previouslySelected = crews.find((crew) => crew.id === selectedCrewId);
         if (previouslySelected) return previouslySelected;
       }
-      return crews.find((crew) => crew.Crew.roster.length > 0) || crews[0];
+
+      // else, use the latest readyAt crew with a roster (fallback to first crew)
+      return crews
+        .filter((crew) => crew.Crew.roster.length > 0)
+        .sort((a, b) => a.Crew.readyAt > b.Crew.readyAt ? -1 : 1)
+        ?.[0] || crews[0];
     }
     return null;
   }, [crews, selectedCrewId]);
