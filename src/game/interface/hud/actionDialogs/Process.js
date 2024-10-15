@@ -596,6 +596,8 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
       </ActionDialogBody>
 
       <ActionDialogFooter
+        crewAvailableTime={crewTimeRequirement}
+        taskCompleteTime={taskTimeRequirement}
         disabled={
           stage === actionStages.NOT_STARTED
           && !(

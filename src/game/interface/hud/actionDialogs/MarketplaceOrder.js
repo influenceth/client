@@ -881,6 +881,8 @@ const MarketplaceOrder = ({
       </ActionDialogBody>
 
       <ActionDialogFooter
+        crewAvailableTime={crewTimeRequirement}
+        taskCompleteTime={taskTimeRequirement}
         disabled={
           (isCancellation && orderCrew?.id !== crew?.id) ||
           !isCancellation && (

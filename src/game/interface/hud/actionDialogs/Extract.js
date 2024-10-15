@@ -569,6 +569,8 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
       </ActionDialogBody>
 
       <ActionDialogFooter
+        crewAvailableTime={crewTimeRequirement}
+        taskCompleteTime={taskTimeRequirement}
         disabled={
           stage !== actionStage.READY_TO_COMPLETE &&
           (

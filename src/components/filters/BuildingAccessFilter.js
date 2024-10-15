@@ -25,7 +25,7 @@ const BuildingAccessFilter = ({ assetType, filters, onChange }) => {
   const { crew } = useCrewContext();
 
   const [types, setTypes] = useState(initialValues);
-  console.log({ 'types': types });
+  // console.log({ 'types': types });
 
   useEffect(() => {
     const newTypes = ({ ...initialValues });

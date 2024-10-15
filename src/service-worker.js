@@ -138,4 +138,36 @@ self.addEventListener('fetch', event => {
   })());
 });
 
+// // handle push notifications
+// self.addEventListener('push', (event) => {
+//   console.log('push received', event);
+
+//   let data = {};
+//   if (event.data) {
+//     try {
+//       data = event.data.json();
+//     } catch (e) {
+//       console.error('Error parsing push data:', e);
+//     }
+//   }
+
+//   const title = data.title || 'Influence Notification';
+//   const options = {
+//     body: data.body || 'Something happened that needs your attention.',
+//     icon: data.icon || '/apple-touch-icon.png', // TODO: action-specific or crew specific icons?
+//   };
+
+//   event.waitUntil(
+//     self.registration.showNotification(title, options)
+//   );
+// });
+
+// self.addEventListener('notificationclick', function (event) {
+//   event.notification.close();
+//   event.waitUntil(
+//     // TODO: deep link
+//     clients.openWindow('/')
+//   );
+// });
+
 // Any other custom service worker logic can go here.

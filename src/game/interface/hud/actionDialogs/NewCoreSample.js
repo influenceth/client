@@ -332,6 +332,8 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAction
       </ActionDialogBody>
 
       <ActionDialogFooter
+        crewAvailableTime={crewTimeRequirement}
+        taskCompleteTime={taskTimeRequirement}
         disabled={lotAbundance === 0 || !drillSource}
         goLabel="Prospect"
         onGo={() => startSampling(resourceId, drillSource)}

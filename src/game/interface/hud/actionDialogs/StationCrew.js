@@ -254,6 +254,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
       </ActionDialogBody>
 
       <ActionDialogFooter
+        crewAvailableTime={travelTime}
         disabled={
           !destination ||
           !stationConfig ||

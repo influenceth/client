@@ -499,6 +499,7 @@ const FeedCrew = ({
       </ActionDialogBody>
 
       <ActionDialogFooter
+        crewAvailableTime={crewTimeRequirement}
         disabled={disabled}
         finalizeLabel="Complete"
         goLabel={`${exchangeSelection?.fillPaymentTotal > 0 ? 'Purchase & ' : ''}Transfer`}

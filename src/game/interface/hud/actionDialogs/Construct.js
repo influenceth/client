@@ -289,6 +289,8 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
       </ActionDialogBody>
 
       <ActionDialogFooter
+        crewAvailableTime={crewTimeRequirement}
+        taskCompleteTime={taskTimeRequirement}
         disabled={!requirementsMet || waitingOnTransfer}
         goLabel="Construct"
         onGo={startConstruction}

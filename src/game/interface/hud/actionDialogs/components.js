@@ -31,7 +31,6 @@ import CrewIndicator from '~/components/CrewIndicator';
 import CrewLocationLabel from '~/components/CrewLocationLabel';
 import Dialog from '~/components/Dialog';
 import IconButton from '~/components/IconButton';
-import { CrewBusyIcon } from '~/components/AnimatedIcons';
 import {
   ChevronRightIcon,
   CloseIcon,
@@ -112,6 +111,9 @@ import { ProductMarketSummary } from './ShoppingList';
 import ThumbnailBottomBanner from '~/components/ThumbnailBottomBanner';
 import ThumbnailIconBadge from '~/components/ThumbnailIconBadge';
 import PurchaseButtonInner from '~/components/PurchaseButtonInner';
+import useUser from '~/hooks/useUser';
+import NotificationSettings from '~/components/NotificationSettings';
+import GenericDialog from '~/components/GenericDialog';
 
 const SECTION_WIDTH = 780;
 
@@ -4887,7 +4889,6 @@ export const MultiSourceInputBlock = ({
   }
 
   // if off-surface, just present inventory...
-  console.log({ props })
   return (
     <InventoryInputBlock
       {...props}
@@ -5302,8 +5303,46 @@ const CrewNotLaunchedButton = () => {
   );
 };
 
+const NotificationEnabler = styled.label`
+  align-items: center;
+  color: white;
+  cursor: ${p => p.theme.cursors.active};
+  display: inline-flex;
+  opacity: 0.5;
+  transition: opacity 250ms ease;
+  & > svg {
+    color: ${p => p.theme.colors[p.enabled ? 'main' : 'error']};
+    margin-right: 4px;
+  }
+
+  &:hover {
+    opacity: 0.75;
+  }
+`;
+
+const NotificationSettingsPrompt = ({ onFinished }) => {
+  // TODO: disable finish if form is in invalid state (i.e. email but invalid email)
+  // TODO: is isTransaction always true?
+  const [loading, setLoading] = useState(false);
+  const [valid, setValid] = useState(false);
+  return (
+    <GenericDialog
+      title="Select Your Notification Preference"
+      isTransaction
+      disabled={!valid}
+      loading={loading}
+      onConfirm={onFinished}
+      confirmText="Continue Action">
+      <div style={{ alignItems: 'center', border: 'solid #222', borderWidth: '1px 0', display: 'flex', minHeight: 152 }}>
+        <NotificationSettings standalone onLoading={setLoading} onValid={setValid} />
+      </div>
+    </GenericDialog>
+  );
+};
+
 export const ActionDialogFooter = ({
   buttonsLoading,
+  crewAvailableTime,
   disabled,
   finalizeLabel,
   goLabel,
@@ -5314,20 +5353,14 @@ export const ActionDialogFooter = ({
   onFinalize,
   onGo,
   stage,
+  taskCompleteTime,
   waitForCrewReady,
   wide
 }) => {
   const { crew, isLaunched } = useCrewContext();
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-
-  // TODO: connect notifications to top-level state
-  //  and use that state to evaluate which timers should be passed to service worker
-  //  (we'll also need the ability to cancel those timers)
-
-  // show unless already enabled
-  const enableNotifications = useCallback(async () => {
-    setNotificationsEnabled((x) => !x);
-  }, []);
+  const { data: user, isLoading: userIsLoading } = useUser();
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [promptForNotifications, setPromptForNotifications] = useState(false);
 
   const allowedOrLaunched = useMemo(() => requireLaunched ? isLaunched : true, [isLaunched, requireLaunched]);
 
@@ -5341,16 +5374,48 @@ export const ActionDialogFooter = ({
     return [{ finalizeLabel, onFinalize }];
   }, [finalizeLabel, onFinalize]);
 
+  // only show notification option if i've disabled all and this would have one
+  const showNotificationOption = useMemo(() => {
+    if (stage === actionStage.NOT_STARTED) {
+      if (!crew?._isSimulation && !userIsLoading) {
+        // if not subscribed to one of the things that takes time
+        // TODO: does this cover ship delivery? can we also show in form_agreement?
+        return (
+          (!user?.notificationSubscriptions?.CREW && crewAvailableTime?.total > 0) 
+          || (!user?.notificationSubscriptions?.TASK && taskCompleteTime?.total > 0) 
+          || (!user?.email && (crewAvailableTime?.total > 0 || taskCompleteTime?.total > 0))
+        );
+      }
+    }
+    return false;
+  }, [crewAvailableTime?.total, stage, taskCompleteTime?.total, userIsLoading, user?.email, user?.notificationSubscriptions]);
+
+  const onBeforeGo = useCallback(async () => {
+    if (showNotificationOption && notificationsEnabled) {
+      setPromptForNotifications(true);
+    } else {
+      onGo();
+    }
+  }, [onGo, notificationsEnabled, showNotificationOption]);
+
+  const onCloseNotificationPrompt = useCallback(() => {
+    setPromptForNotifications(false);
+    onGo();
+  }, [onGo]);
+
   const isReady = isSequenceable ? crew?._readyToSequence : crew?._ready;
   return (
     <Footer wide={wide}>
       <SectionBody>
-        {/* TODO: ...
-          <NotificationEnabler onClick={enableNotifications}>
+        {showNotificationOption && (
+          <NotificationEnabler
+            enabled={notificationsEnabled}
+            onClick={() => setNotificationsEnabled((e) => !e)}>
             {notificationsEnabled ? <CheckedIcon /> : <UncheckedIcon />}
-            Notify on Completion
+            Notify when Ready
           </NotificationEnabler>
-        */}
+        )}
+
         <Spacer />
 
         {stage === actionStage.NOT_STARTED
@@ -5365,10 +5430,10 @@ export const ActionDialogFooter = ({
               {waitForCrewReady && allowedOrLaunched && !isReady && <CrewBusyButton isSequenceable={isSequenceable} />}
               {(!waitForCrewReady || (isReady && allowedOrLaunched)) && (
                 <Button
-                  disabled={nativeBool(disabled)}
+                  disabled={nativeBool(disabled || userIsLoading)}
                   isTransaction
                   loading={reactBool(buttonsLoading)}
-                  onClick={onGo}>
+                  onClick={onBeforeGo}>
                   {goLabelPrice > 0
                     ? (
                       <PurchaseButtonInner>
@@ -5410,6 +5475,14 @@ export const ActionDialogFooter = ({
               )
           )}
       </SectionBody>
+
+      {promptForNotifications && createPortal(
+        <NotificationSettingsPrompt
+          goLabel={goLabel}
+          onFinished={onCloseNotificationPrompt}
+        />,
+        document.body
+      )}
     </Footer>
   );
 };
