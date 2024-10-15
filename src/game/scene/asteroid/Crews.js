@@ -10,7 +10,6 @@ import {
   InstancedMesh,
   Line,
   Matrix4,
-  MeshBasicMaterial,
   Object3D,
   Raycaster,
   ShaderMaterial,
@@ -40,7 +39,7 @@ import useStore from '~/hooks/useStore';
 import useCrewContext from '~/hooks/useCrewContext';
 import useSession from '~/hooks/useSession';
 
-// TODO: remove this when done testing
+// TODO: for debugging... vvv
 // import debugData from './debugData';
 // const now = Math.floor(Date.now() / 1000);
 // const debug = debugData
@@ -55,6 +54,7 @@ import useSession from '~/hooks/useSession';
 //     return d;
 //   });
 // console.log(debugData);
+// ^^^
 
 const hopperRadius = 400;
 const arcColor = new Color(theme.colors.glowGreen);
@@ -94,6 +94,9 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
         Entity.packEntity({ label: Entity.IDS.ASTEROID, id: asteroidId }),
         Object.keys(activities).filter((k) => !!activities[k].getVisitedLot)
       );
+      // TODO: for debugging... vvv
+      // const ongoingActivities = cloneDeep(debug);
+      // ^^^
       await hydrateActivities(ongoingActivities, queryClient)
       return ongoingActivities;
     },
@@ -239,6 +242,12 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
       transparent: true,
     });
 
+    // something to play with as an alternative (add these to the time incrementer):
+    //  instanceDummy.current.rotateX(2 * Math.PI / 1200);
+    //  instanceDummy.current.rotateY(2 * Math.PI / 1200);
+    // hopperGeometry.current = new BoxGeometry(hopperRadius, hopperRadius, hopperRadius);
+    // hopperMaterial.current = new MeshBasicMaterial({ color: hopperColor });
+
     // add basic scaffolding to the scene...
     attachTo.add(main.current);
 
@@ -313,7 +322,12 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
         hopperMaterial.current.dispose();
       }
       if (main.current) {
-        main.current.children.traverse((node) => {
+        [
+          activeCrewArc.current,
+          highlightedCrewArc.current,
+          activeCrewMarker.current,
+          highlightedCrewMarker.current,
+        ].forEach((node) => {
           if (node) {
             if (node.material) {
               if (node.material.map) {
@@ -462,6 +476,7 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
   }, [cardHovered, hovered, selected]);
 
   const crewMarkerScale = useMemo(() => Math.max(1, Math.sqrt(cameraAltitude / 7500)), [cameraAltitude]);
+  const hopperScale = useMemo(() => 0.3 * Math.max(1, Math.sqrt(cameraAltitude / 7500)), [cameraAltitude]);
   const shouldBeActiveCrewHopperIndex = useMemo(() => 
     Object.keys(ongoingTravel).filter((c) => !ongoingTravel[c].hideHopper).findIndex((c) => Number(c) === crew?.id),
     [crew, ongoingTravel]
@@ -510,7 +525,6 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
     // timing.current.tally++;
     // ^^^
     
-    const hopperScale = crewMarkerScale * 0.25; // TODO: play with this
     const updateColors = shouldBeActiveCrewHopperIndex !== activeCrewHopperIndex.current;
     const crewsWithHoppers = Object.keys(ongoingTravel).filter((c) => !ongoingTravel[c].hideHopper);
     if (crewsWithHoppers.length > 0) {
