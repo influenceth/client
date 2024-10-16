@@ -287,7 +287,7 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
       );
       bgSprite.scale.set(850, 1159, 0);
       bgSprite.layers.enable(BLOOM_LAYER); // need this to hide bloomed things behind it (weird sprite thing)
-      bgSprite.renderOrder = 1001;
+      bgSprite.renderOrder = 1001 + i * 2;
 
       const sprite = new Sprite(
         new SpriteMaterial({
@@ -300,7 +300,7 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
       );
       sprite.scale.set(750, 1000, 0);
       // sprite.position.set(50, 79, 0);
-      sprite.renderOrder = 1002;
+      sprite.renderOrder = 1002 + i * 2;
 
       const crewMarker = new Group();
       crewMarker.add(bgSprite);
