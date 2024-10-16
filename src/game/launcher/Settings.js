@@ -378,6 +378,8 @@ const GameplayPane = () => {
   const gameplay = useStore(s => s.gameplay);
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
   const toggleAutoswap = useStore(s => s.dispatchAutoswapEnabled);
+  
+  const dispatchActiveCrewsDisplaySet = useStore(s => s.dispatchActiveCrewsDisplaySet);
   const dispatchDismissCrewTutorial = useStore(s => s.dispatchDismissCrewTutorial);
   const dispatchPreferredUiCurrency = useStore(s => s.dispatchPreferredUiCurrency);
   const dispatchTutorialDisabled = useStore(s => s.dispatchTutorialDisabled);
@@ -417,7 +419,29 @@ const GameplayPane = () => {
       <Section>
         <h3>Gameplay</h3>
         <div>
-          <StyledDataReadout label="Price Display">
+          <CheckboxRow>
+            <label>Active Crew Indicators:</label>
+            <ControlGroup>
+              <Button
+                active={gameplay.activeCrewsDisplay === 'selected'}
+                onClick={() => dispatchActiveCrewsDisplaySet('selected')}>
+                Activated Only
+              </Button>
+              <Button
+                active={gameplay.activeCrewsDisplay === 'delegated'}
+                onClick={() => dispatchActiveCrewsDisplaySet('delegated')}>
+                My Crews
+              </Button>
+              <Button
+                active={!gameplay.activeCrewsDisplay || gameplay.activeCrewsDisplay === 'all'}
+                onClick={() => dispatchActiveCrewsDisplaySet('all')}>
+                All Crews
+              </Button>
+            </ControlGroup>
+          </CheckboxRow>
+
+          <CheckboxRow>
+            <label>Price Display:</label>
             <ControlGroup>
               <Button
                 active={preferredUiCurrency === TOKEN.USDC}
@@ -430,7 +454,7 @@ const GameplayPane = () => {
                 ETH
               </Button>
             </ControlGroup>
-          </StyledDataReadout>
+          </CheckboxRow>
 
           <CheckboxRow>
             <label>Autoswap ETH ⇌ USDC:</label>

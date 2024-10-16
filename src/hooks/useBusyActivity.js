@@ -6,7 +6,6 @@ import useBlockTime from '~/hooks/useBlockTime';
 import activities, { hydrateActivities } from '~/lib/activities';
 import api from '~/lib/api';
 
-
 const useBusyActivity = (entity) => {
   const queryClient = useQueryClient();
   const blockTime = useBlockTime();
@@ -14,12 +13,11 @@ const useBusyActivity = (entity) => {
   const [isHydrating, setIsHydrating] = useState();
   const [hydratedBusyItem, setHydratedBusyItem] = useState();
 
+  const busyEvents = useMemo(() => Object.keys(activities).filter((i) => !!activities[i].getBusyItem || !!activities[i].requiresCrewTime), []);
+
   const { data: recentItems, dataUpdatedAt, isLoading, refetch } = useQuery(
     [ 'activities', entity?.label, Number(entity?.id), 'busy' ],
-    () => {
-      const busyEvents = Object.keys(activities).filter((i) => !!activities[i].getBusyItem || !!activities[i].requiresCrewTime);
-      return api.getEntityActivities(entity, { events: busyEvents, pageSize: 24 });
-    },
+    () => api.getEntityActivities(entity, { events: busyEvents, pageSize: 24 }),
     { enabled: !!entity }
   );
 

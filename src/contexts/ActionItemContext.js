@@ -11,7 +11,7 @@ import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 import useStore from '~/hooks/useStore';
 import useCrewBuildings from '~/hooks/useCrewBuildings';
 import useBusyActivity from '~/hooks/useBusyActivity';
-import { hydrateActivities } from '~/lib/activities';
+import activities, { hydrateActivities } from '~/lib/activities';
 import api from '~/lib/api';
 import SIMULATION_CONFIG from '~/simulation/simulationConfig';
 
@@ -44,7 +44,7 @@ const leaseAndProcessEvents = {
 
 export function ActionItemProvider({ children }) {
   const { authenticated, blockTime } = useSession();
-  const { crew, pendingTransactions } = useCrewContext();
+  const { crew, pendingTransactions, setCrewMovementActivity } = useCrewContext();
   const { data: busyActivity } = useBusyActivity(crew);
   const { data: crewAgreements, isLoading: agreementsLoading } = useCrewAgreements();
   const getActivityConfig = useGetActivityConfig();
@@ -58,6 +58,7 @@ export function ActionItemProvider({ children }) {
 
       // add startTime to all for consistency
       activities.forEach((a) => {
+        a._startTime = a.event?.timestamp;
         if (sequenceableSystems.includes(a.event.name)) {
           if (a.data?.crew?.Crew?.lastReadyAt > a.event?.timestamp) {
             a._startTime = a.data?.crew?.Crew?.lastReadyAt;
@@ -224,6 +225,17 @@ export function ActionItemProvider({ children }) {
         .sort((a, b) => a._agreement.endTime - b._agreement.endTime)
     );
   }, [actionItems, busyActivity, crew, crew?._ready, crewAgreements, plannedBuildings, blockTime, itemsUpdatedAt, plansUpdatedAt]);
+
+  useEffect(() => {
+    const movementEvents = Object.keys(activities).filter((i) => !!activities[i].getVisitedLot);
+    const act = unreadyItems.find((i) => movementEvents.includes(i.event.name));
+    if (act) {
+      setCrewMovementActivity({
+        ...cloneDeep(act),
+        _finishTime: unstartedItems.length ? unstartedItems[0]._startTime : crew.Crew?.readyAt
+      })
+    }
+  }, [unreadyItems, unstartedItems]);
 
   const allVisibleItems = useMemo(() => {
     if (!authenticated) return [];

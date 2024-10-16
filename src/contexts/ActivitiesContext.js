@@ -157,6 +157,9 @@ export function ActivitiesProvider({ children }) {
           if (activityConfig.requiresCrewTime) {
             activityInvalidations.push([ 'activities', crew?.label, crew?.id, 'busy' ]);
           }
+          if (activityConfig.visitedLot) {
+            activityInvalidations.push([ 'activities', 'ongoing' ]);
+          }
 
           // sway gas invalidation
           // (if no caller or if caller matches my account)

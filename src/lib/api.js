@@ -405,6 +405,11 @@ const api = {
     };
   },
 
+  getOngoingActivities: async (asteroidUuid, eventTypes = []) => {
+    const response = await instance.get(`/${apiVersion}/activity/ongoing/${asteroidUuid}?${buildQuery({ types: eventTypes.join(','), page: 1, pageSize: 250 })}`);
+    return response.data;
+  },
+
   getTransactionActivities: async (txHashes) => {
     const response = await instance.get(`/${apiVersion}/activity?${buildQuery({ txHash: txHashes.join(',') })}`);
     return {
