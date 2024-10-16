@@ -476,7 +476,8 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
   }, [cardHovered, hovered, selected]);
 
   const crewMarkerScale = useMemo(() => Math.max(1, Math.sqrt(cameraAltitude / 7500)), [cameraAltitude]);
-  const hopperScale = useMemo(() => 0.3 * Math.max(1, Math.sqrt(cameraAltitude / 7500)), [cameraAltitude]);
+  const hopperScale = useMemo(() => 0.3 * crewMarkerScale, [crewMarkerScale]);
+  const indicatorOffsetScale = useMemo(() => Math.max(1.5, Math.min(1.5 * Math.sqrt(cameraAltitude / 7500), 4)), [crewMarkerScale]);
   const shouldBeActiveCrewHopperIndex = useMemo(() => 
     Object.keys(ongoingTravel).filter((c) => !ongoingTravel[c].hideHopper).findIndex((c) => Number(c) === crew?.id),
     [crew, ongoingTravel]
@@ -518,7 +519,7 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
 
     crewIndicatorOffset.current.addVectors(
       localUp.setLength(3 * hopperRadius * crewMarkerScale), // "north" from hopper
-      localOut.setLength(-650) // towards camera (above surface)
+      localOut.setLength(-150 * indicatorOffsetScale) // towards camera (above surface)
     );
     
     // timing.current.total += performance.now() - s;
@@ -581,7 +582,7 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
       const intersections = safeRaycaster.intersectObject(hoppersMesh.current);
       const shouldBeHovered = intersections.length > 0 && crewsWithHoppers[intersections[0].instanceId];
       if (hovered !== shouldBeHovered) {
-        if (shouldBeHovered) {
+        if (shouldBeHovered && Number(shouldBeHovered) !== crew?.id) {
           clearTimeout(unselector.current);
           unselector.current = null;
 
