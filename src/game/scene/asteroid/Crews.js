@@ -6,6 +6,7 @@ import {
   Color,
   CubicBezierCurve3,
   Group,
+  IcosahedronGeometry,
   InstancedBufferAttribute,
   InstancedMesh,
   Line,
@@ -13,7 +14,6 @@ import {
   Object3D,
   Raycaster,
   ShaderMaterial,
-  SphereGeometry,
   Sprite,
   SpriteMaterial,
   TextureLoader,
@@ -73,7 +73,7 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
   const { accountAddress } = useSession();
 
   const activeCrewsDisplay = useStore((s) => s.gameplay.activeCrewsDisplay);
-  
+
   const attachTo = useMemo(() => overrideAttachTo || scene, [overrideAttachTo, scene]);
   const textureLoader = useRef(new TextureLoader());
 
@@ -116,7 +116,7 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
       if (crewLocation.asteroidId === asteroidId) {
         ongoingActivities.push(crewMovementActivity);
       }
-    }    
+    }
 
     ongoing?.forEach((activity) => {
       const crew = activity.data.crew;
@@ -167,7 +167,7 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
               hideHopper: (nowSec > startTime + travelTime),
             }
           }
-          
+
           // second leg of round trip
           else {
             crews[crew.id] = {
@@ -184,7 +184,7 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
         // console.log('skip', activity);
       }
     });
-    
+
     // add curve and texture to crews
     Object.keys(crews).forEach((crewId) => {
       const origin = new Vector3(...getLotPosition(crews[crewId].origin));
@@ -213,7 +213,7 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
   const nullArcGeometry = useRef(() => new BufferGeometry().setFromPoints([new Vector3(0, 0, 0)]));
   useEffect(() => {
     // init hopper geometry and material for instanced mesh
-    hopperGeometry.current = new SphereGeometry(hopperRadius, 32, 32);
+    hopperGeometry.current = new IcosahedronGeometry(hopperRadius, 0);
     hopperMaterial.current = new ShaderMaterial({
       uniforms: { uTime: arcTime.current, },
       vertexShader: `
@@ -365,7 +365,7 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
     hoppersMesh.current.geometry.setAttribute('aOffset', new InstancedBufferAttribute(offsets, 1));
     hoppersMesh.current.geometry.setAttribute('aInstanceColor', new InstancedBufferAttribute(hopperColors.current, 3));
     hoppersMesh.current.layers.enable(BLOOM_LAYER);
-    
+
     activeCrewHopperIndex.current = -1;
 
     main.current.add(hoppersMesh.current);
@@ -442,7 +442,7 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
         if (highlightedCrewMarker.current.children[1].material.map) {
           highlightedCrewMarker.current.children[1].material.map.dispose();
         }
-        
+
         highlightedCrewMarker.current.children[1].material.map = null;
         highlightedCrewMarker.current.children[1].material.opacity = 0;
         highlightedCrewMarker.current.children[1].material.needsUpdate = true;
@@ -487,10 +487,10 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
     }
   }, [cardHovered, hovered, selected]);
 
-  const crewMarkerScale = useMemo(() => Math.max(1, Math.sqrt(cameraAltitude / 7500)), [cameraAltitude]);
+  const crewMarkerScale = useMemo(() => Math.max(1, Math.sqrt(cameraAltitude / 10000)), [cameraAltitude]);
   const hopperScale = useMemo(() => 0.3 * crewMarkerScale, [crewMarkerScale]);
-  const indicatorOffsetScale = useMemo(() => Math.max(1.5, Math.min(1.5 * Math.sqrt(cameraAltitude / 7500), 4)), [crewMarkerScale]);
-  const shouldBeActiveCrewHopperIndex = useMemo(() => 
+  const indicatorOffsetScale = useMemo(() => Math.max(1.5, Math.min(1.5 * Math.sqrt(cameraAltitude / 10000), 4)), [crewMarkerScale]);
+  const shouldBeActiveCrewHopperIndex = useMemo(() =>
     Object.keys(ongoingTravel).filter((c) => !ongoingTravel[c].hideHopper).findIndex((c) => Number(c) === crew?.id),
     [crew, ongoingTravel]
   );
@@ -515,7 +515,7 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
     if (arcTime.current) {
       arcTime.current.value += 1;
     }
-    
+
     // TODO: vvv this could probably be improved by thinking about screenspace vectors better
     // (i.e. could we just attach the sprites to the root scene and avoid all these transforms)
     // this takes ~0.15ms per frame, perhaps that is tolerable
@@ -530,14 +530,14 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
     const localOut = cameraDirection.current.applyMatrix4(inverseMatrix.current);
 
     crewIndicatorOffset.current.addVectors(
-      localUp.setLength(3 * hopperRadius * crewMarkerScale), // "north" from hopper
+      localUp.setLength(2 * hopperRadius * crewMarkerScale), // "north" from hopper
       localOut.setLength(-150 * indicatorOffsetScale) // towards camera (above surface)
     );
-    
+
     // timing.current.total += performance.now() - s;
     // timing.current.tally++;
     // ^^^
-    
+
     const updateColors = shouldBeActiveCrewHopperIndex !== activeCrewHopperIndex.current;
     const crewsWithHoppers = Object.keys(ongoingTravel).filter((c) => !ongoingTravel[c].hideHopper);
     if (crewsWithHoppers.length > 0) {
@@ -583,7 +583,7 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
     if (main.current?.children?.length > 0 && state.raycaster) {
 
       // not sure why useFrame's raycaster isn't working, probably because it's used more than once in the useFrame loop...
-      // it catches intersections but then stops detecting the same ones without moving mouse... so we use a fallback 
+      // it catches intersections but then stops detecting the same ones without moving mouse... so we use a fallback
       // raycaster while highlighted (but not all the time because it's expensive)
       let safeRaycaster = state.raycaster;
       if (hovered && raycaster.current) {
