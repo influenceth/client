@@ -17,12 +17,12 @@ import {
   Sprite,
   SpriteMaterial,
   TextureLoader,
+  Vector2,
   Vector3
 } from 'three';
 import { Address, Asteroid, Crewmate, Entity, Lot, Time } from '@influenceth/sdk';
 import { useHistory } from 'react-router-dom';
 import { useQuery, useQueryClient } from 'react-query';
-import cloneDeep from 'lodash/cloneDeep';
 
 import { appConfig } from '~/appConfig';
 import { BLOOM_LAYER } from '~/game/Postprocessor';
@@ -459,18 +459,30 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
   }, [cardHovered]);
 
   // listen for click events (toggle hopper selection, click through to crew page)
+  const clickStatus = useRef();
   useEffect(() => {
     if (hovered || selected) {
-      const onClick = (e) => {
-        if (cardHovered) {
-          history.push(`/crew/${selected}`)
-        } else {
-          setSelected(hovered === selected ? undefined : hovered);
+      const onMouseEvent = (e) => {
+        if (e.type === 'pointerdown') {
+          clickStatus.current = new Vector2(e.clientX, e.clientY);
+        }
+        else if (e.type === 'pointerup' && clickStatus.current) {
+          const distance = clickStatus.current.distanceTo(new Vector2(e.clientX, e.clientY));
+          if (distance < 3) {
+            if (cardHovered) {
+              history.push(`/crew/${selected}`)
+            } else {
+              setSelected(hovered === selected ? undefined : hovered);
+            }
+          }
         }
       };
-      gl.domElement.addEventListener('pointerup', onClick, true);
+
+      gl.domElement.addEventListener('pointerdown', onMouseEvent, true);
+      gl.domElement.addEventListener('pointerup', onMouseEvent, true);
       return () => {
-        gl.domElement.removeEventListener('pointerup', onClick, true);
+        gl.domElement.removeEventListener('pointerdown', onMouseEvent, true);
+        gl.domElement.removeEventListener('pointerup', onMouseEvent, true);
       };
     }
   }, [cardHovered, hovered, selected]);
