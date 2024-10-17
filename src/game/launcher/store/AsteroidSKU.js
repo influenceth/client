@@ -147,15 +147,15 @@ const AsteroidSize = ({ sizeLabel }) => {
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
   const minPriceUSDC = useMemo(() => {
-    if (sizeLabel === 'small') return priceHelper.from(asteroidPrice(13n, priceConstants), TOKEN.ETH).to(TOKEN.USDC);
+    if (sizeLabel === 'small') return priceHelper.from(asteroidPrice(13n, priceConstants), priceConstants.ASTEROID_PURCHASE_TOKEN).to(TOKEN.USDC);
     if (sizeLabel === 'medium') return sizeUI.small.maxPriceUSDC * TOKEN_SCALE[TOKEN.USDC];
     if (sizeLabel === 'large') return sizeUI.medium.maxPriceUSDC * TOKEN_SCALE[TOKEN.USDC];
   }, [priceHelper, priceConstants, sizeLabel]);
 
   const [minLots, maxLots] = useMemo(() => {
     return [
-      asteroidPriceToLots(priceHelper.from(minPriceUSDC, TOKEN.USDC).to(TOKEN.ETH), priceConstants),
-      asteroidPriceToLots(priceHelper.from(maxPriceUSDC * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC).to(TOKEN.ETH), priceConstants),
+      asteroidPriceToLots(priceHelper.from(minPriceUSDC, TOKEN.USDC), priceConstants),
+      asteroidPriceToLots(priceHelper.from(maxPriceUSDC * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC), priceConstants),
     ];
   }, [priceHelper, priceConstants]);
   
