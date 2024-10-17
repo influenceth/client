@@ -35,7 +35,7 @@ import useWebWorker from '~/hooks/useWebWorker';
 import constants from '~/lib/constants';
 import exportGLTF from '~/lib/graphics/exportGLTF';
 import formatters from '~/lib/formatters';
-import { asteroidPrice, TOKEN_FORMAT } from '~/lib/priceUtils';
+import { asteroidPrice, TOKEN, TOKEN_FORMAT, TOKEN_SCALE } from '~/lib/priceUtils';
 import { fireTrackingEvent, nativeBool, reactBool } from '~/lib/utils';
 import EntityActivityLog from '../EntityActivityLog';
 import usePriceHelper from '~/hooks/usePriceHelper';
@@ -314,6 +314,11 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
     return asteroidPrice(lots, priceConstants);
   }, [asteroid, priceConstants]);
 
+  const usdcPrice = useMemo(() => {
+    if (!price || !priceConstants?.ASTEROID_PURCHASE_TOKEN) return 0;
+    return priceHelper.from(price, priceConstants.ASTEROID_PURCHASE_TOKEN).to(TOKEN.USDC) / TOKEN_SCALE[TOKEN.USDC];
+  }, [price, priceConstants?.ASTEROID_PURCHASE_TOKEN, priceHelper]);
+
   const onBuyAsteroid = useCallback(async () => {
     const limited = await checkForLimit();
     if (limited) return;
@@ -323,12 +328,12 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
       category: 'purchase',
       currency: 'USD',
       externalId: accountAddress,
-      value: Number(price) / 1e6,
+      value: usdcPrice,
       items: [{
         item_name: 'asteroid'
       }]
     });
-  }, [accountAddress, buyAsteroid, checkForLimit]);
+  }, [accountAddress, buyAsteroid, checkForLimit, usdcPrice]);
 
   const attemptBuyAsteroid = useCallback(() => {
     onVerifyFunds(
