@@ -400,6 +400,15 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
     }
   }, [crew?.id]);
 
+  useEffect(() => {
+    [0, 1].forEach((i) => {
+      if (activeCrewMarker.current?.children?.[i]?.material) {
+        activeCrewMarker.current.children[i].material.opacity = crewMovementActivity ? 1 : 0;
+        activeCrewMarker.current.children[i].material.needsUpdate = true;
+      }
+    });
+  }, [crewMovementActivity])
+
   // add geometry for the active crew arc
   useEffect(() => {
     if (activeCrewArc.current) {
@@ -538,32 +547,42 @@ const Crews = ({ attachTo: overrideAttachTo, asteroidId, cameraAltitude, getLotP
     // timing.current.tally++;
     // ^^^
 
-    const updateColors = shouldBeActiveCrewHopperIndex !== activeCrewHopperIndex.current;
     const crewsWithHoppers = Object.keys(ongoingTravel).filter((c) => !ongoingTravel[c].hideHopper);
-    if (crewsWithHoppers.length > 0) {
-      crewsWithHoppers.forEach((crewId, hopperIndex) => {
+    const updateColors = shouldBeActiveCrewHopperIndex !== activeCrewHopperIndex.current;
+    if (Object.keys(ongoingTravel)?.length) {
+
+      let hopperIndex = 0;
+      Object.keys(ongoingTravel).forEach((crewId) => {
         const travel = ongoingTravel[crewId];
         const progress = ((Date.now() / 1000) - travel.departure) / travel.travelTime;
         travel.curve.getPointAt(Math.min(Math.max(0, progress), 1), progressPosition.current);
 
-        instanceDummy.current.position.copy(progressPosition.current);
-        instanceDummy.current.scale.set(hopperScale, hopperScale, hopperScale);
-        instanceDummy.current.updateMatrix();
-        hoppersMesh.current.setMatrixAt(hopperIndex, instanceDummy.current.matrix);
+        // update scale and position and color of hoppers
+        if (!travel.hideHopper) {
+          instanceDummy.current.position.copy(progressPosition.current);
+          instanceDummy.current.scale.set(hopperScale, hopperScale, hopperScale);
+          instanceDummy.current.updateMatrix();
+          hoppersMesh.current.setMatrixAt(hopperIndex, instanceDummy.current.matrix);
 
-        if (updateColors) {
-          const color = hopperIndex === shouldBeActiveCrewHopperIndex ? activeCrewColor : hopperColor;
-          hopperColors.current[3 * hopperIndex + 0] = color.r;
-          hopperColors.current[3 * hopperIndex + 1] = color.g;
-          hopperColors.current[3 * hopperIndex + 2] = color.b;
+          if (updateColors) {
+            const color = hopperIndex === shouldBeActiveCrewHopperIndex ? activeCrewColor : hopperColor;
+            hopperColors.current[3 * hopperIndex + 0] = color.r;
+            hopperColors.current[3 * hopperIndex + 1] = color.g;
+            hopperColors.current[3 * hopperIndex + 2] = color.b;
+          }
+
+          hopperIndex++;
         }
 
-        if (Number(crewId) === crew?.id) {
+        // update active crew-marker scale and position
+        if (Number(crewId) === Number(crew?.id)) {
           if (activeCrewMarker.current) {
             activeCrewMarker.current.scale.set(crewMarkerScale, crewMarkerScale, crewMarkerScale);
             activeCrewMarker.current.position.addVectors(progressPosition.current, crewIndicatorOffset.current);
           }
         }
+
+        // update highlighted crew-marker scale and position
         if (highlightedCrewMarker.current) {
           if (Number(crewId) === Number(highlightedCrewId)) {
             highlightedCrewMarker.current.scale.set(crewMarkerScale, crewMarkerScale, crewMarkerScale);
