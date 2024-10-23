@@ -13,9 +13,7 @@ import { entitiesCacheKey } from '~/lib/cacheKey';
 
 const useWalletShips = () => {
   const { accountAddress } = useSession();
-  const { crews, loading: crewsLoading } = useCrewContext();
-
-  const controllerIds = useMemo(() => (crews || []).map((c) => c.id), [crews]);
+  const { accountCrewIds, loading: crewsLoading } = useCrewContext();
 
   const query = useMemo(() => {
     if (!accountAddress || crewsLoading) return null;
@@ -24,7 +22,7 @@ const useWalletShips = () => {
       const qb = esb.boolQuery();
       qb.should([
         esb.termQuery('Nft.owner', accountAddress),
-        esb.termsQuery('Control.controller.id', controllerIds),
+        esb.termsQuery('Control.controller.id', accountCrewIds),
       ]);
       
       const q = esb.requestBodySearch();
@@ -39,10 +37,10 @@ const useWalletShips = () => {
     }
 
     return null;
-  }, [accountAddress, controllerIds, crewsLoading]);
+  }, [accountAddress, accountCrewIds, crewsLoading]);
 
   return useQuery(
-    entitiesCacheKey(Entity.IDS.SHIP, { owner: accountAddress, controllerId: controllerIds }),
+    entitiesCacheKey(Entity.IDS.SHIP, { owner: accountAddress, controllerId: accountCrewIds }),
     async () => {
       const response = await api.searchAssets('ships', query);
       return response?.hits || [];

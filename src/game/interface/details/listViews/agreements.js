@@ -81,7 +81,7 @@ const Progress = ({ start, finish, overrideColor }) => {
 
 const useColumns = () => {
   const { accountAddress } = useSession();
-  const { crew } = useCrewContext();
+  const { accountCrewIds, crew } = useCrewContext();
   const { props: actionProps } = useActionButtons();
   const blockTime = useBlockTime();
 
@@ -135,7 +135,7 @@ const useColumns = () => {
         sortField: 'Control.controller.id',
         selector: row => (
           <>
-            {crew?.id === row.Control?.controller?.id && <My><MyAssetIcon /></My>}
+            {accountCrewIds?.includes(row.Control?.controller?.id) && <My><MyAssetIcon /></My>}
             <EntityLink {...row.Control?.controller} />
           </>
         ), // TODO: is meta.crew.name populated?
@@ -250,7 +250,7 @@ const useColumns = () => {
     ];
 
     return columns.filter((c) => accountAddress || !c.requireLogin);
-  }, [accountAddress, blockTime, crew?.id]);
+  }, [accountAddress, accountCrewIds, blockTime, crew?.id]);
 };
 
 export default useColumns;

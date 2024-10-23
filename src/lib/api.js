@@ -184,78 +184,11 @@ const api = {
     }, []);
   },
 
-  // NOTE (deprecated)
-  getCrewPlannedBuildings: async (crewId) => {
-    const queryBuilder = esb.boolQuery();
-    queryBuilder.filter(esb.termQuery('Building.status', Building.CONSTRUCTION_STATUSES.PLANNED));
-    queryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
-
-    const q = esb.requestBodySearch();
-    q.query(queryBuilder);
-    q.from(0);
-    q.size(10000);
-    const query = q.toJSON();
-
-    const response = await instance.post(`/_search/building`, query);
-    return formatESEntityData(response.data);
-  },
-
-  // NOTE (deprecated)
-  getCrewBuildingsOnAsteroid: async (asteroidId, crewId) => {
-    const queryBuilder = esb.boolQuery();
-
-    // on asteroid
-    queryBuilder.filter(esbLocationQuery({ asteroidId }));
-
-    // controlled by crew
-    queryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
-
-    // not abandoned
-    queryBuilder.filter(esb.rangeQuery('Building.status').gt(0));
-
-    const q = esb.requestBodySearch();
-    q.query(queryBuilder);
-    q.size(10000);
-    const query = q.toJSON();
-
-    const response = await instance.post(`/_search/building`, query);
-    return formatESEntityData(response.data);
-  },
-
   getCrewSamples: async (crewId) => {
     const queryBuilder = esb.boolQuery();
 
     // controlled by crew
     queryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
-
-    // not depleted !(used AND remainingYield === 0)
-    queryBuilder.filter(
-      esb.boolQuery().mustNot([
-        esb.termQuery('Deposit.status', Deposit.STATUSES.USED),
-        esb.termQuery('Deposit.remainingYield', 0),
-      ])
-    );
-
-    const q = esb.requestBodySearch();
-    q.query(queryBuilder);
-    q.size(10000);
-    const query = q.toJSON();
-
-    const response = await instance.post(`/_search/deposit`, query);
-    return formatESEntityData(response.data);
-  },
-
-  getCrewSamplesOnAsteroid: async (asteroidId, crewId, resourceId) => {
-    const queryBuilder = esb.boolQuery();
-
-    // on asteroid
-    queryBuilder.filter(esbLocationQuery({ asteroidId }));
-
-    // controlled by crew
-    queryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
-
-    // resource
-    queryBuilder.filter(esb.termQuery('Deposit.resource', resourceId));
 
     // not depleted !(used AND remainingYield === 0)
     queryBuilder.filter(
@@ -296,14 +229,14 @@ const api = {
     return formatESEntityData(response.data);
   },
 
-  getAsteroidBuildingsWithAccessibleInventories: async (asteroidId, crewId, crewDelegatedTo, withPermission) => {
+  getAsteroidBuildingsWithAccessibleInventories: async (asteroidId, crewId, crewSiblingIds, crewDelegatedTo, withPermission) => {
     const buildingQueryBuilder = esb.boolQuery();
 
     // Exclude unplanned buildings
     buildingQueryBuilder.mustNot(esb.termQuery('Building.status', Building.CONSTRUCTION_STATUSES.UNPLANNED))
 
     // has permission
-    if (withPermission) buildingQueryBuilder.filter(esbPermissionQuery(crewId, crewDelegatedTo, withPermission));
+    if (withPermission) buildingQueryBuilder.filter(esbPermissionQuery(crewId, crewSiblingIds, crewDelegatedTo, withPermission));
 
     // on asteroid
     buildingQueryBuilder.filter(esbLocationQuery({ asteroidId }));
@@ -325,11 +258,11 @@ const api = {
     return formatESEntityData(response.data);
   },
 
-  getAsteroidShipsWithAccessibleInventories: async (asteroidId, crewId, crewDelegatedTo, withPermission) => {
+  getAsteroidShipsWithAccessibleInventories: async (asteroidId, crewId, crewSiblingIds, crewDelegatedTo, withPermission) => {
     const shipQueryBuilder = esb.boolQuery();
 
     // has permission
-    if (withPermission) shipQueryBuilder.filter(esbPermissionQuery(crewId, crewDelegatedTo, withPermission));
+    if (withPermission) shipQueryBuilder.filter(esbPermissionQuery(crewId, crewSiblingIds, crewDelegatedTo, withPermission));
 
     // on asteroid
     // (and not in orbit -- i.e. lotId is present and !== 0)

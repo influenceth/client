@@ -13,7 +13,7 @@ const useConstructionManager = (lotId) => {
   const { actionItems, readyItems } = useActionItems();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
   const blockTime = useBlockTime();
-  const { crew } = useCrewContext();
+  const { accountCrewIds, crew } = useCrewContext();
   const { data: lot } = useLot(lotId);
 
   const asteroidId = useMemo(() => Lot.toPosition(lotId)?.asteroidId, [lotId]);
@@ -96,7 +96,7 @@ const useConstructionManager = (lotId) => {
             stages.plan = actionStage.COMPLETING;
 
           // if at risk, but i was the occupier, still treat as "planned" (will go back to "ready to plan" for other crews)
-          } else if (lot.building?.Control?.controller?.id === crew?.id) {
+          } else if (accountCrewIds?.includes(lot.building?.Control?.controller?.id)) {
             status = 'PLANNED';
             stages.plan = actionStage.COMPLETED;
           }
@@ -139,7 +139,7 @@ const useConstructionManager = (lotId) => {
       isAtRisk,
       stages
     ];
-  }, [actionItems, asteroid, readyItems, getPendingTx, getStatus, payload, planPayload, lot?.building]);
+  }, [accountCrewIds, actionItems, asteroid, readyItems, getPendingTx, getStatus, payload, planPayload, lot?.building]);
 
   const txMeta = useMemo(() => ({ asteroidId, lotId }), [asteroidId, lotId]);
 

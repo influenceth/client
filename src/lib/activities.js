@@ -970,7 +970,7 @@ const activities = {
       const _location = locationsArrToObj(destination?.Location?.locations || []);
       return {
         icon: <SurfaceTransferIcon />,
-        label: `${destination?.Control?.controller?.id !== viewingAs?.id ? 'Outgoing' : 'Incoming'} Transfer Proposal`,
+        label: `${destination?.Control?.controller?.id === viewingAs?.id ? 'Incoming' : 'Outgoing'} Transfer Proposal`,
         asteroidId: _location.asteroidId,
         lotId: _location.lotId,
         locationDetail: getEntityName(destination),

@@ -69,7 +69,7 @@ const SelectableRow = styled.div`
 `;
 
 const Favorites = ({ onClose }) => {
-  const { crew } = useCrewContext();
+  const { accountCrewIds } = useCrewContext();
   const asteroidId = useStore(s => s.asteroids.origin);
   const selectAsteroid = useStore(s => s.dispatchOriginSelected);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
@@ -90,7 +90,7 @@ const Favorites = ({ onClose }) => {
         <SelectableRow key={asteroid.id} selected={asteroidId === asteroid.id} onClick={onClick(asteroid.id)}>
           {asteroidId === asteroid.id && (
             <Thumbnail>
-              {asteroid.Control?.controller.id === crew?.id && <MyAssetIcon />}
+              {accountCrewIds?.includes(asteroid.Control?.controller?.id) && <MyAssetIcon />}
               <AsteroidRendering asteroid={asteroid} />
             </Thumbnail>
           )}

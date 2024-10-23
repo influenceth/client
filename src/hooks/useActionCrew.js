@@ -4,6 +4,7 @@ import { Crewmate } from '@influenceth/sdk';
 import useCrewContext from '~/hooks/useCrewContext';
 import useEntity from '~/hooks/useEntity';
 import { getCrewAbilityBonuses, locationsArrToObj } from '~/lib/utils';
+import useOwnedCrews from './useOwnedCrews';
 
 const useActionCrew = (currentAction) => {
   const { _cachedData, startTime } = currentAction || {};
@@ -13,6 +14,9 @@ const useActionCrew = (currentAction) => {
   // all new activities have crew.Location included... old ones will need to use this as a
   // best-effort fallback (so we'll only load if crew.Location is not set)
   const { data: liveStation } = useEntity(_cachedData?.crew?.Location ? null : _cachedData?.station?.entity);
+
+  const { data: accountCrews } = useOwnedCrews(_cachedData?.crew?.Crew?.delegatedTo);
+  const accountCrewIds = useMemo(() => (accountCrews || []).map((c) => c.id), [accountCrews]);
 
   return useMemo(() => {
     if (_cachedData) {
@@ -55,12 +59,13 @@ const useActionCrew = (currentAction) => {
         volume: bonuses[Crewmate.ABILITY_IDS.INVENTORY_VOLUME_CAPACITY]?.totalBonus,
       };
 
-      // console.log('usecachedcrew', c);
+      // attach sibling crews
+      c._siblingCrewIds = accountCrewIds.filter((id) => id !== c.id);
 
       return c;
     }
     return liveCrew;
-  }, [_cachedData, liveCrew, liveStation, startTime]);
+  }, [_cachedData, accountCrewIds, liveCrew, liveStation, startTime]);
 };
 
 export default useActionCrew;

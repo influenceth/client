@@ -1713,7 +1713,7 @@ const SelectionTableToggle = styled.div`
 `;
 
 export const CoreSampleSelectionDialog = ({ lotId, options, initialSelection, onClose, onSelected, open }) => {
-  const { crew } = useCrewContext();
+  const { accountCrewIds, crew } = useCrewContext();
   const [selection, setSelection] = useState(initialSelection);
   const [showForSale, setShowForSale] = useState(true);
   const [showUsed, setShowUsed] = useState(true);
@@ -1736,17 +1736,17 @@ export const CoreSampleSelectionDialog = ({ lotId, options, initialSelection, on
 
   const samples = useMemo(() => {
     return options
-      .filter((s) => (showForSale || !s.PrivateSale?.amount || crew?.id === s.Control?.controller?.id) && (showUsed || (s.Deposit.remainingYield === s.Deposit.initialYield)))
+      .filter((s) => (showForSale || !s.PrivateSale?.amount || accountCrewIds?.includes(s.Control?.controller?.id)) && (showUsed || (s.Deposit.remainingYield === s.Deposit.initialYield)))
       .sort((a, b) => {
         // sort mine above others'
-        if ((crew?.id === a.Control?.controller?.id) !== (crew?.id === b.Control?.controller?.id)) {
-          return (crew?.id === a.Control?.controller?.id) ? -1 : 1;
+        if (accountCrewIds?.includes(a.Control?.controller?.id) !== accountCrewIds?.includes(b.Control?.controller?.id)) {
+          return accountCrewIds?.includes(a.Control?.controller?.id) ? -1 : 1;
         }
 
         // sort by deposit size
         return b.Deposit.remainingYield - a.Deposit.remainingYield;
       })
-  }, [options, showForSale, showUsed]);
+  }, [accountCrewIds, options, showForSale, showUsed]);
 
   return (
     <SelectionDialog
@@ -1801,10 +1801,10 @@ export const CoreSampleSelectionDialog = ({ lotId, options, initialSelection, on
                 </td>
                 <td>
                   <EntityName {...sample.Control?.controller} />
-                  {crew?.id === sample.Control?.controller?.id ? <label style={{ color: theme.colors.main }}> (Me)</label> : null}
+                  {accountCrewIds?.includes(sample.Control?.controller?.id) ? <label style={{ color: theme.colors.main }}> (Me)</label> : null}
                 </td>
                 <td>
-                  {crew?.id !== sample.Control?.controller?.id && sample.PrivateSale?.amount > 0
+                  {!accountCrewIds?.includes(sample.Control?.controller?.id) && sample.PrivateSale?.amount > 0
                     ? <><SwayIcon /> {formatFixed(sample.PrivateSale?.amount / 1e6, 0)}</>
                     : <span style={{ opacity: 0.5 }}>N / A</span>
                   }
@@ -2448,7 +2448,7 @@ export const InventorySelectionDialog = ({
   open,
   requirePresenceOfItemIds
 }) => {
-  const { crew } = useCrewContext();
+  const { accountCrewIds, crew } = useCrewContext();
 
   const simulationEnabled = useSimulationEnabled();
   const setCoachmarkRef = useCoachmarkRefSetter();
@@ -2469,6 +2469,7 @@ export const InventorySelectionDialog = ({
 
   // if off the surface, cannot access inventories on the surface...
   const { data: inventoryData } = useAccessibleAsteroidInventories(otherLocation.lotIndex === 0 ? null : asteroidId, isSourcing);
+  console.log({ inventoryData});
   const permission = isSourcing ? Permission.IDS.REMOVE_PRODUCTS : Permission.IDS.ADD_PRODUCTS;
 
   // ... but can access inventories on their crewed ship (assuming not sending things elsewhere)
@@ -2496,7 +2497,7 @@ export const InventorySelectionDialog = ({
         }
 
         // filter uncontrolled if limitToControlled
-        if (limitToControlled && entity.Control.controller.id !== crew?.id) return;
+        if (limitToControlled && !accountCrewIds?.includes(entity.Control.controller.id)) return;
 
         // skip if locked (or inventory type is 0, which should not happen but has in staging b/c of dev bugs)
         if (inv.status !== Inventory.STATUSES.AVAILABLE || inv.inventoryType === 0) return;
@@ -2538,7 +2539,7 @@ export const InventorySelectionDialog = ({
           entity,
           disabled: (requirePresenceOfItemIds && !itemTally) || (isSourcing && inv.mass === 0),
           distance: Asteroid.getLotDistance(asteroidId, entityLotIndex, otherLocation.lotIndex), // distance to source + distance to destination
-          isControlled: entity.Control.controller.id === crew?.id,
+          isControlled: accountCrewIds?.includes(entity.Control.controller.id),
           isPermitted: !(entity.PublicPolicies || []).find((p) => p.permission === permission),
 
           contentsObj,
@@ -3935,7 +3936,7 @@ export const FlexSectionBlock = ({ bodyStyle, children, style = {}, title, title
 };
 
 export const LotControlWarning = ({ lot }) => {
-  const { crew } = useCrewContext();
+  const { accountCrewIds, crew } = useCrewContext();
   const { isAtRisk } = useConstructionManager(lot?.id);
 
   const warning = useMemo(() => {
@@ -3943,10 +3944,10 @@ export const LotControlWarning = ({ lot }) => {
     if (isAtRisk) {
       return <>Construction Site is vulnerable to any crew.</>;
     }
-    if (crew?.id !== lot?.Control?.controller?.id) {
+    if (!accountCrewIds?.includes(lot?.Control?.controller?.id)) {
       return <>Lot Not Controlled. Construction Site is vulnerable to <EntityName {...(lot?.Control?.controller || {})} /></>;
     }
-  }, [crew, isAtRisk, lot?.building]);
+  }, [accountCrewIds, crew, isAtRisk, lot?.building]);
 
   if (!warning) return null;
   return (
@@ -5026,9 +5027,9 @@ export const BuildingInputBlock = ({ building, imageProps = {}, ...props }) => {
 };
 
 export const ShipInputBlock = ({ ship, ...props }) => {
-  const { crew } = useCrewContext();
+  const { accountCrewIds, crew } = useCrewContext();
   const hasMyCrew = crew && crew._location?.shipId === ship?.id;
-  const isMine = crew && crew.id === ship?.Control?.controller?.id;
+  const isMine = accountCrewIds?.includes(ship?.Control?.controller?.id);
   const inEmergencyMode = ship?.Ship?.emergencyAt > 0;
   return (
     <FlexSectionInputBlock

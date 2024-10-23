@@ -55,7 +55,7 @@ const StationManifest = () => {
   const lotId = useStore(s => s.asteroids.lot);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
 
-  const { crew, crewCan } = useCrewContext();
+  const { accountCrewIds, crew, crewCan } = useCrewContext();
   const { data: lot } = useLot(lotId);
 
   const zoomShipId = zoomScene?.type === 'SHIP' ? zoomScene.shipId : null;
@@ -207,9 +207,9 @@ const StationManifest = () => {
             />
           )}
 
-          {selectedCrewId && crew?.id === selectedCrewId && <actionButtons.EjectCrew.Component {...actionProps} />}
+          {selectedCrewId && accountCrewIds?.includes(selectedCrewId) && <actionButtons.EjectCrew.Component {...actionProps} />}
 
-          {selectedCrewId && crew?.id !== selectedCrewId && crew?.id === station?.Control?.controller?.id && (
+          {selectedCrewId && !accountCrewIds?.includes(selectedCrewId) && accountCrewIds?.includes(station?.Control?.controller?.id) && (
             <actionButtons.EjectGuestCrew.Component {...actionProps} dialogProps={{ guestId: selectedCrewId }}
             />
           )}

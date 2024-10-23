@@ -21,12 +21,16 @@ const isVisible = ({ crew, building, ship }) => {
   );
 };
 
-const StationCrew = ({ asteroid, blockTime, crew, lot, ship, onSetAction, simulation, simulationActions, _disabled }) => {
+const StationCrew = ({ accountCrewIds, asteroid, blockTime, crew, lot, ship, onSetAction, simulation, simulationActions, _disabled }) => {
   const stationEntity = useMemo(() => ship || (lot?.building?.Station ? lot.building : null), [ship, lot?.building]);
   const { currentStationing } = useStationCrewManager(stationEntity);
   const setCoachmarkRef = useCoachmarkRefSetter();
 
-  const crewIsController = stationEntity?.Control?.controller?.id === crew?.id;
+  const crewIsController = useMemo(
+    () => accountCrewIds?.includes(stationEntity?.Control?.controller?.id),
+    [accountCrewIds, stationEntity?.Control?.controller?.id]
+  );
+  
   const handleClick = useCallback(() => {
     onSetAction(crewIsController ? 'STATION_CREW' : 'STATION_CREW_AS_GUESTS');
   }, [crewIsController, onSetAction]);

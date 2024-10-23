@@ -157,9 +157,9 @@ export const esbLocationQuery = ({ asteroidId, lotId }, path = 'Location.locatio
     )
 };
 
-export const esbPermissionQuery = (crewId, crewDelegatedTo, permissionId) => {
+export const esbPermissionQuery = (crewId, siblingCrewIds, crewDelegatedTo, permissionId) => {
   return esb.boolQuery().should([
-    esb.termQuery('Control.controller.id', crewId),
+    esb.termsQuery('Control.controller.id', [crewId, ...(siblingCrewIds || [])]),
     esb.nestedQuery()
       .path('PublicPolicies')
       .query(esb.termQuery('PublicPolicies.permission', permissionId)),
@@ -199,9 +199,9 @@ export const esbPermissionQuery = (crewId, crewDelegatedTo, permissionId) => {
   ])
 };
 
-export const esbAnyPermissionQuery = (crewId, crewDelegatedTo) => {
+export const esbAnyPermissionQuery = (crewId, siblingCrewIds, crewDelegatedTo) => {
   return esb.boolQuery().should([
-    esb.termQuery('Control.controller.id', crewId),
+    esb.termQuery('Control.controller.id', [crewId, ...(siblingCrewIds || [])]),
     esb.nestedQuery()
       .path('PublicPolicies')
       .query(esb.termQuery('PublicPolicies.public', true)),

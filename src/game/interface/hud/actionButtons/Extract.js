@@ -23,7 +23,7 @@ const isVisible = ({ building, crew }) => {
 
 // TODO: for multiple extractors, need one of these (and an extraction manager) per extractor
 const Extract = ({ onSetAction, asteroid, blockTime, crew, lot, preselect, simulation, simulationActions, _disabled }) => {
-  const { crewCan } = useCrewContext();
+  const { accountCrewIds, crewCan } = useCrewContext();
   const { currentExtraction, extractionStatus } = useExtractionManager(lot?.id);
   const setCoachmarkRef = useCoachmarkRefSetter();
 
@@ -42,15 +42,13 @@ const Extract = ({ onSetAction, asteroid, blockTime, crew, lot, preselect, simul
     if (!crewCan(Permission.IDS.EXTRACT_RESOURCES, lot?.building) && !prepaidLeaseConfig) return 0;
     
     // else, samples are usable if i control them or they are for sale
+    // TODO: need to check delegation of the deposit controller
     return (lot?.deposits || []).filter((c) => (
       c.Deposit.status >= Deposit.STATUSES.SAMPLED
       && c.Deposit.remainingYield > 0
-      && (
-        (c.Control.controller.id === crew?.id)
-        || (c.PrivateSale?.amount > 0)
-      )
+      && (accountCrewIds?.includes(c.Control.controller.id) || (c.PrivateSale?.amount > 0))
     ));
-  }, [prepaidLeaseConfig, lot?.deposits, crew?.id]);
+  }, [accountCrewIds, crewCan, lot?.building, lot?.deposits, prepaidLeaseConfig]);
 
   // const attention = !_disabled && (extractionStatus === 'READY_TO_FINISH' || (myUsableSamples?.length > 0) && extractionStatus === 'READY');
   const attention = !_disabled && (simulation || extractionStatus === 'READY_TO_FINISH');

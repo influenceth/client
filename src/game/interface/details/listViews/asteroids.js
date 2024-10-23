@@ -62,9 +62,6 @@ const useColumns = () => {
         align: 'center',
         icon: <MyAssetIcon />,
         selector: row => {
-          // TODO: ecs refactor
-          // TODO: or
-          // selector: row => row.Control?.controller?.id === crew?.id ? <MyAssetIcon /> : null,
           if (accountAddress && row.Nft?.owner && Address.areEqual(row.Nft.owner, accountAddress)) {
             return <MyAssetIcon />
           }

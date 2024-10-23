@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import { css } from 'styled-components';
 import { Address } from '@influenceth/sdk';
@@ -39,7 +39,7 @@ const AsteroidDetails = () => {
   const history = useHistory();
   const { i, tab } = useParams();
   const { data: asteroid } = useAsteroid(Number(i));
-  const { crew } = useCrewContext();
+  const { accountCrewIds, crew } = useCrewContext();
   const groupAbundances = useAsteroidAbundances(asteroid);
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
 
@@ -48,8 +48,8 @@ const AsteroidDetails = () => {
     if (i) dispatchOriginSelected(Number(i));
   }, [ i, dispatchOriginSelected ]);
 
-  const isOwner = accountAddress && asteroid?.Nft?.owner && Address.areEqual(accountAddress, asteroid.Nft.owner);
-  const isManager = crew && asteroid?.Control?.controller?.id === crew.id;
+  const isOwner = useMemo(() => accountAddress && asteroid?.Nft?.owner && Address.areEqual(accountAddress, asteroid.Nft.owner), [accountAddress, asteroid?.Nft?.owner]);
+  const isManager = useMemo(() => accountCrewIds?.includes(asteroid?.Control?.controller?.id), [accountCrewIds, asteroid?.Control?.controller?.id]);
 
   const onTabChange = (tabIndex) => {
     if (tabIndex === 1) {

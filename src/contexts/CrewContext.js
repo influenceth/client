@@ -12,6 +12,7 @@ import { getCrewAbilityBonuses, locationsArrToObj, openAccessJSTime } from '~/li
 import { entitiesCacheKey } from '~/lib/cacheKey';
 import useSimulationState from '~/hooks/useSimulationState';
 import SIMULATION_CONFIG from '~/simulation/simulationConfig';
+import useOwnedCrews from '~/hooks/useOwnedCrews';
 
 const entityProps = ({ id, label }) => ({ id, label, uuid: Entity.packEntity({ id, label }) });
 const simulationNftConfig = {
@@ -40,11 +41,6 @@ export function CrewProvider({ children }) {
     if (!constants) return [];
     return [constants.CREW_SCHEDULE_BUFFER, constants.TIME_ACCELERATION];
   }, [constants]);
-
-  const ownedCrewsQueryKey = useMemo(
-    () => entitiesCacheKey(Entity.IDS.CREW, { owner: accountAddress }),
-    [accountAddress]
-  );
 
   const simulationCrew = useMemo(() => {
     if (!simulationState) return null;
@@ -98,11 +94,8 @@ export function CrewProvider({ children }) {
     };
   }, [blockTime, simulationState]);
 
-  const { data: realRawCrews, isLoading: crewsLoading, dataUpdatedAt: rawCrewsUpdatedAt } = useQuery(
-    ownedCrewsQueryKey,
-    () => api.getOwnedCrews(accountAddress),
-    { enabled: !!token }
-  );
+  const { data: realRawCrews, isLoading: crewsLoading, dataUpdatedAt: rawCrewsUpdatedAt } = useOwnedCrews(accountAddress);
+
   const rawCrews = useMemo(() => simulationCrew ? [simulationCrew] : realRawCrews, [simulationCrew, rawCrewsUpdatedAt]);
 
   const combinedCrewRoster = useMemo(
@@ -209,6 +202,8 @@ export function CrewProvider({ children }) {
     })
   }, [blockTime, crewmateMap, crewsAndCrewmatesReady, CREW_SCHEDULE_BUFFER, rawCrews, rawCrewsUpdatedAt]);
 
+  const accountCrewIds = useMemo(() => (rawCrews || []).map((c) => c.id), [rawCrews]);
+
   const selectedCrew = useMemo(() => {
     if (crews && crews.length > 0) {
       // use previously selected crew if still exists
@@ -283,10 +278,11 @@ export function CrewProvider({ children }) {
       _ready: selectedCrew?._ready && !actionTypeTriggered,
       _station: selectedCrewLocation?.Station || {},
       _scheduleBuffer: parseInt(CREW_SCHEDULE_BUFFER),
-      _timeAcceleration: parseInt(TIME_ACCELERATION) // (attach to crew for easy use in bonus calcs)
+      _siblingCrewIds: (accountCrewIds || []).filter((id) => id !== selectedCrew.id),
+      _timeAcceleration: parseInt(TIME_ACCELERATION), // (attach to crew for easy use in bonus calcs)
     }
   // (launched and ready are required for some reason to get final to update)
-  }, [actionTypeTriggered, selectedCrew, selectedCrew?._ready, selectedCrewLocation, CREW_SCHEDULE_BUFFER, TIME_ACCELERATION]);
+  }, [accountCrewIds, actionTypeTriggered, selectedCrew, selectedCrew?._ready, selectedCrewLocation, CREW_SCHEDULE_BUFFER, TIME_ACCELERATION]);
 
   // return all pending transactions that are specific to this crew AND those that are not specific to any crew
   const pendingTransactions = useMemo(() => {
@@ -299,26 +295,29 @@ export function CrewProvider({ children }) {
   const refreshReadyAt = useCallback(async () => {
     const updatedCrew = await api.getEntityById({ label: Entity.IDS.CREW, id: selectedCrewId, components: ['Crew'] });
     if (updatedCrew) {
-      queryClient.setQueryData(ownedCrewsQueryKey, (prevRawCrews = []) => {
-        return prevRawCrews.map((c) => {
-          if (c.id === updatedCrew.id) {
-            // TODO: any reason not to just replace the whole Crew component here?
-            c.Crew.actionRound = updatedCrew.Crew.actionRound;
-            c.Crew.actionStrategy = updatedCrew.Crew.actionStrategy;
-            c.Crew.actionType = updatedCrew.Crew.actionType;
-            c.Crew.actionWeight = updatedCrew.Crew.actionWeight;
-            c.Crew.lastFed = updatedCrew.Crew.lastFed;
-            c.Crew.readyAt = updatedCrew.Crew.readyAt;
+      queryClient.setQueryData(
+        entitiesCacheKey(Entity.IDS.CREW, { owner: accountAddress }),
+        (prevRawCrews = []) => {
+          return prevRawCrews.map((c) => {
+            if (c.id === updatedCrew.id) {
+              // TODO: any reason not to just replace the whole Crew component here?
+              c.Crew.actionRound = updatedCrew.Crew.actionRound;
+              c.Crew.actionStrategy = updatedCrew.Crew.actionStrategy;
+              c.Crew.actionType = updatedCrew.Crew.actionType;
+              c.Crew.actionWeight = updatedCrew.Crew.actionWeight;
+              c.Crew.lastFed = updatedCrew.Crew.lastFed;
+              c.Crew.readyAt = updatedCrew.Crew.readyAt;
 
-            // since refreshReadyAt can only happen on selectedCrewId, untrigger random event
-            // (in case random event resolution is what brought us here)
-            setActionTypeTriggered(false);
-          }
-          return c;
-        });
-      });
+              // since refreshReadyAt can only happen on selectedCrewId, untrigger random event
+              // (in case random event resolution is what brought us here)
+              setActionTypeTriggered(false);
+            }
+            return c;
+          });
+        }
+      );
     }
-  }, [ownedCrewsQueryKey, selectedCrewId]);
+  }, [accountAddress, selectedCrewId]);
 
   // make sure a default-selected crew makes it into state (if logged in)
   useEffect(() => {
@@ -398,6 +397,7 @@ export function CrewProvider({ children }) {
 
   return (
     <CrewContext.Provider value={{
+      accountCrewIds,
       adalianRecruits,
       arvadianRecruits,
       captain,

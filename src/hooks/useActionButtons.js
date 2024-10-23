@@ -122,7 +122,7 @@ const useActionButtons = () => {
   const { accountAddress } = useSession();
 
   // crew
-  const { crew } = useCrewContext();
+  const { accountCrewIds, crew } = useCrewContext();
 
   // asteroid-level
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(asteroidId);
@@ -152,7 +152,7 @@ const useActionButtons = () => {
 
     // // if there is only one owned ship on the lot
     // if (!ship) {
-    //   const lotOwnedShips = (lot?.ships || []).filter((s) => s.Control.controller.id === crew?.id);
+    //   const lotOwnedShips = (lot?.ships || []).filter((s) => accountCrewIds?.includes(s.Control.controller.id));
     //   if (lotOwnedShips?.length === 1) ship = lotOwnedShips[0]; // if only one owned ship, show it
     // }
 
@@ -171,6 +171,7 @@ const useActionButtons = () => {
     return Object.keys(actionButtons)
       .filter((k) => !actionButtons[k].isVisible || actionButtons[k].isVisible({
         account: accountAddress,
+        accountCrewIds,
         asteroid,
         blockTime,
         crew,
@@ -195,6 +196,7 @@ const useActionButtons = () => {
     actions,
     props: {
       accountAddress,
+      accountCrewIds,
       asteroid,
       blockTime,
       crew,

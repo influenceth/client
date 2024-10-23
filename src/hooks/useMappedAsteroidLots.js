@@ -3,10 +3,11 @@ import { useQueryClient } from 'react-query';
 import { Building, Entity, Lot } from '@influenceth/sdk';
 
 import { options as lotLeaseOptions } from '~/components/filters/LotLeaseFilter';
-import useAsteroidCrewBuildings from '~/hooks/useAsteroidCrewBuildings';
-import useCrewShips from '~/hooks/useCrewShips';
+import useAsteroidWalletBuildings from '~/hooks/useAsteroidWalletBuildings';
 import useAsteroidLotData from '~/hooks/useAsteroidLotData';
+import useWalletBuildings from '~/hooks/useWalletBuildings';
 import useWalletLeasedLots from '~/hooks/useWalletLeasedLots';
+import useWalletShips from '~/hooks/useWalletShips';
 import useStore from '~/hooks/useStore';
 import { getAndCacheEntity } from '~/lib/activities';
 import { locationsArrToObj } from '~/lib/utils';
@@ -36,7 +37,8 @@ const useMappedAsteroidLots = (i) => {
   ]), [leasedLots, dataUpdatedAt1]);
 
   // get all occupied-by-me buildings from the server
-  const { data: crewLots, isLoading: crewLotsLoading, dataUpdatedAt: dataUpdatedAt2 } = useAsteroidCrewBuildings(i);
+  const x = useWalletBuildings
+  const { data: crewLots, isLoading: crewLotsLoading, dataUpdatedAt: dataUpdatedAt2 } = useAsteroidWalletBuildings(i);
   const myOccupationMap = useMemo(() => {
     if (crewLotsLoading) return null;
     return (crewLots || []).reduce((acc, p) => {
@@ -49,17 +51,17 @@ const useMappedAsteroidLots = (i) => {
   }, [crewLots, crewLotsLoading, dataUpdatedAt2]);
 
   // get all occupied-by-me ships from the server
-  const { data: crewShips, isLoading: crewShipsLoading, dataUpdatedAt: dataUpdatedAt3 } = useCrewShips();
+  const { data: walletShips, isLoading: walletShipsLoading, dataUpdatedAt: dataUpdatedAt3 } = useWalletShips();
   const myShipMap = useMemo(() => {
-    if (crewShipsLoading) return null;
-    return (crewShips || []).reduce((acc, p) => {
+    if (walletShipsLoading) return null;
+    return (walletShips || []).reduce((acc, p) => {
       const _locations = locationsArrToObj(p?.Location?.locations || []);
       return {
         ...acc,
         [_locations.lotIndex]: true
       };
     }, {});
-  }, [crewShips, crewShipsLoading, dataUpdatedAt3]);
+  }, [walletShips, walletShipsLoading, dataUpdatedAt3]);
 
   // determine if search is on or not
   const searchIsOn = useMemo(() => {
