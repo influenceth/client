@@ -1,4 +1,4 @@
-import { AdalianOrbit, Asteroid, Building, Lot, Ship } from '@influenceth/sdk';
+import { AdalianOrbit, Asteroid, Building, Entity, Lot, Ship } from '@influenceth/sdk';
 import { constants } from '@influenceth/astro';
 import { safeBigInt } from './utils';
 
@@ -76,6 +76,19 @@ const formatters = {
   shipName: (s, fallbackText) => {
     if (!s) return fallbackText || 'Ship';
     return s.Name?.name || `${Ship.TYPES[s.Ship?.shipType]?.name || 'Ship'} #${s.id.toLocaleString()}`;
+  },
+
+  entityName: (e, fallbackText) => {
+    if (!e) return fallbackText || 'Entity';
+    switch (e.label) {
+      case Entity.IDS.ASTEROID: return formatters.asteroidName(e, fallbackText);
+      case Entity.IDS.BUILDING: return formatters.buildingName(e, fallbackText);
+      case Entity.IDS.SHIP: return formatters.shipName(e, fallbackText);
+      case Entity.IDS.CREW: return formatters.crewName(e, fallbackText);
+      case Entity.IDS.CREWMATE: return formatters.crewmateName(e, fallbackText);
+      case Entity.IDS.LOT: return formatters.lotName(e, fallbackText);
+      default: return fallbackText || 'Entity';
+    }
   }
 };
 
