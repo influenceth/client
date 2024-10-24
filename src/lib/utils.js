@@ -201,7 +201,7 @@ export const esbPermissionQuery = (crewId, siblingCrewIds, crewDelegatedTo, perm
 
 export const esbAnyPermissionQuery = (crewId, siblingCrewIds, crewDelegatedTo) => {
   return esb.boolQuery().should([
-    esb.termQuery('Control.controller.id', [crewId, ...(siblingCrewIds || [])]),
+    esb.termsQuery('Control.controller.id', [crewId, ...(siblingCrewIds || [])]),
     esb.nestedQuery()
       .path('PublicPolicies')
       .query(esb.termQuery('PublicPolicies.public', true)),

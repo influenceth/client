@@ -5,7 +5,6 @@ import { Building, Entity, Lot } from '@influenceth/sdk';
 import { options as lotLeaseOptions } from '~/components/filters/LotLeaseFilter';
 import useAsteroidWalletBuildings from '~/hooks/useAsteroidWalletBuildings';
 import useAsteroidLotData from '~/hooks/useAsteroidLotData';
-import useWalletBuildings from '~/hooks/useWalletBuildings';
 import useWalletLeasedLots from '~/hooks/useWalletLeasedLots';
 import useWalletShips from '~/hooks/useWalletShips';
 import useStore from '~/hooks/useStore';
@@ -37,18 +36,17 @@ const useMappedAsteroidLots = (i) => {
   ]), [leasedLots, dataUpdatedAt1]);
 
   // get all occupied-by-me buildings from the server
-  const x = useWalletBuildings
-  const { data: crewLots, isLoading: crewLotsLoading, dataUpdatedAt: dataUpdatedAt2 } = useAsteroidWalletBuildings(i);
+  const { data: walletLots, isLoading: walletLotsLoading, dataUpdatedAt: dataUpdatedAt2 } = useAsteroidWalletBuildings(i);
   const myOccupationMap = useMemo(() => {
-    if (crewLotsLoading) return null;
-    return (crewLots || []).reduce((acc, p) => {
+    if (walletLotsLoading) return null;
+    return (walletLots || []).reduce((acc, p) => {
       const _locations = locationsArrToObj(p?.Location?.locations || []);
       return {
         ...acc,
         [_locations.lotIndex]: true
       };
     }, {});
-  }, [crewLots, crewLotsLoading, dataUpdatedAt2]);
+  }, [walletLots, walletLotsLoading, dataUpdatedAt2]);
 
   // get all occupied-by-me ships from the server
   const { data: walletShips, isLoading: walletShipsLoading, dataUpdatedAt: dataUpdatedAt3 } = useWalletShips();
@@ -245,7 +243,7 @@ const useMappedAsteroidLots = (i) => {
     }
   }, []);
 
-  const isLoading = lotDataLoading || leasedLotsLoading || crewLotsLoading;
+  const isLoading = lotDataLoading || leasedLotsLoading || walletLotsLoading;
 
   return useMemo(() => {
     return {
