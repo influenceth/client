@@ -73,10 +73,10 @@ const CrewSwitcher = () => {
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
-    const crewId = searchParams.get('cid');
+    const crewId = searchParams.get('crewId');
     if (crewId) {
       dispatchCrewSelected(Number(crewId));
-      searchParams.delete('cid');
+      searchParams.delete('crewId');
       history.replace({
         pathname: location.pathname,
         search: searchParams.toString(),
