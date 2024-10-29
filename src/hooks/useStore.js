@@ -53,6 +53,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     launcherPage: null,
     launcherSubpage: null,
     openHudMenu: null,
+    hudMenuState: {},
 
     // TODO: more encapsulated structure, but might cause unnecessary re-renders more often
     // simulation: {
@@ -772,6 +773,12 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       }
     })),
 
+    dispatchHudMenuState: (menu, menuState) => set(produce(state => {
+      if (!state.hudMenuState) state.hudMenuState = {};
+      if (!state.hudMenuState[menu]) state.hudMenuState[menu] = {};
+      state.hudMenuState[menu] = { ...menuState };
+    })),
+
     //
     // SPECIAL GETTERS
 
@@ -870,6 +877,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     'coachmarks',
     'cutscene',
     'draggables',
+    'hudMenuState',
     'lotLoader',
     'simulationActions',
     'timeOverride' // should this be in ClockContext?

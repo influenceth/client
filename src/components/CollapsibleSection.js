@@ -86,6 +86,7 @@ const CollapsibleSection = ({
   children,
   forceClose,
   initiallyClosed,
+  onCollapsedChange,
   openOnChange,
   title,
   containerHeight,
@@ -111,6 +112,12 @@ const CollapsibleSection = ({
       hasLoaded.current = true;
     }
   }, [openOnChange, toggleCollapse]);
+
+  useEffect(() => {
+    if (onCollapsedChange) {
+      onCollapsedChange(collapsed);
+    }
+  }, [collapsed])
 
   return (
     <>
