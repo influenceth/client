@@ -15,6 +15,21 @@ The browser game client for Influence.
 1. Adjust or fill in any missing .env variables as needed. Most values are preset in 
 `src/appConfig/prerelease.json`. However, if you need to overwrite any of these presets,
 you can do so in your local env file by following the instructions in `src/appConfig/index.js`
+    - For example, adding these settings may make development less cumbersome:
+        ```
+        REACT_APP_APP_DISABLEINTROANIMATION=1
+        REACT_APP_APP_DISABLELAUNCHERLANDING=1
+        REACT_APP_APP_DISABLELAUNCHTRAILER=1
+        REACT_APP_APP_DISABLESCREENSIZEWARNING=1
+        REACT_APP_APP_DEFAULTMUTED=1
+        ```
+    - The following api keys need to be filled in if you want to interact with all third-party apis:
+        ```
+        REACT_APP_API_CLIENTID_GOOGLE=
+        REACT_APP_API_CLIENTID_LAYERSWAP=
+        REACT_APP_API_CLIENTID_RAMP=
+        ```
+1. Run `npm install`.
 1. Run `npm start`.
 
 ## Available Scripts
