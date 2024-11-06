@@ -1,6 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Building, Entity, Permission, Ship } from '@influenceth/sdk';
+import { useThrottle } from '@react-hook/throttle';
 import Loader from 'react-spinners/PuffLoader';
 
 import useCrewContext from '~/hooks/useCrewContext';
@@ -93,6 +94,7 @@ const EmptyMessage = styled.div`
   }
 `;
 
+const menuStateLabel = 'MY_ASSETS';
 const containerHeightBuffer = 30;
 const groupTitleHeight = 44 + containerHeightBuffer;
 
@@ -146,26 +148,45 @@ const LoadingMessage = () => (
   </span>
 );
 
-const GroupedAssets = ({ assetTally, groupedAssets, isLoading, itemHeight, itemGetter, singleGroupMode, title }) => {
+const GroupedAssetsSubsection = ({ asteroidId, assets, collapsedPaths, itemGetter, itemHeight, onCollapsedChange, path }) => {
+  const initiallyClosed = useMemo(() => (collapsedPaths || []).includes(path), []);
+  return (
+    <HudMenuCollapsibleSection
+      containerHeight={itemHeight * assets.length + containerHeightBuffer}
+      collapsed={initiallyClosed}
+      onCollapsedChange={onCollapsedChange(path)}
+      titleProps={{ style: { textTransform: 'none' } }}
+      titleText={asteroidId === '_' ? 'In Flight' : <EntityName label={Entity.IDS.ASTEROID} id={asteroidId} />}>
+      {assets.map(itemGetter)}
+    </HudMenuCollapsibleSection>
+  );
+};
+
+const GroupedAssets = ({ assetTally, collapsedPaths, groupedAssets, isLoading, itemHeight, itemGetter, onCollapsedChange, path, singleGroupMode, title }) => {
   const groupTally = singleGroupMode ? 0 : Object.keys(groupedAssets).length;
+  const initiallyClosed = useMemo(() => (collapsedPaths || []).includes(path), []);
   return (
     <HudMenuCollapsibleSection
       titleText={<>{title}{isLoading && <LoadingMessage />}</>}
       titleLabel={`${assetTally} Asset${assetTally === 1 ? '' : 's'}`}
-      collapsed={!assetTally}
+      collapsed={!assetTally || initiallyClosed}
       containerHeight={itemHeight * assetTally + groupTitleHeight * groupTally + containerHeightBuffer}
+      onCollapsedChange={onCollapsedChange(path)}
       openOnChange={!!assetTally}>
       {!isLoading && assetTally === 0 && <EmptyMessage />}
       {singleGroupMode
         ? Object.values(groupedAssets)[0]?.map(itemGetter)
         : Object.keys(groupedAssets).map((asteroidId) => (
-          <HudMenuCollapsibleSection
+          <GroupedAssetsSubsection
             key={asteroidId}
-            containerHeight={itemHeight * groupedAssets[asteroidId].length + containerHeightBuffer}
-            titleProps={{ style: { textTransform: 'none' } }}
-            titleText={asteroidId === '_' ? 'In Flight' : <EntityName label={Entity.IDS.ASTEROID} id={asteroidId} />}>
-            {groupedAssets[asteroidId].map(itemGetter)}
-          </HudMenuCollapsibleSection>
+            asteroidId={asteroidId}
+            assets={groupedAssets[asteroidId]}
+            collapsedPaths={collapsedPaths}
+            itemGetter={itemGetter}
+            itemHeight={itemHeight}
+            onCollapsedChange={onCollapsedChange}
+            path={`${path}.${asteroidId}`}
+          />
         ))
       }
     </HudMenuCollapsibleSection>
@@ -318,6 +339,43 @@ const MyAssets = () => {
     return [groups, ungrouped.length];
   }, [walletShips, allAsteroidsMode, allCrewsMode]);
 
+  //
+  // state persistence for this menu...
+  //
+  const scrollable = useRef();
+  const isLoading = buildingsLoading || shipsLoading || agreementsLoading || asteroidsLoading;
+  const [scrollTop, setScrollTop] = useThrottle(null, 10, true);
+
+  const dispatchHudMenuState = useStore((s) => s.dispatchHudMenuState);
+  const hudMenuState = useStore((s) => s.hudMenuState?.[menuStateLabel]);
+
+  const [collapsedPaths, setCollapsedPaths] = useState(hudMenuState?.collapsedPaths || []);
+  const onCollapsedChange = useCallback((path) => (isCollapsed) => {
+    setCollapsedPaths((paths) => {
+      return isCollapsed ? [...paths, path] : paths.filter((p) => p !== path);  
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!isLoading) {
+      dispatchHudMenuState(menuStateLabel, { allCrewsMode, allAsteroidsMode, autoselectMode, collapsedPaths, scrollTop });
+    }
+  }, [allCrewsMode, allAsteroidsMode, autoselectMode, collapsedPaths, scrollTop]);
+
+  useEffect(() => {
+    if (hudMenuState?.hasOwnProperty('allCrewsMode')) setAllCrewsMode(hudMenuState?.allCrewsMode);
+    if (hudMenuState?.hasOwnProperty('allAsteroidsMode')) setAllAsteroidsMode(hudMenuState?.allAsteroidsMode);
+    if (hudMenuState?.hasOwnProperty('autoselectMode')) setAutoselectMode(hudMenuState?.autoselectMode);
+    if (scrollable.current) {
+      const t = setTimeout(() => {
+        scrollable.current.scrollTop = hudMenuState?.scrollTop || 0;
+      }, 50); // (give time for above updates to apply)
+      return () => clearTimeout(t);
+    }
+  }, [isLoading]); // want this to run when done loading
+
+  const asteroidsInitiallyClosed = useMemo(() => (collapsedPaths || []).includes('asteroids'), [collapsedPaths])
+
   return (
     <Wrapper>
       <Controls>
@@ -357,7 +415,7 @@ const MyAssets = () => {
       </Controls>
 
       <Contents>
-        <Scrollable>
+        <Scrollable ref={scrollable} onScroll={(e) => setScrollTop(e.target.scrollTop)}>
 
           <GroupedAssets
             title="Buildings"
@@ -377,12 +435,16 @@ const MyAssets = () => {
               );
             }}
             itemHeight={55}
+            collapsedPaths={collapsedPaths}
+            onCollapsedChange={onCollapsedChange}
+            path="buildings"
             singleGroupMode={!allAsteroidsMode} />
 
           <HudMenuCollapsibleSection
             titleText={<>Asteroids{asteroidsLoading && <LoadingMessage />}</>}
             titleLabel={`${asteroidTally} Asset${asteroidTally === 1 ? '' : 's'}`}
-            collapsed={!asteroidTally}
+            collapsed={!asteroidTally || asteroidsInitiallyClosed}
+            onCollapsedChange={onCollapsedChange('asteroids')}
             containerHeight={85 * asteroidTally + containerHeightBuffer}>
             {!asteroidsLoading && asteroidTally === 0 && <EmptyMessage />}
             <AsteroidBlocks
@@ -408,6 +470,9 @@ const MyAssets = () => {
               );
             }}
             itemHeight={85}
+            collapsedPaths={collapsedPaths}
+            onCollapsedChange={onCollapsedChange}
+            path="ships"
             singleGroupMode={!allAsteroidsMode} />
 
           <GroupedAssets
@@ -428,6 +493,9 @@ const MyAssets = () => {
               );
             }}
             itemHeight={55}
+            collapsedPaths={collapsedPaths}
+            onCollapsedChange={onCollapsedChange}
+            path="agreements"
             singleGroupMode={!allAsteroidsMode} />
           </Scrollable>
       </Contents>
