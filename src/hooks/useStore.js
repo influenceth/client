@@ -168,6 +168,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     preferredUiCurrency: null,
 
+    dmPrivateKey: null,
+
     //
     // DISPATCHERS
 
@@ -218,7 +220,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     })),
 
     dispatchLauncherPage: (page, subpage) => set(produce(state => {
-      if (['play', 'store', 'help', 'rewards', 'settings'].includes(page)) {
+      if (['play', 'store', 'help', 'rewards', 'settings', 'inbox'].includes(page)) {
         state.launcherPage = page;
         state.launcherSubpage = subpage;
       }
@@ -493,6 +495,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     dispatchSessionEnded: () => set(produce(state => {
       delete state.sessions[state.currentSession?.accountAddress];
       state.currentSession = {};
+      state.dmPrivateKey = null;
     })),
 
     dispatchSimulationEnabled: (which) => set(produce(state => {
@@ -770,6 +773,9 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       if (!state.crewTutorials[crewId].dismissedSteps.includes(step)) {
         state.crewTutorials[crewId].dismissedSteps.push(step);
       }
+    })),
+    dispatchDmPrivateKey: (key) => set(produce(state => {
+      state.dmPrivateKey = key;
     })),
 
     //

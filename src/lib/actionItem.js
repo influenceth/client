@@ -46,6 +46,7 @@ import {
   CheckCircleIcon,
   StarIcon,
   JettisonCargoIcon,
+  InboxIcon,
 } from '~/components/Icons';
 import formatters from '~/lib/formatters';
 import { getProcessorProps, locationsArrToObj, ucfirst } from '~/lib/utils';
@@ -178,6 +179,14 @@ const formatAsTx = (item) => {
           history.push(`/ship/${item.meta?.entity?.id}`);
         }
       };
+      break;
+    }
+    case 'DirectMessage': {
+      formatted.icon = <InboxIcon />;
+      formatted.label = `Send Direct Message`;
+      formatted.onClick = ({ history }) => {
+        history.push('/launcher/inbox');
+      }
       break;
     }
     case 'ArrangeCrew': {

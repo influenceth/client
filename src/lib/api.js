@@ -88,6 +88,16 @@ const api = {
     return response.data;
   },
 
+  getInboxSeed: async () => {
+    const response = await instance.get(`/${apiVersion}/user/inboxseed`);
+    return response.data;
+  },
+
+  getInboxPublicKey: async (recipient) => {
+    const response = await instance.get(`/${apiVersion}/messages/key/${recipient}`);
+    return response.data;
+  },
+
   getEntityActivities: async (entity, query = {}) => {
     const response = await instance.get(`/${apiVersion}/entities/${Entity.packEntity(entity)}/activity?${buildQuery(query)}`);
     return response.data;

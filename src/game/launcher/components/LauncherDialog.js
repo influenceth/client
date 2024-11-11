@@ -8,6 +8,8 @@ import { reactBool } from '~/lib/utils';
 import theme from '~/theme';
 import IconButton from '~/components/IconButton';
 import useStore from '~/hooks/useStore';
+import { PuffLoader } from 'react-spinners';
+import AttentionDot from '~/components/AttentionDot';
 
 const borderColor = '#222;'
 
@@ -36,13 +38,7 @@ const Dialog = styled.div`
 `;
 const PaneWrapper = styled.div`
   border-left: 1px solid ${borderColor};
-  ${p => p.singlePane
-      ? 'max-height: calc(100vh - 250px);'
-      : `
-        height: calc(100vh - 250px);
-        max-height: calc(100vh - 175px);
-      `
-  }
+  height: calc(100vh - 250px);
   overflow: hidden auto;
   width: 1075px;
 `;
@@ -51,7 +47,33 @@ const TabWrapper = styled.div`
   display: flex;
   flex-direction: column;
   flex: 0 0 300px;
+  max-height: calc(100vh - 250px);
+  overflow: hidden auto;
   padding: 15px 0;
+`;
+
+const NavIconWrapper = styled.span`
+  font-size: 125%;
+  margin-right: 4px;
+  opacity: 0;
+  transition: opacity 150ms ease;
+`;
+const Label = styled.label`
+  display: flex;
+  flex-direction: column;
+  margin-right: 5px;
+`;
+const Sublabel = styled.span`
+  font-size: 12px;
+  opacity: 0.75;
+  text-transform: none;
+`;
+const AttentionIcon = styled.div`
+  color: ${p => p.theme.colors.success};
+  display: flex;
+  flex: 1;
+  justify-content: flex-end;
+  padding-right: 10px;
 `;
 
 const Tab = styled.div`
@@ -70,18 +92,12 @@ const Tab = styled.div`
     background 150ms ease,
     border-right-width 150ms ease,
     opacity 150ms ease;
-  & > span {
-    font-size: 125%;
-    margin-right: 4px;
-    opacity: 0;
-    transition: opacity 150ms ease;
-  }
   ${p => p.isSelected
     ? `
       background: rgba(${p.theme.colors.mainRGB}, 0.4);
       border-right-color: ${p.theme.colors.main};
       opacity: 1;
-      & > span {
+      ${NavIconWrapper} {
         opacity: 1;
       }
     `
@@ -91,10 +107,6 @@ const Tab = styled.div`
         opacity: 0.9;
       }
   `};
-
-  & > label {
-    margin-right: 5px;
-  }
 `;
 
 const CloseButton = styled(IconButton)`
@@ -114,7 +126,9 @@ const LauncherDialog = ({ panes = [], preselect, singlePane, bottomLeftMenu }) =
   const [selected, setSelected] = useState();
 
   useEffect(() => {
+    console.log('select1');
     if (!!panes) {
+      console.log('select2');
       setSelected(panes[preselect || 0]);
     }
   }, [!!panes, preselect]);
@@ -140,12 +154,16 @@ const LauncherDialog = ({ panes = [], preselect, singlePane, bottomLeftMenu }) =
             <TabWrapper>
               {panes.map((pane) => (
                 <Tab
-                  key={pane.label}
-                  isSelected={selected?.label === pane.label}
+                  key={pane.key || pane.label}
+                  isSelected={(selected?.key || selected?.label) === (pane.key || pane.label)}
                   onClick={() => handleClick(pane)}>
-                  <span><NavIcon color={theme.colors.main} /></span>
-                  <label>{pane.label}</label>
+                  <NavIconWrapper><NavIcon color={theme.colors.main} /></NavIconWrapper>
+                  <Label>
+                    {pane.label}
+                    {pane.sublabel && <Sublabel>{pane.sublabel}</Sublabel>}
+                  </Label>
                   {pane.link && <LinkIcon />}
+                  {pane.attention && <AttentionIcon><AttentionDot size={12} /></AttentionIcon>}
                 </Tab>
               ))}
               {bottomLeftMenu && (

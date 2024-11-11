@@ -3,15 +3,17 @@ import { useQuery, useQueryClient } from 'react-query';
 import { Crewmate, Entity, Permission, Ship, System } from '@influenceth/sdk';
 
 import { appConfig } from '~/appConfig';
-import api from '~/lib/api';
-import useSession from '~/hooks/useSession';
 import useConstants from '~/hooks/useConstants';
 import useEntity from '~/hooks/useEntity';
+import useSession from '~/hooks/useSession';
+import useSimulationState from '~/hooks/useSimulationState';
 import useStore from '~/hooks/useStore';
+import useWalletCrews from '~/hooks/useWalletCrews';
+import api from '~/lib/api';
 import { getCrewAbilityBonuses, locationsArrToObj, openAccessJSTime } from '~/lib/utils';
 import { entitiesCacheKey } from '~/lib/cacheKey';
-import useSimulationState from '~/hooks/useSimulationState';
 import SIMULATION_CONFIG from '~/simulation/simulationConfig';
+
 
 const entityProps = ({ id, label }) => ({ id, label, uuid: Entity.packEntity({ id, label }) });
 const simulationNftConfig = {
@@ -40,11 +42,6 @@ export function CrewProvider({ children }) {
     if (!constants) return [];
     return [constants.CREW_SCHEDULE_BUFFER, constants.TIME_ACCELERATION];
   }, [constants]);
-
-  const ownedCrewsQueryKey = useMemo(
-    () => entitiesCacheKey(Entity.IDS.CREW, { owner: accountAddress }),
-    [accountAddress]
-  );
 
   const simulationCrew = useMemo(() => {
     if (!simulationState) return null;
@@ -98,11 +95,7 @@ export function CrewProvider({ children }) {
     };
   }, [blockTime, simulationState]);
 
-  const { data: realRawCrews, isLoading: crewsLoading, dataUpdatedAt: rawCrewsUpdatedAt } = useQuery(
-    ownedCrewsQueryKey,
-    () => api.getOwnedCrews(accountAddress),
-    { enabled: !!token }
-  );
+  const { data: realRawCrews, isLoading: crewsLoading, dataUpdatedAt: rawCrewsUpdatedAt } = useWalletCrews();
   const rawCrews = useMemo(() => simulationCrew ? [simulationCrew] : realRawCrews, [simulationCrew, rawCrewsUpdatedAt]);
 
   const combinedCrewRoster = useMemo(
@@ -299,26 +292,29 @@ export function CrewProvider({ children }) {
   const refreshReadyAt = useCallback(async () => {
     const updatedCrew = await api.getEntityById({ label: Entity.IDS.CREW, id: selectedCrewId, components: ['Crew'] });
     if (updatedCrew) {
-      queryClient.setQueryData(ownedCrewsQueryKey, (prevRawCrews = []) => {
-        return prevRawCrews.map((c) => {
-          if (c.id === updatedCrew.id) {
-            // TODO: any reason not to just replace the whole Crew component here?
-            c.Crew.actionRound = updatedCrew.Crew.actionRound;
-            c.Crew.actionStrategy = updatedCrew.Crew.actionStrategy;
-            c.Crew.actionType = updatedCrew.Crew.actionType;
-            c.Crew.actionWeight = updatedCrew.Crew.actionWeight;
-            c.Crew.lastFed = updatedCrew.Crew.lastFed;
-            c.Crew.readyAt = updatedCrew.Crew.readyAt;
+      queryClient.setQueryData(
+        entitiesCacheKey(Entity.IDS.CREW, { owner: accountAddress }),
+        (prevRawCrews = []) => {
+          return prevRawCrews.map((c) => {
+            if (c.id === updatedCrew.id) {
+              // TODO: any reason not to just replace the whole Crew component here?
+              c.Crew.actionRound = updatedCrew.Crew.actionRound;
+              c.Crew.actionStrategy = updatedCrew.Crew.actionStrategy;
+              c.Crew.actionType = updatedCrew.Crew.actionType;
+              c.Crew.actionWeight = updatedCrew.Crew.actionWeight;
+              c.Crew.lastFed = updatedCrew.Crew.lastFed;
+              c.Crew.readyAt = updatedCrew.Crew.readyAt;
 
-            // since refreshReadyAt can only happen on selectedCrewId, untrigger random event
-            // (in case random event resolution is what brought us here)
-            setActionTypeTriggered(false);
-          }
-          return c;
-        });
-      });
+              // since refreshReadyAt can only happen on selectedCrewId, untrigger random event
+              // (in case random event resolution is what brought us here)
+              setActionTypeTriggered(false);
+            }
+            return c;
+          });
+        }
+      );
     }
-  }, [ownedCrewsQueryKey, selectedCrewId]);
+  }, [accountAddress, selectedCrewId]);
 
   // make sure a default-selected crew makes it into state (if logged in)
   useEffect(() => {

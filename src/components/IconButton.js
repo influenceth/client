@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 
+import Badge from '~/components/Badge';
 import useStore from '~/hooks/useStore';
 import { hexToRGB } from '~/theme';
 
@@ -69,8 +70,15 @@ const CancelIndicator = styled.svg`
   }
 `;
 
+const StyledBadge = styled(Badge)`
+  font-size: 80%;
+  left: -14px;
+  position: absolute;
+  top: -8px;
+`;
+
 const IconButton = (props) => {
-  const { active, dataPlace = 'right', dataTip, dataFor = 'globalTooltip', delayHide = 10, onClick, setRef, ...restProps} = props;
+  const { active, badge, badgeProps, dataPlace = 'right', dataTip, dataFor = 'globalTooltip', delayHide = 10, onClick, setRef, ...restProps} = props;
   const playSound = useStore(s => s.dispatchEffectStartRequested);
 
   const _onClick = (e) => {
@@ -90,6 +98,7 @@ const IconButton = (props) => {
       data-tooltip-delay-hide={delayHide}
       {...restProps}>
       {props.children}
+      {props.badge !== undefined ? <StyledBadge value={props.badge} max={9} {...badgeProps} /> : null}
       {active && (
         <CancelIndicator viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
           <line x1="6" y1="6" x2="24" y2="24" />

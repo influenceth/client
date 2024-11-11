@@ -36,6 +36,8 @@ import formatters from '~/lib/formatters';
 import { nativeBool, reactBool } from '~/lib/utils';
 import theme from '~/theme';
 import EntityActivityLog from './EntityActivityLog';
+import DirectMessageDialog from '~/components/DirectMessageDialog';
+import useInboxPublicKey from '~/hooks/useInboxPublicKey';
 
 const breakpoint = 1375;
 
@@ -260,6 +262,7 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isDelegatedCrew, isOwnedCrew, sel
 
   const hydratedLocation = useHydratedLocation(crew._location, crew.id);
 
+  const [composing, setComposing] = useState();
   const [editing, setEditing] = useState();
   const [hovered, setHovered] = useState();
   const [newName, setNewName] = useState(crew.Name?.name || '');
@@ -268,6 +271,8 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isDelegatedCrew, isOwnedCrew, sel
   const hasMyCrewmates = useMemo(() => {
     return crew._crewmates.filter((c) => accountAddress && Address.areEqual(accountAddress, c.Nft?.owner))?.length;
   }, [accountAddress, crew._crewmates]);
+
+  const { data: inboxPublicKey, isLoading: inboxPublicKeyLoading } = useInboxPublicKey();
 
   // reset
   useEffect(() => {
@@ -473,6 +478,15 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isDelegatedCrew, isOwnedCrew, sel
                 <Button disabled={nativeBool(crew.Crew?.roster?.length >= 5) || !crew._ready} onClick={onClickRecruit}>Recruit to Crew</Button>
               </div>
             )}
+            {!isDelegatedCrew && crew?.Crew?.delegatedTo && (
+              <div style={{ marginTop: 35 }}
+                data-tooltip-id="detailsTooltip"
+                data-tooltip-content={inboxPublicKey ? '' : 'Crew has not yet enabled direct messaging'}>
+                <Button
+                  disabled={nativeBool(inboxPublicKeyLoading || !inboxPublicKey)}
+                  onClick={() => setComposing(true)}>Direct Message</Button>
+              </div>
+            )}
             {!isMyCrew && isDelegatedCrew && (
               <div style={{ paddingTop: 15 }}>
                 <Button onClick={() => selectCrew(crewId)}>Switch to Crew</Button>
@@ -514,6 +528,9 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isDelegatedCrew, isOwnedCrew, sel
 
         </BelowFold>
       </MainContainer>
+      {composing && (
+        <DirectMessageDialog onClose={() => setComposing()} recipient={crew?.Crew?.delegatedTo} />
+      )}
     </>
   );
 };

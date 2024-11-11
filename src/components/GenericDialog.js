@@ -12,7 +12,7 @@ const Title = styled.div`
   display: flex;
   flex-direction: row;
   height: 60px;
-  & > h4 { flex: 1, margin: 0 }
+  & > h4 { flex: 1; margin: 0 }
 `;
 
 const Body = styled.div`
@@ -64,14 +64,16 @@ const Wrapper = styled.div`
 const GenericDialog = ({ children, disabled, loading, onConfirm, onReject, isTransaction, title, ...props }) => (
   <Dialog>
     <Wrapper {...props}>
-      <Title>
-        <NavIcon
-          selected
-          selectedColor="white"
-          size={22}
-          style={{ marginRight: 12 }} />
-        <h4>{title}</h4>
-      </Title>
+      {title && (
+        <Title>
+          <NavIcon
+            selected
+            selectedColor="white"
+            size={22}
+            style={{ marginRight: 12 }} />
+          <h4>{title}</h4>
+        </Title>
+      )}
       <Body>
         {loading ? <Loader /> : children}
       </Body>
