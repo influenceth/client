@@ -1206,7 +1206,7 @@ const activities = {
           version: 1
         },
         recipient: event.returnValues?.recipient,
-        event: pick(event, ['transactionHash', 'transactionIndex', 'logIndex'])
+        event: pick(event, ['transactionHash', 'logIndex'])
       });
     },
     getInvalidations: ({ event: { returnValues } }) => ([
