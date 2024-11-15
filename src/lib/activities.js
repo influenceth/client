@@ -1,6 +1,7 @@
 import { Address, Building, Delivery, Entity, Lot, Permission, Process, Product, RandomEvent, Ship } from '@influenceth/sdk';
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
+import { pick } from 'lodash';
 
 import { appConfig } from '~/appConfig';
 import AddressLink from '~/components/AddressLink';
@@ -1194,6 +1195,31 @@ const activities = {
     getInvalidations: ({ event: { returnValues } }) => ([
       ['annotations', cleanseTxHash(returnValues.transactionHash), `${returnValues.logIndex}`]
     ])
+  },
+
+  DirectMessageSent: {
+    onBeforeReceived: ({ event }) => async (pendingTransaction) => {
+      await api.saveDirectMessage({
+        encryptedMessage: {
+          content: pendingTransaction?.meta?.encryptedMessage,
+          type: 'DirectMessage',
+          version: 1
+        },
+        recipient: event.returnValues?.recipient,
+        event: pick(event, ['transactionHash', 'transactionIndex', 'logIndex'])
+      });
+    },
+    getInvalidations: ({ event: { returnValues } }) => ([
+      ['inbox', returnValues.caller],
+      ['inbox', returnValues.recipient]
+    ])
+  },
+
+  RekeyedInbox: {
+    getInvalidations: ({ event: { returnValues } }) => ([
+      ['user'],
+      ['inbox']
+    ]),
   },
 
   ExchangeConfigured: {

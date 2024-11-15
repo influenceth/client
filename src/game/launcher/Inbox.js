@@ -1,6 +1,7 @@
-import { Fragment, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { forwardRef, Fragment, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
+import { Address, Encryption } from '@influenceth/sdk';
 
 import PageLoader from '~/components/PageLoader';
 import useWalletInbox from '~/hooks/useWalletInbox';
@@ -8,19 +9,21 @@ import useWalletInbox from '~/hooks/useWalletInbox';
 import LauncherDialog from './components/LauncherDialog';
 import moment from 'moment';
 import useWalletCrews from '~/hooks/useWalletCrews';
-import EntityLink from '~/components/EntityLink';
 import formatters from '~/lib/formatters';
 import AddressLink from '~/components/AddressLink';
 import useStore from '~/hooks/useStore';
 import Button from '~/components/ButtonAlt';
-import { useQuery } from 'react-query';
 import useSession from '~/hooks/useSession';
 import useAccountFormatted from '~/hooks/useAccountFormatted';
-import { decryptContent, generatePrivateKeyFromSeed, generateSeed, getPublicKeyFromPrivateKey } from '~/lib/encrypt';
 import api from '~/lib/api';
 import useUser from '~/hooks/useUser';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-
+import useIpfsContent from '~/hooks/useIpfsContent';
+import DirectMessageDialog from '~/components/DirectMessageDialog';
+import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
+import { ChevronRightIcon, ConstructionSiteBuildingIcon, InboxReceivedIcon, InboxSentIcon, InboxSentReadIcon } from '~/components/Icons';
+import AttentionDot from '~/components/AttentionDot';
+import { useQueryClient } from 'react-query';
 
 const Wrapper = styled.div`
   display: flex;
@@ -32,6 +35,64 @@ const Wrapper = styled.div`
   width: 100%;
 `;
 
+const MessageWrapper = styled.div`
+  width: 100%;
+`;
+const Uncollapsible = styled.div`
+  align-items: center;
+  background: ${p => p.expanded ? '#191919' : 'transparent'};
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  flex-direction: row;
+  height: 36px;
+  padding: 0 6px;
+
+  transition: background 150ms ease;
+
+  & > svg {
+    font-size: 20px;
+  }
+  & > label {
+    flex: 1;
+    margin-left: 8px;
+    opacity: 0.5;
+    transition: opacity 150ms ease;
+  }
+  & > svg:last-child {
+    font-size: 28px;
+    opacity: ${p => p.expanded ? 1 : 0.5};
+    transform: rotate(${p => p.expanded ? '90deg' : '0deg'});
+    transition: opacity 150ms ease, transform 150ms ease;
+  }
+
+  &:hover {
+    background: #222;
+    & > label {
+      opacity: 0.7;
+    }
+  }
+`;
+const Collapsible = styled.div`
+  ${p => p.expanded
+    ? `
+      border-bottom: 1px solid #444;
+      min-height: 100px;
+      padding-bottom: 20px;
+    `
+    : `
+      border-bottom: 1px solid #222;
+      min-height: 0;
+    `
+  }
+  transition: min-height 150ms ease;
+`;
+const Unread = styled.div`
+  color: ${p => p.theme.colors.success};
+  display: flex;
+  justify-content: center;
+  width: 20px;
+`;
+
 const Title = styled.h3`
   border-bottom: 1px solid ${p => p.theme.colors.contentBorder};
   color: white;
@@ -41,12 +102,39 @@ const Title = styled.h3`
   padding-bottom: 8px;
   text-transform: uppercase;
 `;
+
 const Body = styled.div`
   display: flex;
   flex: 1 0 calc(100% - 30px);
   flex-direction: column;
   overflow: hidden;
 `;
+
+const ThreadTitle = styled.div`
+  align-items: center;
+  background: rgba(${p => p.theme.colors.darkMainRGB}, 0.25);
+  color: white;
+  display: flex;
+  flex-direction: row;
+  font-weight: normal;
+  margin: 0;
+  padding: 15px 20px 10px;
+  & > div > div > label {
+    display: inline-block;
+    opacity: 0.4;
+    width: 58px;
+  }
+`;
+
+const ThreadWrapper = styled(Wrapper)`
+  padding: 0;
+  ${Body} {
+    flex: 1 0 calc(100% - 200px);
+    overflow: hidden auto;
+    padding: 10px 20px 30px;
+  }
+`;
+
 const RecoveryBody = styled.div`
   align-items: center;
   display: flex;
@@ -58,37 +146,12 @@ const RecoveryBody = styled.div`
     font-size: 110%;
     margin: 0 0 20px;
     opacity: 0.6;
-    width: 500px;
+    width: 525px;
   }
   & > button {
     display: inline-block;
     margin-top: 10px;
     width: 350px;
-  }
-`;
-const Meta = styled.div`
-  background: #222;
-  display: flex;
-  flex-direction: row;
-  padding: 10px 10px;
-  & > div:first-child {
-    flex: 1;
-    font-size: 16px;
-    padding-right: 20px;
-    & > label {
-      font-weight: bold;
-      &:before {
-        content: "From: ";
-        font-weight: normal;
-      }
-
-      & > span {
-        text-decoration: none;
-        &:hover {
-          text-decoration: underline;
-        }
-      }
-    }
   }
 `;
 const Empty = styled(RecoveryBody)``;
@@ -98,14 +161,22 @@ const Content = styled.div`
   padding: 20px 10px;
   white-space: pre-line;
 `;
+const DecryptionError = styled.div`
+  &:before {
+    content: 'Decryption Error';
+    color: rgba(${p => p.theme.colors.errorRGB}, 0.5);
+  }
+`;
 
 const StyledLink = styled(Link)`
   color: ${p => p.theme.colors.main};
   opacity: 0.8;
+  text-decoration: none;
   transition: opacity 150ms ease;
   white-space: nowrap;
   &:hover {
     opacity: 1;
+    text-decoration: underline;
   }
 `;
 
@@ -113,77 +184,164 @@ const Actions = styled.div`
   border-top: 1px solid #222;
   display: flex;
   justify-content: flex-end;
-  padding-top: 10px;
+  padding: 10px 20px 10px;
 `;
 
-const Message = ({ message }) => {
-  const { data: crews } = useWalletCrews(message.from);
+const MessageInner = ({ message }) => {
+  const queryClient = useQueryClient();
+  const { accountAddress } = useSession();
 
   const dmPrivateKey = useStore(s => s.dmPrivateKey);
-  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
 
+  const { data: ipfsContent, isLoading } = useIpfsContent(message?.ipfs?.hash);
+  
+  const [decryptedContent, setDecryptedContent] = useState();
+  const [decryptionError, setDecryptionError] = useState();
+  useEffect(() => {
+    setDecryptionError();
+    const iAmRecipient = Address.areEqual(accountAddress, message?.recipient);
+    const decryptable = ipfsContent?.[iAmRecipient ? 'recipient' : 'sender'];
+    if (decryptable && dmPrivateKey) {
+      Encryption.decryptContent(dmPrivateKey, decryptable)
+        .then((content) => {
+          setDecryptedContent(content);
+          if (!message?.read && iAmRecipient) {
+            api.markMessageAsRead(message.id).then(() => {
+              // (give use a moment to see unread then mark as read)
+              setTimeout(() => {
+                queryClient.setQueryData(
+                  ['inbox', accountAddress],
+                  (messages) => {
+                    try {
+                      messages.find((m) => m.id === message.id).read = true;
+                    } catch (e) {
+                      console.warn('Failed to mark message as read', e);
+                    }
+                    return messages;
+                  }
+                );
+              }, 3500)
+            });
+          }
+        })
+        .catch((e) => {
+          console.error(e);
+          setDecryptedContent();
+          setDecryptionError(true);
+        });
+    }
+  }, [dmPrivateKey, ipfsContent, message]);
+
+  return (
+    <Content>
+      {isLoading && <PageLoader />}
+      {decryptionError ? <DecryptionError /> : (decryptedContent || '...')}
+    </Content>
+  );
+};
+  
+  
+const Message = ({ message, initialExpanded, isSent, scrollToSelf }) => {
+  const [expanded, setExpanded] = useState(initialExpanded);
+
+  const onToggle = useCallback(() => {
+    setExpanded((e) => !e);
+  }, []);
+
+  const elRef = useRef();
+  useEffect(() => {
+    if (elRef.current) {
+      if (scrollToSelf) {
+        elRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, [scrollToSelf])
+
+  return (
+    <MessageWrapper ref={elRef}>
+      <Uncollapsible expanded={expanded} onClick={onToggle}>
+        {(!isSent && !message.read)
+          ? <Unread><AttentionDot size={12} /></Unread>
+          : (isSent
+            ? (message.read
+                ? <InboxSentReadIcon data-tooltip-content="Sent (read)" data-tooltip-id="launcherTooltip" />
+                : <InboxSentIcon data-tooltip-content="Sent (unread)" data-tooltip-id="launcherTooltip" />
+              )
+            : <InboxReceivedIcon data-tooltip-content="Received (read)" data-tooltip-id="launcherTooltip" />
+          )}
+        <label>{moment(message.createdAt).format('MMM Do YYYY, h:mma')}</label>
+        <ChevronRightIcon />
+      </Uncollapsible>
+      
+      <Collapsible expanded={expanded}>
+        {expanded && <MessageInner message={message} />}
+      </Collapsible>
+    </MessageWrapper>
+  );
+};
+
+const Thread = ({ correspondent }) => {
+  const { accountAddress } = useSession();
+  const { threads, dataUpdatedAt } = useWalletInbox();
+  const { data: crews } = useWalletCrews(correspondent);
+
+  const messages = useMemo(() => {
+    return threads.find((t) => t.correspondent === correspondent)?.messages || []
+  }, [correspondent, dataUpdatedAt]);
+
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dismissLauncher = useCallback(() => {
     dispatchLauncherPage();
   }, []);
 
-  const handleReply = useCallback(() => {
-    // TODO: ...
+  const [composing, setComposing] = useState();
 
-    // TODO: investigate starknet.id for vanity names
-    // TODO: compose dialog
-
-    // {composing && (
-    //   <DirectMessageDialog onClose={() => setComposing()} recipient={crew?.Crew?.delegatedTo} />
-    // )}
-  }, []);
-
-  useEffect(() => {
-    if (!message?.read) {
-      // TODO: mark as read... (maybe after timeout? probably not worth waiting)
-    }
-  }, [message?.read]);
-
-  const [decryptedContent, setDecryptedContent] = useState('');
-  useEffect(() => {
-    if (!message?.content || !dmPrivateKey) return;
-    decryptContent(dmPrivateKey, message?.content)
-      .then((content) => setDecryptedContent(content))
-      .catch((e) => {
-        console.error(e);
-        setDecryptedContent();
-      });
-  }, [dmPrivateKey, message?.content]);
+  const messagesWithMeta = useMemo(() => {
+    let hasScrollTarget = false;
+    return (messages || []).map((m, i) => {
+      const isSent = Address.areEqual(accountAddress, m.sender);
+      const initialExpanded = (!isSent && !m.read) || (i === messages.length - 1);
+      const scrollToSelf = initialExpanded && !hasScrollTarget;
+      hasScrollTarget = hasScrollTarget || scrollToSelf;
+      return {
+        isSent,
+        initialExpanded,
+        scrollToSelf,
+        message: m
+      };
+    });
+  }, [dataUpdatedAt, messages]);
 
   return (
-    <Wrapper>
-      <Title>
-        Direct Message
-      </Title>
+    <ThreadWrapper>
+      <ThreadTitle>
+        <CrewCaptainCardFramed crewId={crews?.[0]?.id} width={56} />
+        <div style={{ paddingLeft: 12 }}>
+          <div>
+            <label>Wallet: </label>
+            <AddressLink address={correspondent} doNotReplaceYou reverseUnderline />
+          </div>
+          <div>
+            <label>Crew{crews?.length === 1 ? '' : 's'}: </label>
+            {crews?.map((c, i) => (
+              <Fragment key={c.id}>
+                {i > 0 && ', '}
+                <StyledLink onClick={dismissLauncher} to={`/crew/${c.id}`}>{formatters.crewName(c)}</StyledLink>
+              </Fragment>
+            ))}
+          </div>
+        </div>
+      </ThreadTitle>
       <Body>
-        <Meta>
-          <div>
-            <label><AddressLink address={message.from} doNotReplaceYou /></label>
-            <div style={{ paddingLeft: 44, fontSize: '14px' }}>
-              {crews?.map((c, i) => (
-                <Fragment key={c.id}>
-                  {i > 0 && ', '}
-                  <StyledLink onClick={dismissLauncher} to={`/crew/${c.id}`}>{formatters.crewName(c)}</StyledLink>
-                </Fragment>
-              ))}
-            </div>
-          </div>
-          <div>
-            {moment(message.timestamp).format('MMM Do YYYY, h:mma')}
-          </div>
-        </Meta>
-        <Content>
-          {decryptedContent}
-        </Content>
-        <Actions>
-          <Button onClick={handleReply}>Reply</Button>
-        </Actions>
+        {messagesWithMeta.map((m) => <Message key={m.message.id} {...m} />)}
       </Body>
-    </Wrapper>
+      <Actions>
+        <Button onClick={() => setComposing(true)}>Reply</Button>
+      </Actions>
+      {composing && (
+        <DirectMessageDialog onClose={() => setComposing()} recipient={correspondent} />
+      )}
+    </ThreadWrapper>
   );
 };
 
@@ -213,7 +371,7 @@ const EnableInbox = () => {
     });
     if (signature) {
       const signedSeed = `${seed}${BigInt(`${signature.join('')}`).toString(16)}`;
-      return await generatePrivateKeyFromSeed(signedSeed);
+      return await Encryption.generatePrivateKeyFromSeed(signedSeed);
     }
     return null;
   }, [chainId, walletAccount]);
@@ -221,23 +379,39 @@ const EnableInbox = () => {
   // TODO (later):
   // - add button to connected-inbox to change encryption key (or settings)
   //  - when this happens, unpin all messages (OR re-encrypt with new key?)
+  const [pendingKeypair, setPendingKeypair] = useState();
   const rekeyInbox = useCallback(async () => {
-    const seed = generateSeed();
+    const seed = Encryption.generateSeed();
     const privateKey = await getPrivateKeyFromSeed(seed);
     if (privateKey) {
-      const publicKeyBytes = getPublicKeyFromPrivateKey(privateKey);
-      const publicKey = Buffer.from(publicKeyBytes).toString('hex');
-      await execute('RekeyInbox', { publicKey });
-      
-      // TODO: if successful...
-      dispatchDmPrivateKey(privateKey); // (update local private key)
-      await api.updateUser({ directMessageSeed: seed }); // (update recovery seed)
+      const publicKey = Encryption.getPublicKeyFromPrivateKey(privateKey);
+      const messagingKeys = Encryption.publicKeyToMessagingKeys(publicKey);
+      await execute('RekeyInbox', messagingKeys);
+      setPendingKeypair([publicKey, privateKey, seed]);
     }
-  }, []);
+  }, [execute]);
 
   const isRekeying = useMemo(() => {
     return getStatus('RekeyInbox') === 'pending';
   }, [getStatus]);
+
+  // once detect the rekeying is underway, clear the local private key and save the new seed
+  useEffect(() => {
+    if (isRekeying) {
+      dispatchDmPrivateKey();
+      if (pendingKeypair[2]) {
+        api.updateUser({ directMessagingSeed: pendingKeypair[2] })
+      }
+    }
+  }, [isRekeying]);
+
+  // once detect the user's public key has updated to the expected value, set private key in state
+  useEffect(() => {
+    if (pendingKeypair && user?.publicKey && pendingKeypair[0] === user.publicKey) {
+      dispatchDmPrivateKey(pendingKeypair[1]);
+      setPendingKeypair();
+    }
+  }, [user?.publicKey]);
 
   const [isRecovering, setIsRecovering] = useState();
   const recoverKey = useCallback(async () => {
@@ -254,7 +428,7 @@ const EnableInbox = () => {
 
   if (isLoading) return <PageLoader />;
 
-  if (user?.directMessagePublicKey) {
+  if (user?.publicKey) {
     return (
       <Wrapper>
         <Title>Connect to Your Inbox</Title>
@@ -268,7 +442,7 @@ const EnableInbox = () => {
             isTransaction
             loading={isRecovering}
             onClick={recoverKey}
-            size="large">Login</Button>
+            size="large">Recover Key</Button>
         </RecoveryBody>
       </Wrapper>
     );
@@ -280,12 +454,12 @@ const EnableInbox = () => {
       <RecoveryBody>
         <p>
           To enable decentralized direct messaging, you must first create an encryption
-          keypair for your messages.
+          key-pair for your messages.
         </p>
         <p>
-          The public key will be published on-chain so that anyone sending you a message
-          can encrypt the message such that it can only be decrypted by you (with the 
-          private key).
+          The public key will be published on-chain so that anyone sending to you can
+          encrypt their message, such that it can only be decrypted by you (with your 
+          unpublished private key).
         </p>
         <Button
           disabled={isRekeying}
@@ -302,7 +476,7 @@ const EmptyInbox = () => {
   return (
     <Wrapper>
       <Title>Inbox</Title>
-      <Empty><p>Your inbox is empty.</p></Empty>
+      <Empty><p>You have not yet received any messages.</p></Empty>
     </Wrapper>
   );
 };
@@ -313,30 +487,45 @@ const AccountLabel = ({ address }) => {
 };
 
 const InboxWrapper = () => {
+  const { accountAddress, authenticating, connecting, _isSimulation } = useSession();
   const { data: user, isLoading: userIsLoading } = useUser();
-  const { messages, isLoading } = useWalletInbox();
+  const { dataUpdatedAt, isLoading, threads } = useWalletInbox();
 
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dmPrivateKey = useStore(s => s.dmPrivateKey);
 
-  const messagePanes = useMemo(() => {
-    return messages?.map((m) => ({
-      key: m.id,
-      label: <AccountLabel address={m.from} />,
-      sublabel: moment(m.timestamp).format('MMM Do YYYY, h:mma'),
-      attention: !m.read,
-      pane: <Message message={m} />
-    }));
-  }, [messages]);
+  // redirect if not logged in
+  useEffect(() => {
+    if (!(accountAddress && !_isSimulation)) {
+      if (!authenticating && !connecting) {
+        const t = setTimeout(() => {
+          dispatchLauncherPage('play');
+        }, 10);
+        return () => clearTimeout(t);
+      }
+    }
+  }, [accountAddress, authenticating, connecting, _isSimulation]);
 
-  if (isLoading || userIsLoading) {
+  const messagePanes = useMemo(() => {
+    return threads?.map((thread) => ({
+      key: thread.correspondent,
+      label: <AccountLabel address={thread.correspondent} />,
+      sublabel: moment(thread.updatedAt).format('MMM Do YYYY, h:mma'),
+      badge: thread.messages?.length || 0,
+      attention: thread.unreadTally > 0,
+      pane: <Thread correspondent={thread.correspondent} />
+    }));
+  }, [dataUpdatedAt, threads]);
+
+  if (!accountAddress || isLoading || userIsLoading) {
     return <PageLoader />;
   }
 
-  if (!user?.directMessagePublicKey || !dmPrivateKey) {
+  if (!user?.publicKey || !dmPrivateKey) {
     return <LauncherDialog singlePane={<EnableInbox />} />
   }
 
-  if (messages?.length === 0) {
+  if (threads?.length === 0) {
     return <LauncherDialog singlePane={<EmptyInbox />} />
   }
 

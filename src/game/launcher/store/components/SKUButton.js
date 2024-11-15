@@ -28,8 +28,7 @@ const SKUButton = ({ usdcPrice, onClick, isPurchasing, isSway, ...props }) => {
       onClick={onClick}
       {...props}>
       <PurchaseButtonInner>
-        Purchase{usdcPrice && `: `}
-        {usdcPrice && (
+        Purchase{usdcPrice ? (<>: {(
           isSway
             ? (
               <SwayPrice
@@ -43,7 +42,7 @@ const SKUButton = ({ usdcPrice, onClick, isPurchasing, isSway, ...props }) => {
                 priceToken={TOKEN.USDC}
                 format={TOKEN_FORMAT.SHORT} />
             )
-          )
+          )}</>) : null
         }
         <ChevronRightIcon />
       </PurchaseButtonInner>

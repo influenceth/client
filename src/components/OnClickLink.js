@@ -3,11 +3,11 @@ import styled from 'styled-components';
 const OnClickLink = styled.span`
   color: ${p => p.theme?.colors?.mainText || '#ccc'};
   cursor: ${p => p.theme?.cursors?.active || 'pointer'};
-  text-decoration: ${p => p.noUnderline ? 'none' : 'underline'};
+  text-decoration: ${p => p.noUnderline || p.reverseUnderline ? 'none' : 'underline'};
   &:active,
   &:hover {
     color: white;
-    text-decoration: none;
+    text-decoration: ${p => p.reverseUnderline ? 'underline' : 'none'};
   }
 
   ${p => p.maxWidth && `

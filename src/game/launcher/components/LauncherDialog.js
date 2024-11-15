@@ -8,8 +8,8 @@ import { reactBool } from '~/lib/utils';
 import theme from '~/theme';
 import IconButton from '~/components/IconButton';
 import useStore from '~/hooks/useStore';
-import { PuffLoader } from 'react-spinners';
 import AttentionDot from '~/components/AttentionDot';
+import Badge from '~/components/Badge';
 
 const borderColor = '#222;'
 
@@ -74,6 +74,15 @@ const AttentionIcon = styled.div`
   flex: 1;
   justify-content: flex-end;
   padding-right: 10px;
+  width: 20px;
+`;
+
+const BadgeIcon = styled(AttentionIcon)`
+  font-size: 16px;
+  & > span {
+    background: rgba(${p => p.isSelected ? '40, 40, 40' : p.theme.colors.darkMainRGB}, 0.6);
+    margin: 0
+  };
 `;
 
 const Tab = styled.div`
@@ -126,12 +135,10 @@ const LauncherDialog = ({ panes = [], preselect, singlePane, bottomLeftMenu }) =
   const [selected, setSelected] = useState();
 
   useEffect(() => {
-    console.log('select1');
-    if (!!panes) {
-      console.log('select2');
+    if (!!panes?.length) {
       setSelected(panes[preselect || 0]);
     }
-  }, [!!panes, preselect]);
+  }, [!!panes?.length, preselect]);
 
   const handleClick = useCallback((pane) => {
     if (pane.link) {
@@ -152,20 +159,26 @@ const LauncherDialog = ({ panes = [], preselect, singlePane, bottomLeftMenu }) =
           <CloseButton borderless hasBackground onClick={onClose}><CloseIcon /></CloseButton>
           {!singlePane && (
             <TabWrapper>
-              {panes.map((pane) => (
-                <Tab
-                  key={pane.key || pane.label}
-                  isSelected={(selected?.key || selected?.label) === (pane.key || pane.label)}
-                  onClick={() => handleClick(pane)}>
-                  <NavIconWrapper><NavIcon color={theme.colors.main} /></NavIconWrapper>
-                  <Label>
-                    {pane.label}
-                    {pane.sublabel && <Sublabel>{pane.sublabel}</Sublabel>}
-                  </Label>
-                  {pane.link && <LinkIcon />}
-                  {pane.attention && <AttentionIcon><AttentionDot size={12} /></AttentionIcon>}
-                </Tab>
-              ))}
+              {panes.map((pane) => {
+                const isSelected = (selected?.key || selected?.label) === (pane.key || pane.label);
+                return (
+                  <Tab
+                    key={pane.key || pane.label}
+                    isSelected={isSelected}
+                    onClick={() => handleClick(pane)}>
+                    <NavIconWrapper><NavIcon color={theme.colors.main} /></NavIconWrapper>
+                    <Label>
+                      {pane.label}
+                      {pane.sublabel && <Sublabel>{pane.sublabel}</Sublabel>}
+                    </Label>
+                    {pane.link && <LinkIcon />}
+                    {pane.attention
+                      ? <AttentionIcon><AttentionDot size={12} /></AttentionIcon>
+                      : <BadgeIcon isSelected={isSelected}><Badge subtler value={pane.badge} /></BadgeIcon>
+                    }
+                  </Tab>
+                );
+              })}
               {bottomLeftMenu && (
                 <>
                   <div style={{ flex: 1 }} />

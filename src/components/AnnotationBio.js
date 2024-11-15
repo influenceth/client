@@ -6,7 +6,7 @@ import AdalianFlourish from '~/components/AdalianFlourish';
 import Button from '~/components/ButtonAlt';
 import EntityName from '~/components/EntityName';
 import EntityDescriptionForm from '~/game/interface/hud/hudMenus/components/EntityDescriptionForm';
-import useAnnotationContent from '~/hooks/useAnnotationContent';
+import useIpfsContent from '~/hooks/useIpfsContent';
 import useAnnotationManager from '~/hooks/actionManagers/useAnnotationManager';
 import useDescriptionAnnotation from '~/hooks/useDescriptionAnnotation';
 import useEarliestActivity from '~/hooks/useEarliestActivity';
@@ -89,7 +89,7 @@ const Footer = styled.span`
 const AnnotationBio = ({ entity, isEditable }) => {
   const { data: earliest } = useEarliestActivity(entity);
   const { data: annotation, isLoading: annotationLoading } = useDescriptionAnnotation(entity);
-  const { data: content, isLoading: contentLoading } = useAnnotationContent(annotation);
+  const { data: content, isLoading: contentLoading } = useIpfsContent(annotation?.ipfs?.hash);
   const { savingAnnotation } = useAnnotationManager(earliest, entity);
 
   const [editing, setEditing] = useState();

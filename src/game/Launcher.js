@@ -509,13 +509,15 @@ const Launcher = (props) => {
               selected={launcherPage === 'settings'}>
               <SettingsIcon /> Settings
             </NavItem>
-            <NavItem
-              onClick={() => dispatchLauncherPage('inbox')}
-              selected={launcherPage === 'inbox'}>
-              <InboxIcon /> Inbox 
-              {hasNoPublicKey && <NavItemLabel><WarningIcon /></NavItemLabel>}
-              {!hasNoPublicKey && unreadTally > 0 && <NavItemBadge value={unreadTally} />}
-            </NavItem>
+            {accountAddress && (
+              <NavItem
+                onClick={() => dispatchLauncherPage('inbox')}
+                selected={launcherPage === 'inbox'}>
+                <InboxIcon /> Inbox 
+                {hasNoPublicKey && <NavItemLabel><WarningIcon /></NavItemLabel>}
+                {!hasNoPublicKey && unreadTally > 0 && <NavItemBadge value={unreadTally} />}
+              </NavItem>
+            )}
 
             <NavItem isRule />
 

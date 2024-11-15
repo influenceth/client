@@ -11,6 +11,7 @@ import CrewLocationLabel from '~/components/CrewLocationLabel';
 import CrewmateCardFramed, { EmptyCrewmateCardFramed } from '~/components/CrewmateCardFramed';
 import CrewmateInfoPane from '~/components/CrewmateInfoPane';
 import Details from '~/components/DetailsModal';
+import DirectMessageDialog from '~/components/DirectMessageDialog';
 import LiveFoodStatus from '~/components/LiveFoodStatus';
 import LiveReadyStatus from '~/components/LiveReadyStatus';
 import {
@@ -30,14 +31,14 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useEarliestActivity from '~/hooks/useEarliestActivity';
 import useHydratedCrew from '~/hooks/useHydratedCrew';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
+import useInboxPublicKey from '~/hooks/useInboxPublicKey';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import useStore from '~/hooks/useStore';
 import formatters from '~/lib/formatters';
 import { nativeBool, reactBool } from '~/lib/utils';
 import theme from '~/theme';
 import EntityActivityLog from './EntityActivityLog';
-import DirectMessageDialog from '~/components/DirectMessageDialog';
-import useInboxPublicKey from '~/hooks/useInboxPublicKey';
+import useUser from '~/hooks/useUser';
 
 const breakpoint = 1375;
 
@@ -251,9 +252,11 @@ const PopperWrapper = (props) => {
 const CrewDetails = ({ crewId, crew, isMyCrew, isDelegatedCrew, isOwnedCrew, selectCrew }) => {
   const { accountAddress } = useSession();
   const history = useHistory();
+  const { data: user, isLoading: userIsLoading } = useUser();
 
   const onSetAction = useStore(s => s.dispatchActionDialog);
   const createAlert = useStore(s => s.dispatchAlertLogged);
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const isNameValid = useNameAvailability(crew);
   const { data: earliestActivity, isLoading: earliestLoading } = useEarliestActivity({ id: crewId, label: Entity.IDS.CREW });
   const { changeName, changingName } = useChangeName({ id: crewId, label: Entity.IDS.CREW });
@@ -272,7 +275,7 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isDelegatedCrew, isOwnedCrew, sel
     return crew._crewmates.filter((c) => accountAddress && Address.areEqual(accountAddress, c.Nft?.owner))?.length;
   }, [accountAddress, crew._crewmates]);
 
-  const { data: inboxPublicKey, isLoading: inboxPublicKeyLoading } = useInboxPublicKey();
+  const { data: inboxPublicKey, isLoading: inboxPublicKeyLoading } = useInboxPublicKey(crew?.Crew?.delegatedTo);
 
   // reset
   useEffect(() => {
@@ -310,6 +313,20 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isDelegatedCrew, isOwnedCrew, sel
     hydratedLocation.onLink();
     history.push('/');
   }, [hydratedLocation]);
+
+  const handleDirectMessage = useCallback(() => {
+    if (user?.publicKey) {
+      setComposing(true);
+    } else {
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: 'You must first enable Direct Messaging on your own inbox.' },
+        level: 'warning',
+        duration: 6000
+      });
+      dispatchLauncherPage('inbox');
+    }
+  }, [user?.publicKey]);
 
   const formationDate = useMemo(() => {
     if (earliestLoading) return '...';
@@ -483,8 +500,8 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isDelegatedCrew, isOwnedCrew, sel
                 data-tooltip-id="detailsTooltip"
                 data-tooltip-content={inboxPublicKey ? '' : 'Crew has not yet enabled direct messaging'}>
                 <Button
-                  disabled={nativeBool(inboxPublicKeyLoading || !inboxPublicKey)}
-                  onClick={() => setComposing(true)}>Direct Message</Button>
+                  disabled={nativeBool(userIsLoading || inboxPublicKeyLoading || !inboxPublicKey)}
+                  onClick={handleDirectMessage}>Direct Message</Button>
               </div>
             )}
             {!isMyCrew && isDelegatedCrew && (

@@ -181,14 +181,6 @@ const formatAsTx = (item) => {
       };
       break;
     }
-    case 'DirectMessage': {
-      formatted.icon = <InboxIcon />;
-      formatted.label = `Send Direct Message`;
-      formatted.onClick = ({ history }) => {
-        history.push('/launcher/inbox');
-      }
-      break;
-    }
     case 'ArrangeCrew': {
       formatted.icon = <ManageCrewIcon />;
       formatted.label = 'Manage Crew';
@@ -1031,6 +1023,24 @@ const formatAsTx = (item) => {
     case 'PurchaseStarterPack': {
       formatted.icon = <StarIcon />;
       formatted.label = `Purchase Starter Pack`;
+      break;
+    }
+
+    case 'DirectMessage': {
+      formatted.icon = <InboxIcon />;
+      formatted.label = `Send Direct Message`;
+      formatted.onClick = ({ history }) => {
+        history.push('/launcher/inbox');
+      }
+      break;
+    }
+    
+    case 'RekeyInbox': {
+      formatted.icon = <InboxIcon />;
+      formatted.label = `Configure Inbox`;
+      formatted.onClick = ({ history }) => {
+        history.push('/launcher/inbox');
+      }
       break;
     }
 

@@ -61,7 +61,18 @@ const Wrapper = styled.div`
   }
 `;
 
-const GenericDialog = ({ children, disabled, loading, onConfirm, onReject, isTransaction, title, ...props }) => (
+const GenericDialog = ({
+  children,
+  disabled,
+  loading,
+  onConfirm,
+  confirmButtonProps = {},
+  onReject,
+  rejectButtonProps = {},
+  isTransaction,
+  title,
+  ...props
+}) => (
   <Dialog>
     <Wrapper {...props}>
       {title && (
@@ -78,8 +89,24 @@ const GenericDialog = ({ children, disabled, loading, onConfirm, onReject, isTra
         {loading ? <Loader /> : children}
       </Body>
       <Buttons>
-        {onReject ? <Button onClick={onReject} disabled={nativeBool(loading)}>{props.rejectText || 'Cancel'}</Button> : <div />}
-        <Button onClick={onConfirm} disabled={nativeBool(disabled || loading)} isTransaction={isTransaction}>{props.confirmText || 'Ok'}</Button>
+        {onReject
+          ? (
+            <Button
+              disabled={nativeBool(loading)}
+              onClick={onReject}
+              {...rejectButtonProps}>
+              {props.rejectText || 'Cancel'}
+            </Button>
+          )
+          : <div />
+        }
+        <Button
+          disabled={nativeBool(disabled || loading)}
+          isTransaction={isTransaction}
+          onClick={onConfirm}
+          {...confirmButtonProps}>
+          {props.confirmText || 'Ok'}
+        </Button>
       </Buttons>
     </Wrapper>
   </Dialog>

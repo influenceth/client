@@ -1,13 +1,12 @@
 import { useCallback, useContext, useMemo, useState } from 'react';
-import { Entity } from '@influenceth/sdk';
+import { Encryption } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import useCrewContext from '~/hooks/useCrewContext';
+import useInboxPublicKey from '~/hooks/useInboxPublicKey';
+import useSession from '~/hooks/useSession';
+import useUser from '~/hooks/useUser';
 import api from '~/lib/api';
 import { maxAnnotationLength } from '~/lib/utils';
-import useSession from '../useSession';
-import useInboxPublicKey from '../useInboxPublicKey';
-import { encryptContent } from '~/lib/encrypt';
 
 export const isValidAnnotation = (val) => {
   if (val.length > maxAnnotationLength) return false;
@@ -16,34 +15,47 @@ export const isValidAnnotation = (val) => {
 };
 
 const useDirectMessageManager = (recipient) => {
-  const { accountAddress } = useSession();
+  const { data: user } = useUser();
   const { execute, getStatus } = useContext(ChainTransactionContext);
-  const { data: publicKey } = useInboxPublicKey(recipient);
+  const { data: recipientPublicKey } = useInboxPublicKey(recipient);
 
-  const [saving, setSaving] = useState();
+  const [hashing, setHashing] = useState();
 
   const encryptMessage = useCallback(
-    async (message) => (publicKey && message)
-      ? encryptContent(publicKey, message)
-      : null
-    ,
-    [publicKey]
+    async (message) => {
+      console.log('recipientPublicKey', recipientPublicKey);
+      console.log('senderPublicKey', user, user?.publicKey);
+      console.log('message', message);
+      if (recipientPublicKey && user?.publicKey && message) {
+        return {
+          sender: await Encryption.encryptContent(user?.publicKey, message),
+          recipient: await Encryption.encryptContent(recipientPublicKey, message)
+        }
+      }
+      return null;
+    },
+    [recipientPublicKey, user?.publicKey]
   );
 
-  const sendMessage = useCallback(
+  const sendEncryptedMessage = useCallback(
     async (encryptedMessage) => {
-      const hashable = {
-        publicKey,
-        encryptedMessage,
+      setHashing(true);
+      const hash = await api.getDirectMessageHash({
+        content: encryptedMessage,
         type: 'DirectMessage',
         version: 1
-      };
-      const hash = await api.getDirectMessageHash(hashable);
+      });
+      setHashing(false);
+      if (!hash) return;
+
       await execute(
         'DirectMessage',
         {
           recipient,
           content_hash: hash.match(/.{1,31}/g) // chunk into shortstrings (max-length 31)
+        },
+        {
+          encryptedMessage
         }
       );
     },
@@ -56,9 +68,10 @@ const useDirectMessageManager = (recipient) => {
   );
 
   return {
-    sendMessage,
-    sendingMessage: saving || (status === 'pending'),
-    txPending: (status === 'pending')
+    encryptMessage,
+    sendEncryptedMessage,
+    isHashing: hashing,
+    isSending: (status === 'pending'),
   };
 };
 
