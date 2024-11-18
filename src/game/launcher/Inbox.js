@@ -286,7 +286,8 @@ const Thread = ({ correspondent }) => {
   const { data: crews } = useWalletCrews(correspondent);
 
   const messages = useMemo(() => {
-    return threads.find((t) => t.correspondent === correspondent)?.messages || []
+    return (threads.find((t) => t.correspondent === correspondent)?.messages || [])
+      .sort((a, b) => a.createdAt < b.createdAt ? -1 : 1);
   }, [correspondent, dataUpdatedAt]);
 
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
