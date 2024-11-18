@@ -326,8 +326,6 @@ const Porkchop = ({
     const arrivalTime = departureTime + tof;
     const insufficientFood = arrivalTime > (emode ? departureTime : lastFedAt) + maxFoodUtilizationAdays;
 
-    console.log({ insufficientPropellant, insufficientFood, solution });
-
     dispatchTravelSolution({
       ...solution, // v1, v2, deltaV
       shipId: shipParams.id,

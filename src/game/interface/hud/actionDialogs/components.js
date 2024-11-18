@@ -2469,7 +2469,6 @@ export const InventorySelectionDialog = ({
 
   // if off the surface, cannot access inventories on the surface...
   const { data: inventoryData } = useAccessibleAsteroidInventories(otherLocation.lotIndex === 0 ? null : asteroidId, isSourcing);
-  console.log({ inventoryData});
   const permission = isSourcing ? Permission.IDS.REMOVE_PRODUCTS : Permission.IDS.ADD_PRODUCTS;
 
   // ... but can access inventories on their crewed ship (assuming not sending things elsewhere)
