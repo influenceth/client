@@ -4,6 +4,7 @@ import { PuffLoader as Loader } from 'react-spinners';
 import { Tooltip } from 'react-tooltip';
 
 import { appConfig } from '~/appConfig';
+import Badge from '~/components/Badge';
 import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
 import {
@@ -17,20 +18,24 @@ import {
   AssetPortalIcon,
   WalletIcon,
   BugIcon,
-  DownloadIcon
+  DownloadIcon,
+  InboxIcon,
+  WarningIcon
 } from '~/components/Icons';
 import InfluenceLogo from '~/components/InfluenceLogo';
+import HudMenu from '~/game/interface/hud/HudMenu';
+import SystemControls from '~/game/interface/hud/SystemControls';
 import { headerHeight, menuPadding } from '~/game/uiConstants';
 import usePriceConstants from '~/hooks/usePriceConstants';
+import useWalletInbox from '~/hooks/useWalletInbox';
+import { fireTrackingEvent } from '~/lib/utils';
+import theme from '~/theme';
 import Play from './launcher/Play';
 import Settings from './launcher/Settings';
 import Store from './launcher/Store';
-import HudMenu from './interface/hud/HudMenu';
-import SystemControls from './interface/hud/SystemControls';
 import Help from './launcher/Help';
+import Inbox from './launcher/Inbox';
 import Rewards from './launcher/Rewards';
-import { fireTrackingEvent } from '~/lib/utils';
-import theme from '~/theme';
 
 const DISABLE_LAUNCH_TRAILER = appConfig.get('App.disableLaunchTrailer');
 
@@ -359,9 +364,22 @@ const ExitSimulationLink = styled.div`
   }
 `;
 
+const NavItemLabel = styled.div`
+  color: ${p => p.theme.colors.error};
+  font-size: 16px;
+  position: absolute;
+  right: 0;
+`;
+const NavItemBadge = styled(Badge)`
+  font-size: 16px;
+  position: absolute;
+  right: 0;
+`;
+
 const Launcher = (props) => {
   const { accountAddress, authenticating, authenticated, login, walletId } = useSession(false);
   const { data: priceConstants, isLoading: priceConstantsLoading } = usePriceConstants();
+  const { hasNoPublicKey, unreadTally } = useWalletInbox();
 
   const launcherPage = useStore(s => s.launcherPage);
   const simulationEnabled = useStore(s => s.simulationEnabled);
@@ -405,7 +423,7 @@ const Launcher = (props) => {
   useEffect(() => {
     // NOTE: (currently not disallowing any for logged out users)
     // limit selection if logged out
-    // if (!authenticated && !['play', 'help', 'rewards', 'settings', 'store'].includes(launcherPage)) {
+    // if (!authenticated && !['play', 'help', 'rewards', 'settings', 'store', 'inbox'].includes(launcherPage)) {
     //   dispatchLauncherPage('play');
     // }
     // disallow store if no sale available
@@ -491,6 +509,15 @@ const Launcher = (props) => {
               selected={launcherPage === 'settings'}>
               <SettingsIcon /> Settings
             </NavItem>
+            {accountAddress && (
+              <NavItem
+                onClick={() => dispatchLauncherPage('inbox')}
+                selected={launcherPage === 'inbox'}>
+                <InboxIcon /> Inbox 
+                {hasNoPublicKey && <NavItemLabel><WarningIcon /></NavItemLabel>}
+                {!hasNoPublicKey && unreadTally > 0 && <NavItemBadge value={unreadTally} />}
+              </NavItem>
+            )}
 
             <NavItem isRule />
 
@@ -533,6 +560,7 @@ const Launcher = (props) => {
           {launcherPage === 'help' && <Help />}
           {launcherPage === 'rewards' && <Rewards />}
           {launcherPage === 'settings' && <Settings />}
+          {launcherPage === 'inbox' && <Inbox />}
         </MainContent>
 
         {launcherPage === 'play' && (

@@ -54,6 +54,9 @@ const customConfigs = {
   AnnotateEvent: {
     equalityTest: ['transaction_hash', 'log_index'],
   },
+  DirectMessage: {
+    equalityTest: ['recipient'],
+  },
   CancelPrepaidAgreement: {
     equalityTest: ['target.id', 'target.label', 'permission'],
     getTransferConfig: ({ agreementPath, refundAmount, recipient }) => ({
@@ -159,6 +162,9 @@ const customConfigs = {
       return [safeBigInt(ADALIAN_PURCHASE_PRICE), Address.toStandard(ADALIAN_PURCHASE_TOKEN)];
     },
     equalityTest: true
+  },
+  RekeyInbox: {
+    equalityTest: true,
   },
   ResolveRandomEvent: {
     equalityTest: true

@@ -2,7 +2,6 @@ import { useContext, useMemo } from 'react';
 
 import SessionContext from '~/contexts/SessionContext';
 import SIMULATION_CONFIG from '~/simulation/simulationConfig';
-import useSimulationState from './useSimulationState';
 import useStore from '~/hooks/useStore';
 
 
@@ -35,7 +34,8 @@ const useSession = (includeSimulationOverrides = true) => {
         // walletAccount
         // walletId
         // blockNumber
-        blockTime: overrideBlockTime
+        blockTime: overrideBlockTime,
+        _isSimulation: true,
       };
     }
     return context;

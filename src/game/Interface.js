@@ -102,6 +102,8 @@ const Interface = () => {
     if (e.ctrlKey && e.which === 51) dispatchLauncherPage('store');
     // ctrl+4
     if (e.ctrlKey && e.which === 52) dispatchLauncherPage('rewards');
+    // ctrl+5
+    if (e.ctrlKey && e.which === 53) dispatchLauncherPage('inbox');
 
     // ctrl+f9
     if (e.ctrlKey && e.which === 120) dispatchToggleInterface();

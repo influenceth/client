@@ -88,6 +88,21 @@ const api = {
     return response.data;
   },
 
+  getInboxSeed: async () => {
+    const response = await instance.get(`/${apiVersion}/user/inboxseed`);
+    return response.data;
+  },
+
+  getInboxPublicKey: async (recipient) => {
+    const response = await instance.get(`/${apiVersion}/messages/key/${recipient}`);
+    return response.data;
+  },
+
+  getDirectMessageHash: async (encryptedMessage) => {
+    const response = await instance.post(`/${apiVersion}/messages/hash`, { encryptedMessage });
+    return response.data?.hash;
+  },
+
   getEntityActivities: async (entity, query = {}) => {
     const response = await instance.get(`/${apiVersion}/entities/${Entity.packEntity(entity)}/activity?${buildQuery(query)}`);
     return response.data;
@@ -916,6 +931,21 @@ const api = {
 
   saveAnnotation: async (params) => {
     const response = await instance.post(`/${apiVersion}/annotations`, params);
+    return response.data;
+  },
+
+  saveDirectMessage: async (params) => {
+    const response = await instance.post(`/${apiVersion}/messages`, params);
+    return response.data;
+  },
+
+  getInboxMessages: async () => {
+    const response = await instance.get(`/${apiVersion}/messages`);
+    return response.data;
+  },
+
+  markMessageAsRead: async (id) => {
+    const response = await instance.patch(`/${apiVersion}/messages/${id}/read`);
     return response.data;
   }
 };

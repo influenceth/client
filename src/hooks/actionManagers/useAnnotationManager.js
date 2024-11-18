@@ -32,7 +32,7 @@ const useAnnotationManager = (activity, metaEntity) => {
 
       const annotation = { content, type: 'EventAnnotation', version: 1 };
       const hash = await api.getAnnotationHash(annotation);
-      execute(
+      await execute(
         'AnnotateEvent',
         {
           ...payload,

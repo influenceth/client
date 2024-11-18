@@ -7,7 +7,7 @@ import useShip from '~/hooks/useShip';
 import { HudMenuCollapsibleSection, Scrollable } from './components/components';
 import ShipTitleArea from './components/ShipTitleArea';
 import PolicyPanels from './components/PolicyPanels';
-import useAnnotationContent from '~/hooks/useAnnotationContent';
+import useIpfsContent from '~/hooks/useIpfsContent';
 import { reactPreline } from '~/lib/utils';
 
 const Description = styled.div`
@@ -25,7 +25,7 @@ const ShipInfo = () => {
 
   const { data: ship } = useShip(zoomScene?.type === 'SHIP' ? zoomScene?.shipId : null);
   const { data: annotation, isLoading: isAnnotationLoading } = useDescriptionAnnotation(ship);
-  const { data: description, isLoading: isContentLoading } = useAnnotationContent(annotation);
+  const { data: description, isLoading: isContentLoading } = useIpfsContent(annotation?.ipfs?.hash);
 
   if (!ship || isAnnotationLoading || isContentLoading) return null;
   return (

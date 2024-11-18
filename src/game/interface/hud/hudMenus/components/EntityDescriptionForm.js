@@ -7,7 +7,7 @@ import { InputBlock } from '~/components/filters/components';
 import { maxAnnotationLength, nativeBool } from '~/lib/utils';
 import useAnnotationManager, { isValidAnnotation } from '~/hooks/actionManagers/useAnnotationManager';
 import useDescriptionAnnotation from '~/hooks/useDescriptionAnnotation';
-import useAnnotationContent from '~/hooks/useAnnotationContent';
+import useIpfsContent from '~/hooks/useIpfsContent';
 import useEarliestActivity from '~/hooks/useEarliestActivity';
 import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 
@@ -23,7 +23,7 @@ const EntityDescriptionForm = ({ buttonSize = 'small', buttonText = 'Update', en
   const { data: earliest } = useEarliestActivity(entity);
   const { saveAnnotation, savingAnnotation, txPending } = useAnnotationManager(earliest, entity);
   const { data: annotation, isLoading: annotationLoading } = useDescriptionAnnotation(entity);
-  const { data: originalDesc, isLoading: contentLoading } = useAnnotationContent(annotation);
+  const { data: originalDesc, isLoading: contentLoading } = useIpfsContent(annotation?.ipfs?.hash);
   const simulationEnabled = useSimulationEnabled();
   const isLoading = annotationLoading || contentLoading;
 
