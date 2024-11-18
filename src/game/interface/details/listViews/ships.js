@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { Entity, Lot, Ship } from '@influenceth/sdk';
 
 import { MyAssetIcon, SwayIcon } from '~/components/Icons';
@@ -117,10 +118,10 @@ const useColumns = () => {
         selector: row => {
           if (row.Control?.controller?.id) {
             return (
-              <>
+              <Link to={`/crew/${row.Control.controller.id}`}>
                 {row.meta.crew.name || <EntityName {...row.Control.controller} />}
                 {row.Control?.controller?.id === crew?.id && <Me />}
-              </>
+              </Link>
             );
           }
           return null;
