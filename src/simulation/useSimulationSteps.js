@@ -35,8 +35,6 @@ const useSimulationSteps = () => {
   const history = useHistory();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  const dispatchSimulationEnabled = useStore(s => s.dispatchSimulationEnabled);
-  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchCinematicInitialPosition = useStore(s => s.dispatchCinematicInitialPosition);
   const dispatchCoachmarks = useStore(s => s.dispatchCoachmarks);
   const dispatchFiltersReset = useStore(s => s.dispatchFiltersReset);
@@ -44,8 +42,6 @@ const useSimulationSteps = () => {
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
   const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
-  const dispatchRecenterCamera = useStore(s => s.dispatchRecenterCamera);
-  const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
   const dispatchGoToHighAltitude = useStore(s => s.dispatchGoToHighAltitude);
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);

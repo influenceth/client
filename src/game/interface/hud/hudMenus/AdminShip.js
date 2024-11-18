@@ -13,10 +13,13 @@ import CrewIndicator from '~/components/CrewIndicator';
 import useCrew from '~/hooks/useCrew';
 import ListForSalePanel from './components/ListForSalePanel';
 import EntityDescriptionForm from './components/EntityDescriptionForm';
+import useCrewContext from '~/hooks/useCrewContext';
+import SwitchToAdministratingCrew from './components/SwitchToAdministratingCrew';
 
 const AdminShip = ({}) => {
   const lotId = useStore(s => s.asteroids.lot);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
+  const { crew } = useCrewContext();
 
   const zoomShipId = zoomScene?.type === 'SHIP' ? zoomScene.shipId : null;
   const { data: zoomShip } = useShip(zoomShipId);
@@ -30,31 +33,39 @@ const AdminShip = ({}) => {
       <Scrollable>
         <ShipTitleArea ship={ship} />
 
-        <HudMenuCollapsibleSection titleText="Update Name" collapsed>
-          <EntityNameForm
-            entity={ship ? { id: ship.id, label: Entity.IDS.SHIP } : null}
-            originalName={ship?.Name?.name}
-            label="Ship Name" />
-        </HudMenuCollapsibleSection>
+        {crew?.id !== ship?.Control?.controller?.id && (
+          <SwitchToAdministratingCrew entity={ship} />
+        )}
 
-        <HudMenuCollapsibleSection titleText="Update Description" collapsed>
-          <EntityDescriptionForm
-            entity={ship ? { id: ship.id, label: Entity.IDS.SHIP } : null}
-            originalDesc={``}
-            label="Ship Description" />
-        </HudMenuCollapsibleSection>
+        {crew?.id && crew.id === ship?.Control?.controller?.id && (
+          <>
+            <HudMenuCollapsibleSection titleText="Update Name" collapsed>
+              <EntityNameForm
+                entity={ship ? { id: ship.id, label: Entity.IDS.SHIP } : null}
+                originalName={ship?.Name?.name}
+                label="Ship Name" />
+            </HudMenuCollapsibleSection>
 
-        <HudMenuCollapsibleSection titleText="Update Permissions" collapsed>
-          <PolicyPanels editable entity={ship} />
-        </HudMenuCollapsibleSection>
+            <HudMenuCollapsibleSection titleText="Update Description" collapsed>
+              <EntityDescriptionForm
+                entity={ship ? { id: ship.id, label: Entity.IDS.SHIP } : null}
+                originalDesc={``}
+                label="Ship Description" />
+            </HudMenuCollapsibleSection>
 
-        <HudMenuCollapsibleSection titleText="Ship Settings" collapsed>
-          <CrewIndicator crew={controller} label="Flight Crew" />
-          <div style={{ height: 15 }} />
-          <ListForSalePanel
-            entity={ship}
-            forSaleWarning="Note: Control of the ship's manifest and inventories will transfer with any sale." />
-        </HudMenuCollapsibleSection>
+            <HudMenuCollapsibleSection titleText="Update Permissions" collapsed>
+              <PolicyPanels editable entity={ship} />
+            </HudMenuCollapsibleSection>
+
+            <HudMenuCollapsibleSection titleText="Ship Settings" collapsed>
+              <CrewIndicator crew={controller} label="Flight Crew" />
+              <div style={{ height: 15 }} />
+              <ListForSalePanel
+                entity={ship}
+                forSaleWarning="Note: Control of the ship's manifest and inventories will transfer with any sale." />
+            </HudMenuCollapsibleSection>
+          </>
+        )}
 
       </Scrollable>
     </>

@@ -649,7 +649,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     if (type === 'market' && mode === 'buy') perm = Permission.IDS.BUY;
     if (type === 'market' && mode === 'sell') perm = Permission.IDS.SELL;
     return crewCan(perm, marketplace);
-  }, [crewCan, mode, type]);
+  }, [crewCan, marketplace, mode, type]);
 
   const [coachToBuy, coachToSell, coachToLimit, coachToMarket, coachToQuantity, coachToUnitPrice, coachToButton] = useMemo(() => {
     let disable = (coachmarkHelperProduct !== resource.i) || !!actionDialog?.type;

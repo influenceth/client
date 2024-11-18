@@ -7,13 +7,13 @@ import useShipTravelManager from '~/hooks/actionManagers/useShipTravelManager';
 import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 
-const isVisible = ({ asteroid, crew, ship, zoomStatus }) => {
+const isVisible = ({ accountCrewIds, asteroid, crew, ship, zoomStatus }) => {
   if (!ship && crew?.Ship?.emergencyAt > 0) return true; // crew is in escape module
 
   return crew && (
     (asteroid && zoomStatus === 'out') || (
       ship
-      && ship.Control?.controller?.id === crew.id
+      && accountCrewIds?.includes(ship.Control?.controller?.id)
       && !ship._location.lotId  // in orbit
     )
   );

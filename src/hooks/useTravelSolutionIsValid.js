@@ -10,10 +10,11 @@ export const maxFoodUtilizationAdays = 1.5 * 365; // 1.5 years
 
 const useTravelSolutionIsValid = () => {
   const { crew } = useCrewContext();
-  const shipId = crew?.Ship?.emergencyAt > 0 ? crew : crew?._location?.shipId;
+  const travelSolution = useStore(s => s.asteroids.travelSolution);
+  
+  const shipId = crew?.Ship?.emergencyAt > 0 ? crew : (travelSolution?.shipId || crew?._location?.shipId);
   const { data: ship } = useShip(shipId);
 
-  const travelSolution = useStore(s => s.asteroids.travelSolution);
   const exhaustBonus = useMemo(() => {
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY, crew);
   }, [crew]);

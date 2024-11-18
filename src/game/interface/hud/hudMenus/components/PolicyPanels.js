@@ -605,23 +605,24 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
               {([Permission.POLICY_IDS.CONTRACT, Permission.POLICY_IDS.PREPAID].includes(policyType)) && (
                 <div style={{ paddingTop: 15 }}>
                   {!(entity?.label === Entity.IDS.ASTEROID && permission === Permission.IDS.USE_LOT) && (
-                    <actionButtons.FormAgreement.Component
-                      _disabled={
-                        Permission.TYPES[permission].isExclusive &&
-                        (jitStatus === 'unleasable' || agreements?.length > 0) &&
-                        entity?.Control?.controller?.id !== crew?.id
-                      }
-                      entity={entity}
-                      permission={permission} />
-                  )}
-                  {/* TODO: enable list view at an asteroid level... will need to pull all agreements from
-                    elasticsearch since entity will be asteroid (and *agreements won't be populated) */}
-                  {!(entity?.label === Entity.IDS.ASTEROID && permission === Permission.IDS.USE_LOT) && (
-                    <actionButtons.ViewAgreements.Component
-                      _disabled={!agreements?.length}
-                      entity={entity}
-                      permission={permission}
-                      tally={agreements?.length || 0} />
+                    <>
+                      <actionButtons.FormAgreement.Component
+                        _disabled={
+                          Permission.TYPES[permission].isExclusive &&
+                          (jitStatus === 'unleasable' || agreements?.length > 0) &&
+                          entity?.Control?.controller?.id !== crew?.id
+                        }
+                        entity={entity}
+                        permission={permission} />
+
+                      {/* TODO: enable list view at an asteroid level... will need to pull all agreements from
+                      elasticsearch since entity will be asteroid (and *agreements won't be populated) */}
+                      <actionButtons.ViewAgreements.Component
+                        _disabled={!agreements?.length}
+                        entity={entity}
+                        permission={permission}
+                        tally={agreements?.length || 0} />
+                    </>
                   )}
                 </div>
               )}

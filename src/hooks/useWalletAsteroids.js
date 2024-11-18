@@ -10,9 +10,7 @@ import { entitiesCacheKey } from '~/lib/cacheKey';
 
 const useWalletAsteroids = () => {
   const { accountAddress } = useSession();
-  const { crews, loading: crewsLoading } = useCrewContext();
-
-  const controllerIds = useMemo(() => (crews || []).map((c) => c.id), [crews]);
+  const { accountCrewIds, loading: crewsLoading } = useCrewContext();
 
   const query = useMemo(() => {
     if (!accountAddress || crewsLoading) return null;
@@ -21,7 +19,7 @@ const useWalletAsteroids = () => {
       const qb = esb.boolQuery();
       qb.should([
         esb.termQuery('Nft.owner', accountAddress),
-        esb.termsQuery('Control.controller.id', controllerIds),
+        esb.termsQuery('Control.controller.id', accountCrewIds),
         // esb.termsQuery('id', [1,12,123,1234,1234,12345,123456])  // TODO: remove this debug line
       ]);
       
@@ -38,10 +36,10 @@ const useWalletAsteroids = () => {
     }
 
     return null;
-  }, [accountAddress, controllerIds, crewsLoading]);
+  }, [accountAddress, accountCrewIds, crewsLoading]);
 
   return useQuery(
-    entitiesCacheKey(Entity.IDS.ASTEROID, { owner: accountAddress, controllerId: controllerIds }),
+    entitiesCacheKey(Entity.IDS.ASTEROID, { owner: accountAddress, controllerId: accountCrewIds }),
     async () => {
       const response = await api.searchAssets('asteroids', query);
       return response?.hits || [];

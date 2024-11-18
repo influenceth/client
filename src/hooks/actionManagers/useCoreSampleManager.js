@@ -12,7 +12,7 @@ const useCoreSampleManager = (lotId) => {
   const { actionItems, readyItems } = useActionItems();
   const blockTime = useBlockTime();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
-  const { crew, pendingTransactions } = useCrewContext();
+  const { accountCrewIds, crew, pendingTransactions } = useCrewContext();
   const { data: lot } = useLot(lotId);
 
   // * only used by SampleDepositStart contract, but used for equality check on others
@@ -39,7 +39,7 @@ const useCoreSampleManager = (lotId) => {
 
     const activeSamples = (lot?.deposits || [])
       .filter((c) => (
-        c.Control.controller.id === crew?.id && (
+        accountCrewIds?.includes(c.Control.controller.id) && (
           c.Deposit.status < Deposit.STATUSES.SAMPLED || completingSamples.includes(c.id)
         )
       ))

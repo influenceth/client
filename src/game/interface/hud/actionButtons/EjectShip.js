@@ -7,14 +7,14 @@ import useShipDockingManager from '~/hooks/actionManagers/useShipDockingManager'
 import theme from '~/theme';
 import useHydratedCrew from '~/hooks/useHydratedCrew';
 
-const isVisible = ({ crew, building, lot, ship }) => {
-  if (crew && ship && crew?.id !== ship?.Control?.controller?.id) {
+const isVisible = ({ accountCrewIds, building, lot, ship }) => {
+  if (ship && !accountCrewIds?.includes(ship?.Control?.controller?.id)) {
     // if someone else's ship is in my building...
-    if (ship.Location?.location?.uuid === building?.uuid && crew?.id === building?.Control?.controller?.id) {
+    if (ship.Location?.location?.uuid === building?.uuid && accountCrewIds?.includes(building?.Control?.controller?.id)) {
       return true;
     }
     // if someone else's ship is on my lot...
-    if (ship.Location?.location?.uuid === lot?.uuid && crew?.id === lot?.Control?.controller?.id) {
+    if (ship.Location?.location?.uuid === lot?.uuid && accountCrewIds?.includes(lot?.Control?.controller?.id)) {
       return true;
     }
   }

@@ -2,10 +2,10 @@ import { useCallback, useMemo } from 'react';
 import { Entity } from '@influenceth/sdk';
 
 import { ZOOM_OUT_ANIMATION_TIME } from '~/game/scene/Asteroid';
-import useCrewShips from '~/hooks/useCrewShips';
 import useCrew from '~/hooks/useCrew';
 import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
+import useWalletShips from '~/hooks/useWalletShips';
 import { useLotLink } from './LotLink';
 import OnClickLink from './OnClickLink';
 import EntityName from './EntityName';
@@ -70,18 +70,18 @@ export const useShipLink = ({ crewId, shipId, zoomToShip }) => {
 export const ShipLink = ({ shipId, zoomToShip }) => {
   const onClick = useShipLink({ shipId, zoomToShip });
 
-  const { data: controlled, isLoading: controlledAreLoading } = useCrewShips();
+  const { data: owned, isLoading: ownedAreLoading } = useWalletShips();
   const shipName = useMemo(() => {
-    if (controlled) {
-      const match = controlled.find(a => a.id === Number(shipId));
+    if (owned) {
+      const match = owned.find(a => a.id === Number(shipId));
       return match?.name || `Ship #${shipId.toLocaleString()}`;
     }
     return null;
-  }, [ controlled, shipId ])
+  }, [ owned, shipId ])
 
   return (
     <OnClickLink onClick={onClick}>
-      {controlledAreLoading
+      {ownedAreLoading
         ? `Ship #${shipId.toLocaleString()}`
         : (shipName || <EntityName id={shipId} label={Entity.IDS.SHIP} />)}
     </OnClickLink>

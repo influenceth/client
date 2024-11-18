@@ -16,16 +16,14 @@ export const statuses = [
 
 const useWalletBuildings = () => {
   const { accountAddress } = useSession();
-  const { crews, loading: crewsLoading } = useCrewContext();
-
-  const controllerIds = useMemo(() => (crews || []).map((c) => c.id), [crews]);
+  const { accountCrewIds, loading: crewsLoading } = useCrewContext();
 
   const query = useMemo(() => {
     if (!accountAddress || crewsLoading) return null;
 
     try {
       const qb = esb.boolQuery();
-      qb.filter(esb.termsQuery('Control.controller.id', controllerIds));
+      qb.filter(esb.termsQuery('Control.controller.id', accountCrewIds));
       qb.mustNot(esb.termQuery('Building.status', Building.CONSTRUCTION_STATUSES.UNPLANNED));
       
       const q = esb.requestBodySearch();
@@ -40,10 +38,10 @@ const useWalletBuildings = () => {
     }
 
     return null;
-  }, [accountAddress, controllerIds, crewsLoading]);
+  }, [accountAddress, accountCrewIds, crewsLoading]);
 
   return useQuery(
-    entitiesCacheKey(Entity.IDS.BUILDING, { controllerId: controllerIds, status: statuses }),
+    entitiesCacheKey(Entity.IDS.BUILDING, { controllerId: accountCrewIds, status: statuses }),
     async () => {
       const response = await api.searchAssets('buildings', query);
       return response?.hits || [];

@@ -7,15 +7,15 @@ import useStationedCrews from '~/hooks/useStationedCrews';
 import theme from '~/theme';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 
-const isVisible = ({ crew, building, ship }) => {
+const isVisible = ({ accountCrewIds, building, ship }) => {
   // TODO: ...and there are other crews in station (guestCrewsOnShip exists)
   //  - hide if policy does not allow guests?
-  if (crew) {
+  if (accountCrewIds) {
     if (ship && !!ship.Station) {
-      return ship.Control.controller.id === crew.id;
+      return accountCrewIds.includes(ship.Control.controller.id);
     }
     if (building && !!building.Station) {
-      return building.Control.controller.id === crew.id;
+      return accountCrewIds.includes(building.Control.controller.id);
     }
   }
   return false;
@@ -32,7 +32,18 @@ const EjectGuestCrew = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dia
 
   const { currentEjections } = useEjectCrewManager(entityId);
   const { data: allStationedCrews } = useStationedCrews(entityId);
-  const allGuestCrews = useMemo(() => (allStationedCrews || []).filter((c) => c.id !== crew?.id), [allStationedCrews, crew?.id]);
+  const allGuestCrews = useMemo(() => {
+    return (allStationedCrews || [])
+      .filter((c) => c.id !== crew?.id)
+      .map((c) => ({
+        ...c,
+
+        // only need to worry about permissions w/r/t station controller, which
+        // is { crew } in this case... so add { crew } as a sibling when true,
+        // otherwise leave empty (this will help us avoid a bunch) of extra calls
+        _siblingCrewIds: crew._siblingCrewIds.includes(c.id) ? [crew.id] : []
+      }));
+  }, [allStationedCrews, crew?.id]);
 
   const handleClick = useCallback(() => {
     onSetAction('EJECT_GUEST_CREW', { origin: station, ...dialogProps });
@@ -51,6 +62,7 @@ const EjectGuestCrew = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dia
     if (_disabled) return 'loading...';
     if (allGuestCrews?.length === 0) return 'no guests';
     if (station) {
+
       if (dialogProps?.guestId) {
         const targetCrew = allGuestCrews.find((c) => c.id === dialogProps?.guestId);
         const perm = Permission.getPolicyDetails(station, targetCrew, blockTime)[Permission.IDS.STATION_CREW];

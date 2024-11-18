@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import useCrewContext from '~/hooks/useCrewContext';
 import useWalletAsteroids from '~/hooks/useWalletAsteroids';
 
+// TODO: deprecated
 const useCrewAsteroids = () => {
   const { crew } = useCrewContext();
   const { data, isLoading } = useWalletAsteroids();

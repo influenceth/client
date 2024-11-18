@@ -270,7 +270,7 @@ const SaleDetails = ({ isMine, sample }) => {
 };
 
 const DepositSection = ({ deposits = [], selected, onSelect, title, type }) => {
-  const { crew } = useCrewContext();
+  const { accountCrewIds } = useCrewContext();
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
 
   const [showAll, setShowAll] = useState(true);
@@ -303,6 +303,7 @@ const DepositSection = ({ deposits = [], selected, onSelect, title, type }) => {
       {samples.map((sample) => {
         const { name, category } = Product.TYPES[sample.Deposit.resource];
         const categoryKey = keyify(category);
+        const isMine = accountCrewIds?.includes(sample.Control.controller.id);
         const isSelected = selected?.type === type && selected?.id === sample.id;
         return (
           <Sample
@@ -336,16 +337,16 @@ const DepositSection = ({ deposits = [], selected, onSelect, title, type }) => {
                         : null
                       }
                     </DepositInfo>
-                    <Yield isMine={sample.Control.controller.id === crew?.id} sample={sample} />
+                    <Yield isMine={isMine} sample={sample} />
                   </PrimaryInfo>
-                  <SaleDetails isMine={sample.Control.controller.id === crew?.id} sample={sample} />
+                  <SaleDetails isMine={isMine} sample={sample} />
                 </SelectedDeposit>
               )
               : (
                 <>
                   <CoreSampleIcon />
                   <label>{name}</label>
-                  <Yield isMine={sample.Control.controller.id === crew?.id} sample={sample} />
+                  <Yield isMine={isMine} sample={sample} />
                 </>
               )
             }
@@ -358,7 +359,7 @@ const DepositSection = ({ deposits = [], selected, onSelect, title, type }) => {
 
 const LotResources = () => {
   const { props: actionProps } = useActionButtons();
-  const { crew } = useCrewContext();
+  const { accountCrewIds } = useCrewContext();
   const lotId = useStore(s => s.asteroids.lot);
   const asteroidId = useMemo(() => Lot.toPosition(lotId)?.asteroidId, [lotId]);
 
@@ -453,9 +454,9 @@ const LotResources = () => {
   }, [currentExtraction, selectedSample]);
 
   const [ownedSamples, forSaleSamples] = useMemo(() => ([
-    (lot?.deposits || []).filter((s) => s.Control.controller.id === crew?.id && (!s.Deposit.initialYield || s.Deposit.remainingYield > 0)).sort(sampleSort),
+    (lot?.deposits || []).filter((s) => accountCrewIds?.includes(s.Control.controller.id) && (!s.Deposit.initialYield || s.Deposit.remainingYield > 0)).sort(sampleSort),
     (lot?.deposits || []).filter((s) => s.PrivateSale?.amount > 0 && (!s.Deposit.initialYield || s.Deposit.remainingYield > 0)).sort(sampleSort),
-  ]), [crew?.id, lot?.deposits]);
+  ]), [accountCrewIds, lot?.deposits]);
 
   return (
     <>

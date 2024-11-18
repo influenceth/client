@@ -113,8 +113,8 @@ filtersToQuery.buildings = (filters) => {
 
   if (filters.access) {
     if (Array.isArray(filters.access)) {
-      const [crewId, crewDelegatedTo] = filters.access;
-      queryBuilder.filter(esbAnyPermissionQuery(crewId, crewDelegatedTo));
+      const [crewId, crewSiblingIds, crewDelegatedTo] = filters.access;
+      queryBuilder.filter(esbAnyPermissionQuery(crewId, crewSiblingIds, crewDelegatedTo));
     } else if (filters.access === 'public') {
       queryBuilder.filter(
         esb.nestedQuery()

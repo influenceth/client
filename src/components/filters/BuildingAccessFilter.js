@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Address } from '@influenceth/sdk';
 
 import { RadioCheckedIcon, RadioUncheckedIcon } from '~/components/Icons';
@@ -27,13 +27,15 @@ const BuildingAccessFilter = ({ assetType, filters, onChange }) => {
   const [types, setTypes] = useState(initialValues);
   // console.log({ 'types': types });
 
+  const grantedFilterValue = useMemo(() => ([crew?.id, crew?._siblingCrewIds, crew?.Crew?.delegatedTo]), [crew]);
+
   useEffect(() => {
     const newTypes = ({ ...initialValues });
     if (filters[fieldName] && filters[fieldName].length > 0) {
       const filterArr = filters[fieldName];
       Object.keys(newTypes).forEach((k) => {
         if (k === 'granted') {
-          if (Array.isArray(filterArr) && filterArr.includes(crew?.id) && filterArr.includes(crew?.Crew?.delegatedTo)) {
+          if (Array.isArray(filterArr) && JSON.stringify(grantedFilterValue) === JSON.stringify(filterArr)) {
             newTypes[k] = true;
           }
         } else {
@@ -42,16 +44,16 @@ const BuildingAccessFilter = ({ assetType, filters, onChange }) => {
       });
     }
     setTypes(newTypes);
-  }, [filters[fieldName]]);
+  }, [grantedFilterValue, filters[fieldName]]);
 
   const onClick = useCallback((k) => (e) => {
     e.stopPropagation();
     if (k === 'granted') {
-      onChange({ [fieldName]: [crew?.id, crew?.Crew?.delegatedTo] });
+      onChange({ [fieldName]: grantedFilterValue });
     } else {
       onChange({ [fieldName]: k });
     }
-  }, [onChange]);
+  }, [grantedFilterValue, onChange]);
 
   return (
     <SearchMenu

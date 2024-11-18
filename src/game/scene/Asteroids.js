@@ -13,8 +13,6 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAssetSearch from '~/hooks/useAssetSearch';
 import useCoarseTime from '~/hooks/useCoarseTime';
-import useCrewAsteroids from '~/hooks/useCrewAsteroids';
-import useCrewShips from '~/hooks/useCrewShips';
 import useStore from '~/hooks/useStore';
 import useTravelSolutionIsValid from '~/hooks/useTravelSolutionIsValid';
 import useWatchlist from '~/hooks/useWatchlist';
@@ -29,6 +27,8 @@ import frag from './asteroids/asteroids.frag';
 import { formatBeltDistance } from '../interface/hud/actionDialogs/components';
 import formatters from '~/lib/formatters';
 import theme from '~/theme';
+import useWalletShips from '~/hooks/useWalletShips';
+import useWalletAsteroids from '~/hooks/useWalletAsteroids';
 
 const blueMarkerColor = new Color(theme.colors.brightMain);
 const redMarkerColor = new Color(theme.colors.red);
@@ -95,8 +95,8 @@ const Asteroids = () => {
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
   const coarseTime = useCoarseTime();
-  const { data: controlledAsteroids } = useCrewAsteroids();
-  const { data: controlledShips } = useCrewShips();
+  const { data: controlledAsteroids } = useWalletAsteroids();
+  const { data: controlledShips } = useWalletShips();
   const { watchlist: { data: watchlist }} = useWatchlist();
   const travelSolutionValid = useTravelSolutionIsValid();
 

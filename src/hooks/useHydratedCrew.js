@@ -7,17 +7,21 @@ import useBlockTime from '~/hooks/useBlockTime';
 import useConstants from '~/hooks/useConstants';
 import useCrew from '~/hooks/useCrew';
 import useCrewmates from '~/hooks/useCrewmates';
+import useOwnedCrews from '~/hooks/useOwnedCrews';
 
 const useHydratedCrew = (id) => {
   const { data: crew, isLoading: crewLoading } = useCrew(id);
   const { data: crewmates, isLoading: crewmatesLoading, dataUpdatedAt } = useCrewmates(crew?.Crew?.roster);
   const { data: CREW_SCHEDULE_BUFFER, isLoading: constantsLoading } = useConstants('CREW_SCHEDULE_BUFFER');
+  const { data: accountCrews, isLoading: siblingsLoading } = useOwnedCrews(crew?.Crew?.delegatedTo);
   const blockTime = useBlockTime();
+  
+  const accountCrewIds = useMemo(() => (accountCrews || []).map((c) => c.id), [accountCrews]);
 
   return useMemo(() => {
     let data = null;
     let isLoading = true;
-    if (crew && !crewLoading && !crewmatesLoading && !constantsLoading) {
+    if (crew && !crewLoading && !crewmatesLoading && !constantsLoading && !siblingsLoading) {
       data = cloneDeep(crew);
       data._crewmates = (crewmates || []).map((c) => cloneDeep(c));
       data._location = locationsArrToObj(crew.Location?.locations || []);
@@ -37,10 +41,12 @@ const useHydratedCrew = (id) => {
       //   volume: invBonuses[Crewmate.ABILITY_IDS.INVENTORY_VOLUME_CAPACITY]?.totalBonus,
       // };
 
+      data._siblingCrewIds = accountCrewIds.filter((id) => id !== data.id);
+
       isLoading = false;
     }
     return { data, isLoading };
-  }, [blockTime, crew, crewmates, crewLoading, crewmatesLoading, dataUpdatedAt, CREW_SCHEDULE_BUFFER]);
+  }, [accountCrewIds, blockTime, crew, crewmates, crewLoading, crewmatesLoading, dataUpdatedAt, siblingsLoading, CREW_SCHEDULE_BUFFER]);
 };
 
 export default useHydratedCrew;

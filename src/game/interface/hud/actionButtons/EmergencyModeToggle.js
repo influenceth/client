@@ -8,8 +8,8 @@ import ActionButton, { getCrewDisabledReason } from './ActionButton';
 import useReadyAtWatcher from '~/hooks/useReadyAtWatcher';
 
 const isVisible = ({ blockTime, crew, crewedShip, ship }) => {
-  if (!crew || !crewedShip || !ship) return false; // not on a ship
-  if (crewedShip.Control?.controller?.id !== crew.id) return false; // not piloting a ship
+  if (!crew || !crewedShip || !ship) return false; // invisible if no ship or crew
+  if (crewedShip.Control?.controller?.id !== crew.id) return false; // invisible if not my ship
   if (crew && ship && crew._location.shipId === ship.id) {
     // if already in emode, show so can toggle off
     if (ship.Ship.emergencyAt > 0) return true;

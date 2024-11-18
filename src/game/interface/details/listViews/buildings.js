@@ -45,7 +45,7 @@ const AccessRowMin = styled.div`
 const useColumns = () => {
   const { accountAddress } = useSession();
   const blockTime = useBlockTime();
-  const { crew } = useCrewContext();
+  const { accountCrewIds, crew } = useCrewContext();
 
   return useMemo(() => {
     const columns = [
@@ -53,7 +53,9 @@ const useColumns = () => {
         key: 'my',
         align: 'center',
         icon: <MyAssetIcon />,
-        selector: row => row.Control?.controller?.id === crew?.id ? <MyAssetIcon /> : null,
+        selector: row => {
+          return accountCrewIds?.includes(row.Control?.controller?.id) ? <MyAssetIcon /> : null;
+        },
         bodyStyle: { fontSize: '24px' },
         requireLogin: true,
         unhideable: true
@@ -207,7 +209,7 @@ const useColumns = () => {
     ];
 
     return columns.filter((c) => c && (accountAddress || !c.requireLogin));
-  }, [accountAddress, blockTime, crew]);
+  }, [accountAddress, accountCrewIds, blockTime, crew]);
 };
 
 export default useColumns;

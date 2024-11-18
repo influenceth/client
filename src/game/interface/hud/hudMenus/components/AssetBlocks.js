@@ -298,10 +298,17 @@ export const AsteroidBlock = ({ asteroid, onClick, onRenderReady, selectedCrew, 
     return '';
   }, [asteroid]);
 
+  const isMine = useMemo(() => (
+    selectedCrew?.id && (
+      selectedCrew?.id === asteroid.Control?.controller?.id
+      || (selectedCrew._siblingCrewIds || []).includes(asteroid.Control?.controller?.id)
+    )
+  ), [selectedCrew, asteroid.Control?.controller?.id]);
+
   return (
     <SelectableRow onClick={onClick}>
       <Thumbnail>
-        {selectedCrew?.id && asteroid.Control?.controller?.id === selectedCrew?.id && <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>}
+        {isMine && <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>}
         {showRender && <AsteroidRendering asteroid={asteroid} onReady={onRenderReady} />}
         <ClipCorner dimension={10} color={majorBorderColor} />
       </Thumbnail>
@@ -419,10 +426,17 @@ export const BuildingBlock = ({ building, onSelectCrew, selectedCrew, setRef }) 
     onSelectCrew(building.Control?.controller?.id);
   }, [onClickBuilding, onSelectCrew, building?.Control?.controller?.id, buildingLoc?.lotId]);
 
+  const isMine = useMemo(() => (
+    selectedCrew?.id && (
+      selectedCrew?.id === building.Control?.controller?.id
+      || (selectedCrew._siblingCrewIds || []).includes(building.Control?.controller?.id)
+    )
+  ), [selectedCrew, building.Control?.controller?.id]);
+
   return (
     <SelectableRow ref={setRef} onClick={onClick}>
       <IconThumbnail>
-        {selectedCrew?.id && building.Control?.controller?.id === selectedCrew?.id && <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>}
+        {isMine && <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>}
         {getBuildingIcon(building?.Building?.buildingType)}
         <ClipCorner dimension={8} color={majorBorderColor} />
       </IconThumbnail>
@@ -459,10 +473,17 @@ export const ShipBlock = ({ ship, onSelectCrew, selectedCrew, setRef }) => {
     onSelectCrew(ship.Control?.controller?.id);
   }, [onClickShip, onSelectCrew, ship?.Control?.controller?.id]);
 
+  const isMine = useMemo(() => (
+    selectedCrew?.id && (
+      selectedCrew?.id === ship.Control?.controller?.id
+      || (selectedCrew._siblingCrewIds || []).includes(ship.Control?.controller?.id)
+    )
+  ), [selectedCrew, ship.Control?.controller?.id]);
+
   return (
     <SelectableRow ref={setRef} onClick={onClick}>
       <Thumbnail>
-        {selectedCrew?.id && ship.Control?.controller?.id === selectedCrew?.id && <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>}
+        {isMine && <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>}
         <ResourceImage src={getShipIcon(ship.Ship.shipType, 'w150')} contain />
         <ClipCorner dimension={10} color={majorBorderColor} />
       </Thumbnail>

@@ -11,7 +11,7 @@ import ActionButton, { getCrewDisabledReason } from './ActionButton';
 
 const isVisible = ({ asteroid, crew, crewedShip, lot }) => {
   if (!crew || !crewedShip || !asteroid) return false;
-  if (crewedShip.Control?.controller?.id !== crew.id) return false; // not piloting a ship
+  if (crewedShip.Control?.controller?.id !== crew.id) return false;  // not the designated flight crew
   if (crewedShip._location?.asteroidId !== asteroid.id) return false; // not at asteroid
   if (crewedShip._location?.lotId) return false; // on surface already
   if (lot?.building && !lot?.building?.Dock) return false;
