@@ -3,8 +3,7 @@ import { useQuery } from 'react-query';
 
 import { appConfig } from '~/appConfig';
 
-const useAnnotationContent = (annotation) => {
-  const hash = annotation?.ipfs?.hash;
+const useIpfsContent = (hash) => {
   return useQuery(
     ['annotation', hash],
     async () => {
@@ -15,4 +14,4 @@ const useAnnotationContent = (annotation) => {
   )
 };
 
-export default useAnnotationContent;
+export default useIpfsContent;

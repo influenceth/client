@@ -12,7 +12,7 @@ const Title = styled.div`
   display: flex;
   flex-direction: row;
   height: 60px;
-  & > h4 { flex: 1, margin: 0 }
+  & > h4 { flex: 1; margin: 0 }
 `;
 
 const Body = styled.div`
@@ -61,23 +61,52 @@ const Wrapper = styled.div`
   }
 `;
 
-const GenericDialog = ({ children, disabled, loading, onConfirm, onReject, isTransaction, title, ...props }) => (
+const GenericDialog = ({
+  children,
+  disabled,
+  loading,
+  onConfirm,
+  confirmButtonProps = {},
+  onReject,
+  rejectButtonProps = {},
+  isTransaction,
+  title,
+  ...props
+}) => (
   <Dialog>
     <Wrapper {...props}>
-      <Title>
-        <NavIcon
-          selected
-          selectedColor="white"
-          size={22}
-          style={{ marginRight: 12 }} />
-        <h4>{title}</h4>
-      </Title>
+      {title && (
+        <Title>
+          <NavIcon
+            selected
+            selectedColor="white"
+            size={22}
+            style={{ marginRight: 12 }} />
+          <h4>{title}</h4>
+        </Title>
+      )}
       <Body>
         {loading ? <Loader /> : children}
       </Body>
       <Buttons>
-        {onReject ? <Button onClick={onReject} disabled={nativeBool(loading)}>{props.rejectText || 'Cancel'}</Button> : <div />}
-        <Button onClick={onConfirm} disabled={nativeBool(disabled || loading)} isTransaction={isTransaction}>{props.confirmText || 'Ok'}</Button>
+        {onReject
+          ? (
+            <Button
+              disabled={nativeBool(loading)}
+              onClick={onReject}
+              {...rejectButtonProps}>
+              {props.rejectText || 'Cancel'}
+            </Button>
+          )
+          : <div />
+        }
+        <Button
+          disabled={nativeBool(disabled || loading)}
+          isTransaction={isTransaction}
+          onClick={onConfirm}
+          {...confirmButtonProps}>
+          {props.confirmText || 'Ok'}
+        </Button>
       </Buttons>
     </Wrapper>
   </Dialog>

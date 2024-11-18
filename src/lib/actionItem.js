@@ -46,6 +46,7 @@ import {
   CheckCircleIcon,
   StarIcon,
   JettisonCargoIcon,
+  InboxIcon,
 } from '~/components/Icons';
 import formatters from '~/lib/formatters';
 import { getProcessorProps, locationsArrToObj, ucfirst } from '~/lib/utils';
@@ -1022,6 +1023,24 @@ const formatAsTx = (item) => {
     case 'PurchaseStarterPack': {
       formatted.icon = <StarIcon />;
       formatted.label = `Purchase Starter Pack`;
+      break;
+    }
+
+    case 'DirectMessage': {
+      formatted.icon = <InboxIcon />;
+      formatted.label = `Send Direct Message`;
+      formatted.onClick = ({ history }) => {
+        history.push('/launcher/inbox');
+      }
+      break;
+    }
+    
+    case 'RekeyInbox': {
+      formatted.icon = <InboxIcon />;
+      formatted.label = `Configure Inbox`;
+      formatted.onClick = ({ history }) => {
+        history.push('/launcher/inbox');
+      }
       break;
     }
 

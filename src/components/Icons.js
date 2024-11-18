@@ -1,8 +1,18 @@
 import { AiFillEdit, AiFillEye, AiFillStar, AiOutlineNumber } from 'react-icons/ai';
-import { BsFillPersonFill, BsCheckCircle, BsSliders, BsStopwatch, BsThreeDots } from 'react-icons/bs';
+import {
+  BsEnvelope,
+  BsEnvelopeAt,
+  BsEnvelopeCheck,
+  BsEnvelopeFill,
+  BsFillPersonFill,
+  BsCheckCircle,
+  BsSliders,
+  BsStopwatch,
+  BsThreeDots
+} from 'react-icons/bs';
 import { FaBan, FaCaretDown, FaCaretUp, FaCogs, FaCopy, FaDollarSign, FaEthereum, FaList, FaMapMarkedAlt } from 'react-icons/fa';
-import { FiCheckSquare, FiDownload, FiExternalLink, FiLogIn, FiMenu, FiSearch, FiSquare } from 'react-icons/fi';
-import { HiClock, HiCog, HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
+import { FiCheckSquare, FiExternalLink, FiLogIn, FiMenu, FiSearch, FiSquare } from 'react-icons/fi';
+import { HiClock, HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import {
   MdAdd,
   MdBlock,
@@ -15,7 +25,6 @@ import {
   MdFastForward,
   MdHourglassBottom,
   MdNotificationsActive,
-  MdPlayArrow,
   MdPause,
   MdStop,
   MdNavigateBefore,
@@ -450,6 +459,10 @@ export {
   MdFirstPage as BeginningIcon,
   MdFlag as ClaimIcon,
   MdKeyboardArrowDown as CaretIcon,
+  BsEnvelope as InboxIcon,
+  BsEnvelopeFill as InboxReceivedIcon,
+  BsEnvelopeAt as InboxSentIcon,
+  BsEnvelopeCheck as InboxSentReadIcon,
   FaCaretDown as TriangleDownIcon,
   FaCaretUp as TriangleUpIcon,
   MdNavigateBefore as PreviousIcon,

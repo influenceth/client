@@ -19,7 +19,7 @@ import LotTitleArea from './components/LotTitleArea';
 import PolicyPanels from './components/PolicyPanels';
 import useCrew from '~/hooks/useCrew';
 import useDescriptionAnnotation from '~/hooks/useDescriptionAnnotation';
-import useAnnotationContent from '~/hooks/useAnnotationContent';
+import useIpfsContent from '~/hooks/useIpfsContent';
 
 const Description = styled.div`
   color: ${p => p.theme.colors.main};
@@ -84,7 +84,7 @@ const LotInfo = () => {
   const lotId = useStore(s => s.asteroids.lot);
   const { data: lot } = useLot(lotId);
   const { data: annotation, isLoading: isAnnotationLoading } = useDescriptionAnnotation(lot?.building || lot?.surfaceShip);
-  const { data: description, isLoading: isContentLoading } = useAnnotationContent(annotation);
+  const { data: description, isLoading: isContentLoading } = useIpfsContent(annotation?.ipfs?.hash);
   const { data: controller } = useCrew(lot?.building?.Control?.controller?.id);
 
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);

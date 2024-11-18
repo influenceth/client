@@ -90,6 +90,9 @@ class ErrorBoundary extends Component {
       delete redactedStore.state.sessions[key].sessionDappKey;
     });
 
+    // remove inbox private key
+    delete redactedStore.dmPrivateKey;
+
     // TODO (maybe):
     //  - current block number and block time
     //  - activities query cache

@@ -13,7 +13,7 @@ import DataTableComponent from '~/components/DataTable';
 import useActivities from '~/hooks/useActivities';
 import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
-import useAnnotationContent from '~/hooks/useAnnotationContent';
+import useIpfsContent from '~/hooks/useIpfsContent';
 import EntityName from '~/components/EntityName';
 import useCrewContext from '~/hooks/useCrewContext';
 import formatters from '~/lib/formatters';
@@ -145,7 +145,7 @@ const RemainingChars = styled.div`
 `;
 
 const AnnotationItem = ({ annotation }) => {
-  const { data: content, isLoading } = useAnnotationContent(annotation);
+  const { data: content, isLoading } = useIpfsContent(annotation?.ipfs?.hash);
   const ago = useMemo(() => {
     if (!annotation.createdAt) return 'a long time ago';
     const m = moment(new Date(annotation.createdAt));

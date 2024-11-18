@@ -12,7 +12,9 @@ import useHydratedCrew from '~/hooks/useHydratedCrew';
 import { WarningIcon } from '~/components/Icons';
 import EntityName from '~/components/EntityName';
 import TextInput from '~/components/TextInputUncontrolled';
+import { useThrottle } from '@react-hook/throttle';
 
+const menuStateLabel = 'MY_CREWS';
 const defaultBlockStyle = { marginBottom: 8, width: '100%' };
 
 const opacityAnimation = keyframes`
@@ -61,7 +63,7 @@ const locationTitleHeight = 36;
 const locationExtraMargin = 5;
 
 const MyCrews = () => {
-  const { crew, crews, crewmateMap, selectCrew } = useCrewContext();
+  const { crew, crews, crewmateMap, selectCrew, isLoading } = useCrewContext();
   const [searchFilter, setSearchFilter] = useState('');
 
   const filteredCrews = useMemo(() => {
@@ -105,15 +107,46 @@ const MyCrews = () => {
     }, {});
   }, [nonEmptyCrewsByLocation]);
 
+
+  //
+  // state persistence for this menu...
+  //
+  const scrollable = useRef();
+  const [scrollTop, setScrollTop] = useThrottle(null, 10, true);
+
+  const dispatchHudMenuState = useStore((s) => s.dispatchHudMenuState);
+  const hudMenuState = useStore((s) => s.hudMenuState?.[menuStateLabel]);
+
+  const [collapsedPaths, setCollapsedPaths] = useState(hudMenuState?.collapsedPaths || []);
+  const onCollapsedChange = useCallback((path) => (isCollapsed) => {
+    setCollapsedPaths((paths) => isCollapsed ? [...paths, path] : paths.filter((p) => p !== path));
+  }, []);
+
+  useEffect(() => {
+    if (!isLoading) {
+      dispatchHudMenuState(menuStateLabel, { collapsedPaths, scrollTop });
+    }
+  }, [collapsedPaths, scrollTop]);
+
+  useEffect(() => {
+    if (scrollable.current) {
+      setTimeout(() => {
+        scrollable.current.scrollTop = hudMenuState?.scrollTop || 0;
+      }, 50); // (give time for above updates to apply)
+    }
+  }, [isLoading]); // want this to run when done loading
+
   const filterRef = useRef();
   useEffect(() => {
-    setTimeout(() => {
-      if (filterRef.current) filterRef.current.focus();
-    }, 500);  // give animation time to finish before putting focus on the input
+    if ((hudMenuState?.scrollTop || 0) < 50) {
+      setTimeout(() => {
+        if (filterRef.current) filterRef.current.focus();
+      }, 500);  // give animation time to finish before putting focus on the input
+    }
   }, []);
 
   return (
-    <Scrollable>
+    <Scrollable ref={scrollable} onScroll={(e) => setScrollTop(e.target.scrollTop)}>
       {crews.length > 3 && (
         <div style={{ marginBottom: 5, padding: '10px 5px', borderBottom: '1px solid rgba(255, 255, 255, 0.2)', width: '100%' }}>
           <TextInput
@@ -123,42 +156,51 @@ const MyCrews = () => {
             value={searchFilter || ''} />
         </div>
       )}
-      {Object.keys(nonEmptyCrewsByLocation || {}).map((asteroidId) => (
-        <HudMenuCollapsibleSection
-          key={asteroidId}
-          containerHeight={asteroidContainerHeights[asteroidId]}
-          titleText={asteroidId === '_' ? 'In Flight' : <EntityName label={Entity.IDS.ASTEROID} id={asteroidId} />}
-          titleLabel={`${nonEmptyCrewsByLocation[asteroidId].tally} Crew${nonEmptyCrewsByLocation[asteroidId].tally === 1 ? '' : 's'}`}>
-          {Object.keys(nonEmptyCrewsByLocation[asteroidId].locations).map((locationKey) => {
-            const locationCrews = nonEmptyCrewsByLocation[asteroidId].locations[locationKey];
-            const location = locationsArrToObj(locationCrews[0]?.Location?.locations || []);
-            return (
-              <HudMenuCollapsibleSection
-                key={locationKey}
-                containerHeight={crewRowHeight * locationCrews.length}
-                titleProps={{ style: { textTransform: 'none' } }}
-                titleText={asteroidId === '_' && !location?.shipId ? 'Escape Module' : <EntityName {...locationCrews[0]?.Location?.location} />}>
-                {(locationCrews || []).map((c) => (
-                  <CrewInputBlock
-                    key={c.id}
-                    cardWidth={64}
-                    crew={c}
-                    inlineDetails
-                    isSelected={c.id === crew?.id}
-                    onClick={() => selectCrew(c.id)}
-                    subtle
-                    style={defaultBlockStyle} />
-                ))}
-              </HudMenuCollapsibleSection>
-            );
-          })}
-        </HudMenuCollapsibleSection>
-      ))}
+      {Object.keys(nonEmptyCrewsByLocation || {}).map((asteroidId) => {
+        return (
+          <HudMenuCollapsibleSection
+            key={asteroidId}
+            containerHeight={asteroidContainerHeights[asteroidId]}
+            titleText={asteroidId === '_' ? 'In Flight' : <EntityName label={Entity.IDS.ASTEROID} id={asteroidId} />}
+            titleLabel={`${nonEmptyCrewsByLocation[asteroidId].tally} Crew${nonEmptyCrewsByLocation[asteroidId].tally === 1 ? '' : 's'}`}
+            collapsed={collapsedPaths?.includes(asteroidId)}
+            onCollapsedChange={onCollapsedChange(asteroidId)}>
+            {Object.keys(nonEmptyCrewsByLocation[asteroidId].locations).map((locationKey) => {
+              const locationCrews = nonEmptyCrewsByLocation[asteroidId].locations[locationKey];
+              const location = locationsArrToObj(locationCrews[0]?.Location?.locations || []);
+              const path = `${asteroidId}.${locationKey}`;
+              return (
+                <HudMenuCollapsibleSection
+                  key={locationKey}
+                  containerHeight={crewRowHeight * locationCrews.length}
+                  titleProps={{ style: { textTransform: 'none' } }}
+                  titleText={asteroidId === '_' && !location?.shipId ? 'Escape Module' : <EntityName {...locationCrews[0]?.Location?.location} />}
+                  collapsed={collapsedPaths?.includes(path)}
+                  onCollapsedChange={onCollapsedChange(path)}>
+                  {(locationCrews || []).map((c) => (
+                    <CrewInputBlock
+                      key={c.id}
+                      cardWidth={64}
+                      crew={c}
+                      inlineDetails
+                      isSelected={c.id === crew?.id}
+                      onClick={() => selectCrew(c.id)}
+                      subtle
+                      style={defaultBlockStyle} />
+                  ))}
+                </HudMenuCollapsibleSection>
+              );
+            })}
+          </HudMenuCollapsibleSection>
+        );
+      })}
 
       {Object.keys(uncontrolledCrewIds)?.length > 0 && (
         <HudMenuCollapsibleSection
           titleText={<AttnTitle><WarningIcon /> <span>Recoverable Crewmates</span></AttnTitle>}
-          titleLabel={`${Object.keys(uncontrolledCrewIds)?.length} Crew${Object.keys(uncontrolledCrewIds)?.length === 1 ? '' : 's'}`}>
+          titleLabel={`${Object.keys(uncontrolledCrewIds)?.length} Crew${Object.keys(uncontrolledCrewIds)?.length === 1 ? '' : 's'}`}
+          collapsed={collapsedPaths?.includes('recoverable')}
+          onCollapsedChange={onCollapsedChange('recoverable')}>
           {Object.keys(uncontrolledCrewIds || {}).map((crewId) => (
             <UncontrolledCrewBlock key={crewId} crewId={crewId} crewmateIds={uncontrolledCrewIds[crewId]} />
           ))}
@@ -168,7 +210,9 @@ const MyCrews = () => {
       {emptyCrews.length > 0 && (
         <HudMenuCollapsibleSection
           titleText="Empty Crews"
-          titleLabel={`${emptyCrews?.length} Crew${emptyCrews?.length === 1 ? '' : 's'}`}>
+          titleLabel={`${emptyCrews?.length} Crew${emptyCrews?.length === 1 ? '' : 's'}`}
+          collapsed={collapsedPaths?.includes('empty')}
+          onCollapsedChange={onCollapsedChange('empty')}>
           {emptyCrews.map((emptyCrew) => {
             return (
               <CrewInputBlock

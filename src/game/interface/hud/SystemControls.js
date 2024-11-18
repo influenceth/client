@@ -5,6 +5,7 @@ import { FaCaretRight } from 'react-icons/fa';
 import {
   CopyIcon,
   CrewmateCreditIcon,
+  InboxIcon,
   MenuIcon,
   WarningIcon
 } from '~/components/Icons';
@@ -15,6 +16,7 @@ import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
 import useAccountFormatted from '~/hooks/useAccountFormatted';
 import IconButton from '~/components/IconButton';
 import { TOKEN, TOKEN_FORMATTER } from '~/lib/priceUtils';
+import useWalletInbox from '~/hooks/useWalletInbox';
 
 const StyledSystemControls = styled.div`
   align-items: center;
@@ -56,6 +58,20 @@ const SwayBalance = styled.div`
 `;
 
 const CrewmateCreditBalance = styled(SwayBalance)`
+  & > svg {
+    color: ${p => p.theme.colors.main};
+  }
+  & label {
+    font-size: 70%;
+    margin-left: 6px;
+    & b {
+      color: ${p => p.theme.colors.main};
+      font-weight: normal;
+    }
+  }
+`;
+
+const InboxTally = styled(CrewmateCreditBalance)`
   & > svg {
     color: ${p => p.theme.colors.main};
   }
@@ -190,6 +206,8 @@ const SystemControls = () => {
     }
   }, [accountAddress]);
 
+  const { hasNoPublicKey, unreadTally } = useWalletInbox();
+
   return (
     <StyledSystemControls id="topMenu">
       <MobileWarning style={{ marginRight: 10 }}>
@@ -232,7 +250,11 @@ const SystemControls = () => {
         </div>
       )}
 
-      <IconButton onClick={onToggleLauncher} style={{ fontSize: 17 }}>
+      <IconButton
+        badge={launcherPage ? 0 : unreadTally}
+        badgeProps={hasNoPublicKey ? { color: 'errorRGB', isDot: true, showOnZero: !launcherPage } : {}}
+        onClick={onToggleLauncher}
+        style={{ fontSize: 17 }}>
         {launcherPage ? <FaCaretRight /> : <MenuIcon />}
       </IconButton>
 

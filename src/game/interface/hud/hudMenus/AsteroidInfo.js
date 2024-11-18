@@ -20,7 +20,7 @@ import Button from '~/components/ButtonAlt';
 import AsteroidTitleArea from './components/AsteroidTitleArea';
 import PolicyPanels from './components/PolicyPanels';
 import useDescriptionAnnotation from '~/hooks/useDescriptionAnnotation';
-import useAnnotationContent from '~/hooks/useAnnotationContent';
+import useIpfsContent from '~/hooks/useIpfsContent';
 import { AsteroidSwayPrice } from '~/components/SwayPrice';
 import { TOKEN_FORMAT } from '~/lib/priceUtils';
 
@@ -68,7 +68,7 @@ const AsteroidInfo = ({ onClose }) => {
 
   const { data: asteroid } = useAsteroid(asteroidId);
   const { data: annotation, isLoading: isAnnotationLoading } = useDescriptionAnnotation(asteroid);
-  const { data: description, isLoading: isContentLoading } = useAnnotationContent(annotation);
+  const { data: description, isLoading: isContentLoading } = useIpfsContent(annotation?.ipfs?.hash);
   const { data: ships } = useAsteroidShips(asteroidId);
   const { data: lotData } = useAsteroidLotData(asteroidId);
   const { data: administrator } = useCrew(asteroid?.Control?.controller?.id);

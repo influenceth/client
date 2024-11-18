@@ -562,6 +562,7 @@ const menuShortcuts = [
   { label: 'Help Menu', shortcut: 'Ctrl + 2' },
   { label: 'Store Menu', shortcut: 'Ctrl + 3' },
   { label: 'Rewards Menu', shortcut: 'Ctrl + 4' },
+  { label: 'Inbox', shortcut: 'Ctrl + 5' },
 ];
 const cameraShortcuts = [
   { label: 'Recenter Selected Lot', shortcut: 'Ctrl + .' },

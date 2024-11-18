@@ -7,23 +7,30 @@ const useAccountFormatted = (props) => {
   const { address, doNotReplaceYou, truncate, doNotUseName } = props;
   const { accountAddress, provider } = useSession();
 
-  // const { data: starkName } = useQuery(
-  //   [ 'starkName', address ],
-  //   async () => {
-  //     return await provider.getStarkName(address);
-  //   },
-  //   { enabled: !!address }
-  // );
+  const { data: starkName } = useQuery(
+    [ 'starkName', address ],
+    () => {
+      try {
+        return provider.getStarkName(address)
+      } catch (e) {
+        // fail silently... most do not have starkname
+      }
+      return '';
+    },
+    { enabled: !!address }
+  );
 
   const label = useMemo(() => {
     return (accountAddress && accountAddress === address && !doNotReplaceYou)
       ? 'you'
       : (
-        address && truncate
-        ? `${address.substr(0, 6)}...${address.substr(-4)}`
-        : address
+        (!doNotUseName && starkName) || (
+          address && truncate
+          ? `${address.substr(0, 6)}...${address.substr(-4)}`
+          : address
+        )
       );
-  }, [accountAddress, address, doNotReplaceYou, truncate, provider]);
+  }, [accountAddress, address, doNotReplaceYou, doNotUseName, truncate, provider, starkName]);
 
   return useMemo(() => {
     if (!address) return null;
