@@ -3,7 +3,7 @@ import { Encryption } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useInboxPublicKey from '~/hooks/useInboxPublicKey';
-import useSession from '~/hooks/useSession';
+import useStore from '~/hooks/useStore';
 import useUser from '~/hooks/useUser';
 import api from '~/lib/api';
 import { maxAnnotationLength } from '~/lib/utils';
@@ -20,12 +20,13 @@ const useDirectMessageManager = (recipient) => {
   const { data: recipientPublicKey } = useInboxPublicKey(recipient);
 
   const [hashing, setHashing] = useState();
+  const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const encryptMessage = useCallback(
     async (message) => {
-      console.log('recipientPublicKey', recipientPublicKey);
-      console.log('senderPublicKey', user, user?.publicKey);
-      console.log('message', message);
+      // console.log('recipientPublicKey', recipientPublicKey);
+      // console.log('senderPublicKey', user, user?.publicKey);
+      // console.log('message', message);
       if (recipientPublicKey && user?.publicKey && message) {
         return {
           sender: await Encryption.encryptContent(user?.publicKey, message),
@@ -40,11 +41,22 @@ const useDirectMessageManager = (recipient) => {
   const sendEncryptedMessage = useCallback(
     async (encryptedMessage) => {
       setHashing(true);
-      const hash = await api.getDirectMessageHash({
-        content: encryptedMessage,
-        type: 'DirectMessage',
-        version: 1
-      });
+      let hash;
+      try {
+        hash = await api.getDirectMessageHash({
+          content: encryptedMessage,
+          type: 'DirectMessage',
+          version: 1
+        });
+      } catch (e) {
+        console.error(e);
+        createAlert({
+          type: 'GenericAlert',
+          level: 'warning',
+          data: { content: 'IPFS hashing failed. This is likely either a temporary error or due to the size of the mssage. Please try again.' },
+          duration: 5000
+        });
+      }
       setHashing(false);
       if (!hash) return;
 

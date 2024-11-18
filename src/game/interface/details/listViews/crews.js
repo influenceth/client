@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { Address } from '@influenceth/sdk';
 
 import { MyAssetIcon } from '~/components/Icons';
@@ -31,7 +32,7 @@ const useColumns = () => {
         key: 'name',
         label: 'Name',
         sortField: 'Name.name.raw',
-        selector: row => formatters.crewName(row),
+        selector: row => <Link to={`/crew/${row.id}`}>{formatters.crewName(row)}</Link>,
         unhideable: true
       },
       { // TODO: do we want this here?

@@ -147,7 +147,7 @@ const DirectMessageDialog = ({ onClose, recipient }) => {
             disabled={nativeBool(encryptedMessage)}
             onChange={(e) => setMessage(e.currentTarget.value || '')}
             placeholder="Write your message..."
-            value={encryptedMessage || message} />
+            value={message} />
         </div>
         {isSending || encryptedMessage
           ? <Footnote highlight><LockIcon /> Message Encrypted</Footnote>
