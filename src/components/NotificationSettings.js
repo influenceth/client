@@ -91,6 +91,7 @@ const NotificationSettings = ({ onLoading, onValid, ...props }) => {
   const [notifStatus, setNotifStatus] = useState('');
   const [subscriptions, setSubscriptions] = useState({
     CREW: true,
+    DIRECT_MESSAGE: true,
     LEASE: true,
     TASK: true,
   });
@@ -100,6 +101,7 @@ const NotificationSettings = ({ onLoading, onValid, ...props }) => {
       setEmail(user.email || '');
       setSubscriptions(user.notificationSubscriptions || {
         CREW: true,
+        DIRECT_MESSAGE: true,
         LEASE: true,
         TASK: true,
       });
@@ -155,6 +157,7 @@ const NotificationSettings = ({ onLoading, onValid, ...props }) => {
   useEffect(() => {
     if (user && (
       subscriptions.CREW !== user.notificationSubscriptions?.CREW
+      || subscriptions.DIRECT_MESSAGE !== user.notificationSubscriptions?.DIRECT_MESSAGE
       || subscriptions.LEASE !== user.notificationSubscriptions?.LEASE
       || subscriptions.TASK !== user.notificationSubscriptions?.TASK
     )) {
@@ -221,6 +224,12 @@ const NotificationSettings = ({ onLoading, onValid, ...props }) => {
           {subscriptions.LEASE ? <CheckedIcon /> : <UncheckedIcon />}
           <span>
             Lease is Expiring (3 days)
+          </span>
+        </CheckboxRow>
+        <CheckboxRow onClick={() => setSubscriptions((n) => ({ ...n, DIRECT_MESSAGE: !n.DIRECT_MESSAGE }))}>
+          {subscriptions.DIRECT_MESSAGE ? <CheckedIcon /> : <UncheckedIcon />}
+          <span>
+            Direct Messages
           </span>
         </CheckboxRow>
       </Checkboxes>
