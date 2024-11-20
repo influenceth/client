@@ -2,18 +2,19 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Deposit, Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import useActionItems from '~/hooks/useActionItems';
 import useBlockTime from '~/hooks/useBlockTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
+import useUnresolvedActivities from '~/hooks/useUnresolvedActivities';
 import actionStages from '~/lib/actionStages';
 
+
 const useCoreSampleManager = (lotId) => {
-  const { actionItems, readyItems } = useActionItems();
   const blockTime = useBlockTime();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
   const { accountCrewIds, crew, pendingTransactions } = useCrewContext();
   const { data: lot } = useLot(lotId);
+  const { data: actionItems } = useUnresolvedActivities({ label: Entity.IDS.LOT, id: lotId });
 
   // * only used by SampleDepositStart contract, but used for equality check on others
   const payload = useMemo(() => ({
@@ -155,7 +156,7 @@ const useCoreSampleManager = (lotId) => {
       activeSamples.filter((c) => c.stage === actionStages.COMPLETED),
       Date.now()
     ];
-  }, [actionItems, blockTime, completingSamples, pendingTransactions, readyItems, getPendingTx, getStatus, payload, lot?.deposits]);
+  }, [actionItems, blockTime, completingSamples, pendingTransactions, getPendingTx, getStatus, payload, lot?.deposits]);
 
   const startSampling = useCallback((resourceId, coreDrillSource) => {
     // console.log('coreDrillSource', coreDrillSource); return;
