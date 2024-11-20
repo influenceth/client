@@ -2,7 +2,6 @@ import { useCallback, useContext, useMemo } from 'react';
 import { Delivery, Entity, Permission } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import useActionItems from '~/hooks/useActionItems';
 import useBlockTime from '~/hooks/useBlockTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useDeliveries from '~/hooks/useDeliveries';

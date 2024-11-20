@@ -2,15 +2,15 @@ import { useCallback, useContext, useMemo } from 'react';
 import { Asteroid, Building, Entity, Lot } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import useActionItems from '~/hooks/useActionItems';
 import useBlockTime from '~/hooks/useBlockTime';
+import useUnresolvedActivities from '~/hooks/useUnresolvedActivities';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
 import useAsteroid from '~/hooks/useAsteroid';
 import actionStage from '~/lib/actionStages';
 
 const useConstructionManager = (lotId) => {
-  const { actionItems, readyItems } = useActionItems();
+  const { data: actionItems } = useUnresolvedActivities();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
   const blockTime = useBlockTime();
   const { accountCrewIds, crew } = useCrewContext();
@@ -139,7 +139,7 @@ const useConstructionManager = (lotId) => {
       isAtRisk,
       stages
     ];
-  }, [accountCrewIds, actionItems, asteroid, readyItems, getPendingTx, getStatus, payload, planPayload, lot?.building]);
+  }, [accountCrewIds, actionItems, asteroid, getPendingTx, getStatus, payload, planPayload, lot?.building]);
 
   const txMeta = useMemo(() => ({ asteroidId, lotId }), [asteroidId, lotId]);
 

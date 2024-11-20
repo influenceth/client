@@ -4,14 +4,11 @@ import { Dock, Ship } from '@influenceth/sdk';
 
 import ClipCorner from '~/components/ClipCorner';
 import { MagnifyingIcon, MyAssetIcon } from '~/components/Icons';
-import { ResourceImage } from '~/components/ResourceThumbnail';
-import { useShipLink } from '~/components/ShipLink';
-import { getShipIcon } from '~/lib/assetUtils';
 import formatters from '~/lib/formatters';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme';
-import { Tray, majorBorderColor } from './components/components';
+import { Tray } from './components/components';
 import useLot from '~/hooks/useLot';
 import { MiniBarChart, ShipImage } from '../actionDialogs/components';
 import Dropdown from '~/components/Dropdown';
@@ -19,11 +16,8 @@ import UncontrolledTextInput from '~/components/TextInputUncontrolled';
 import AssetBlock, { assetBlockCornerSize } from '~/components/AssetBlock';
 import ThumbnailWithData from '~/components/AssetThumbnailWithData';
 import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
-import useActionItems from '~/hooks/useActionItems';
 import Button from '~/components/ButtonAlt';
 import useBlockTime from '~/hooks/useBlockTime';
-
-const thumbnailDimension = 75;
 
 const Wrapper = styled.div`
   display: flex;
@@ -32,70 +26,6 @@ const Wrapper = styled.div`
   height: 100%;
 `;
 
-const MyAssetWrapper = styled.div`
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  color: white;
-`;
-
-const Thumbnail = styled.div`
-  background: black;
-  border: 1px solid ${majorBorderColor};
-  ${p => p.theme.clipCorner(10)};
-  height: ${thumbnailDimension}px;
-  margin-right: 8px;
-  position: relative;
-  width: ${thumbnailDimension}px;
-`;
-
-const SelectableRow = styled.div`
-  align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  color: #999;
-  cursor: ${p => p.theme.cursors.active};
-  display: flex;
-  flex-direction: row;
-  font-size: 14px;
-  padding: 8px 4px;
-  position: relative;
-  width: 100%;
-
-  ${p => p.selected
-    ? `
-      border: 1px solid ${p.theme.colors.main};
-      background: rgba(${p.theme.colors.mainRGB}, 0.2);
-      ${p.theme.clipCorner(10)};
-      margin: 4px 0;
-      padding: 4px 8px 4px 4px;
-    `
-    : `
-      &:hover {
-        background: rgba(255, 255, 255, 0.05);
-      }
-    `
-  }
-`;
-
-const Info = styled.div`
-  align-self: stretch;
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  
-  & > label {
-    color: white;
-    font-size: 17px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  & > div {
-    border-top: 1px solid ${majorBorderColor};
-    margin-top: 8px;
-    padding-top: 8px;
-  }
-`;
 const FilterRow = styled.div`
   align-items: center;
   display: flex;
@@ -126,23 +56,6 @@ const Ready = styled.div`
   margin-top: 4px;
   text-transform: uppercase;
 `;
-
-const ShipRow = ({ ship }) => {
-  const onClickShip = useShipLink({ shipId: ship.id, zoomToShip: true })
-  return (
-    <SelectableRow onClick={onClickShip}>
-      <Thumbnail>
-        <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>
-        <ResourceImage src={getShipIcon(ship.Ship.shipType, 'w150')} contain />
-        <ClipCorner dimension={10} color={majorBorderColor} />
-      </Thumbnail>
-      <Info>
-        <label>{formatters.shipName(ship)}</label>
-        <div style={{ flex: 1 }}></div>
-      </Info>
-    </SelectableRow>
-  );
-};
 
 const DockDetails = ({ onClose }) => {
   const { accountCrewIds } = useCrewContext();

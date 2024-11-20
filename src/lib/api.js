@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Asteroid, Building, Deposit, Entity, Inventory, Order, Ship } from '@influenceth/sdk';
 import esb from 'elastic-builder';
-import { executeSwap, fetchQuotes } from "@avnu/avnu-sdk";
+import { executeSwap, fetchQuotes } from '@avnu/avnu-sdk';
 
 import { appConfig } from '~/appConfig';
 import useStore from '~/hooks/useStore';

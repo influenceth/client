@@ -10,7 +10,6 @@ import actionStages from '~/lib/actionStages';
 
 // TODO: truly support multiple extractors
 const useExtractionManager = (lotId, slot = 1) => {
-  // const { actionItems, readyItems } = useActionItems();
   const blockTime = useBlockTime();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
   const { crew, crewCan } = useCrewContext();

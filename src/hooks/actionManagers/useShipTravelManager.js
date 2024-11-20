@@ -4,22 +4,22 @@ import { GM_ADALIA, AdalianOrbit, Crewmate, Entity, Ship, Time } from '@influenc
 import { Vector3 } from 'three';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import useActionItems from '~/hooks/useActionItems';
 import useAsteroid from '~/hooks/useAsteroid';
 import useBlockTime from '~/hooks/useBlockTime';
 import useConstants from '~/hooks/useConstants';
 import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
+import useUnresolvedActivities from '~/hooks/useUnresolvedActivities';
 import actionStages from '~/lib/actionStages';
 import { arrToXYZ, getCrewAbilityBonuses } from '~/lib/utils';
 
 const toV3 = ({ x, y, z }) => new Vector3(x, y, z);
 
 const useShipTravelManager = (shipId) => {
-  const { actionItems, readyItems } = useActionItems();
   const blockTime = useBlockTime();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
   const { data: ship, dataUpdatedAt: shipUpdatedAt } = useShip(shipId);
+  const { data: actionItems } = useUnresolvedActivities({ label: Entity.IDS.SHIP, id: shipId });
 
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
   const proposedTravelSolution = useStore(s => s.asteroids.travelSolution);
@@ -89,7 +89,7 @@ const useShipTravelManager = (shipId) => {
       status,
       stage
     ];
-  }, [actionItems, blockTime, readyItems, getPendingTx, getStatus, caller_crew, ship, TIME_ACCELERATION]);
+  }, [actionItems, blockTime, getPendingTx, getStatus, caller_crew, ship, TIME_ACCELERATION]);
 
   const { data: origin } = useAsteroid(currentTravelAction?.originId || proposedTravelSolution?.originId);
   const { data: destination } = useAsteroid(currentTravelAction?.destinationId || proposedTravelSolution?.destinationId);
