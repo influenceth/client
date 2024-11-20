@@ -81,7 +81,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   const { currentExtraction, extractionStatus, startExtraction, finishExtraction } = extractionManager;
   const crew = useActionCrew(currentExtraction);
   const blockTime = useBlockTime();
-  const { crewCan } = useCrewContext();
+  const { accountCrewIds, crewCan } = useCrewContext();
 
   const [amount, setAmount] = useState(0);
   const [selectedCoreSample, setSelectedCoreSample] = useState();
@@ -91,8 +91,8 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   const { data: buildingOwner } = useCrew(lot?.building?.Control?.controller?.id);
 
   const isPurchase = useMemo(
-    () => selectedCoreSample && selectedCoreSample?.Control?.controller?.id !== crew?.id,
-    [crew?.id, selectedCoreSample?.Control?.controller?.id]
+    () => selectedCoreSample && !accountCrewIds?.includes(selectedCoreSample?.Control?.controller?.id),
+    [accountCrewIds, selectedCoreSample?.Control?.controller?.id]
   );
   const { data: depositOwner } = useCrew(isPurchase ? selectedCoreSample?.Control?.controller?.id : null);
 
@@ -143,11 +143,11 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
   const usableSamples = useMemo(() => {
     return (lot?.deposits || []).filter((d) => (
-      (d.Control.controller.id === crew?.id || d.PrivateSale?.amount > 0)
+      (accountCrewIds?.includes(d.Control.controller.id) || d.PrivateSale?.amount > 0)
       && d.Deposit.remainingYield > 0
       && d.Deposit.status >= Deposit.STATUSES.SAMPLED
     ));
-  }, [lot?.deposits, crew?.id]);
+  }, [accountCrewIds, lot?.deposits, crew?.id]);
 
   const selectCoreSample = useCallback((sample) => {
     setSelectedCoreSample(sample);

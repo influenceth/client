@@ -112,7 +112,7 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
           }}
           icon={improveSample ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />}
           onClick={handleClick}
-          sequenceDelay={(!crew?._ready || currentSamplingStack.length > 0) ? crew?.Crew?.readyAt : null} />
+          sequenceDelay={!crew?._ready ? crew?.Crew?.readyAt : null} />
       )}
     </>
   );

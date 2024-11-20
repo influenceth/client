@@ -6,6 +6,7 @@ import { constants } from '@influenceth/astro';
 import OnClickLink from '~/components/OnClickLink';
 import MarketplaceLink from '~/components/MarketplaceLink';
 import {
+  CrewIcon,
   EccentricityIcon,
   FavoriteIcon,
   InclinationIcon,
@@ -23,6 +24,7 @@ import useWatchAsteroid from '~/hooks/useWatchAsteroid';
 import useUnWatchAsteroid from '~/hooks/useUnWatchAsteroid';
 import { LocationLink } from './components';
 import formatters from '~/lib/formatters';
+import EntityLink from '~/components/EntityLink';
 
 const FavoriteToggle = styled.span`
   cursor: ${p => p.theme.cursors.active};
@@ -62,9 +64,6 @@ const useColumns = () => {
         align: 'center',
         icon: <MyAssetIcon />,
         selector: row => {
-          // TODO: ecs refactor
-          // TODO: or
-          // selector: row => row.Control?.controller?.id === crew?.id ? <MyAssetIcon /> : null,
           if (accountAddress && row.Nft?.owner && Address.areEqual(row.Nft.owner, accountAddress)) {
             return <MyAssetIcon />
           }
@@ -146,6 +145,15 @@ const useColumns = () => {
         label: 'Spectral Type',
         sortField: 'Celestial.celestialType',
         selector: row => `${Asteroid.Entity.getSpectralType(row)}-type`
+      },
+      {
+        key: 'crew',
+        label: 'Controller',
+        icon: <CrewIcon />,
+        // sortField: 'Control.controller.id',
+        selector: row => {
+          return row.Control?.controller?.id ? <EntityLink {...row.Control.controller} /> : 'Uncontrolled';
+        }
       },
       {
         key: 'scanStatus',

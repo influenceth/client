@@ -13,7 +13,7 @@ import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 
 const isVisible = ({ crew, ship }) => {
   return crew && ship
-    && ship.Control?.controller?.id === crew.id
+    && ship.Control?.controller?.id === crew.id // i am the designated flight crew
     && ship._location.lotId  // on surface
 };
 

@@ -13,13 +13,13 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useCoarseTime from '~/hooks/useCoarseTime';
 import useConstants from '~/hooks/useConstants';
 import useCrewContext from '~/hooks/useCrewContext';
-import useCrewShips from '~/hooks/useCrewShips';
 import useStore from '~/hooks/useStore';
 import formatters from '~/lib/formatters';
 import { sampleAsteroidOrbit } from '~/lib/geometryUtils';
 import { getCrewAbilityBonuses, reactBool, formatFixed, nativeBool } from '~/lib/utils';
 import { MaterialBonusTooltip, MouseoverContent, ShipImage, formatMass } from '../actionDialogs/components';
 import { Scrollable } from './components/components';
+import useWalletShips from '~/hooks/useWalletShips';
 
 const ShipSelection = styled.div`
   align-items: center;
@@ -221,7 +221,7 @@ const RoutePlanner = () => {
 
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
-  const { data: myShips, isLoading: myShipsLoading } = useCrewShips();
+  const { data: myShips, isLoading: myShipsLoading } = useWalletShips();
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
 
   const [baseTime, setBaseTime] = useState();

@@ -145,7 +145,7 @@ const ShipRow = ({ ship }) => {
 };
 
 const DockDetails = ({ onClose }) => {
-  const { crew } = useCrewContext();
+  const { accountCrewIds } = useCrewContext();
   const blockTime = useBlockTime();
 
   const lotId = useStore(s => s.asteroids.lot);
@@ -210,7 +210,7 @@ const DockDetails = ({ onClose }) => {
               <div>
                 <ThumbnailWithData noWrap style={{ width: 'calc(100% - 60px)' }}>
                   <ShipImage
-                    iconBadge={ship.Control?.controller?.id === crew?.id ? <MyAssetIcon /> : null}
+                    iconBadge={accountCrewIds?.includes(ship.Control?.controller?.id) ? <MyAssetIcon /> : null}
                     shipType={ship.Ship.shipType}
                     style={{ width: 100, height: 85 }} />
                   <label style={{ padding: '0 8px', width: 'calc(100% - 100px)' }}>

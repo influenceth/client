@@ -139,7 +139,7 @@ const LotInfo = () => {
 
             <HudMenuCollapsibleSection titleText={`${siteOrBuilding} Permissions`} collapsed>
               <div style={{ marginBottom: 10 }}>
-                <CrewIndicator crew={controller} label={`${siteOrBuilding} Controller`} />
+                <CrewIndicator crew={controller} label={`${siteOrBuilding} Administrator`} />
               </div>
               <PolicyPanels entity={lot.building} />
             </HudMenuCollapsibleSection>

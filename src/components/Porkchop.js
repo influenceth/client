@@ -328,7 +328,8 @@ const Porkchop = ({
 
     dispatchTravelSolution({
       ...solution, // v1, v2, deltaV
-      _isSimulation: shipParams._simulated,
+      shipId: shipParams.id,
+      _isSimulation: !!shipParams._simulated,
       _isSimulationInvalid: insufficientPropellant || insufficientFood,
       originId,
       destinationId,

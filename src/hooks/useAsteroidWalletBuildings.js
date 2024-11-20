@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { Entity } from '@influenceth/sdk';
 
-import useCrewBuildings from '~/hooks/useCrewBuildings';
+import useWalletBuildings from '~/hooks/useWalletBuildings';
 
-const useAsteroidCrewBuildings = (asteroidId) => {
-  const { data, isLoading } = useCrewBuildings();
+const useAsteroidWalletBuildings = (asteroidId) => {
+  const { data, isLoading } = useWalletBuildings();
 
   return useMemo(() => {
     return {
@@ -18,4 +18,4 @@ const useAsteroidCrewBuildings = (asteroidId) => {
   }, [data, isLoading]);
 };
 
-export default useAsteroidCrewBuildings;
+export default useAsteroidWalletBuildings;

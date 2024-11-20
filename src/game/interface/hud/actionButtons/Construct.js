@@ -13,9 +13,9 @@ const labelDict = {
   FINISHING: 'Finishing Construction...'
 };
 
-const isVisible = ({ constructionStatus, crew, lot }) => {
-  return crew && lot && lot.building
-    && lot.building.Control?.controller?.id === crew.id
+const isVisible = ({ accountCrewIds, constructionStatus, lot }) => {
+  return lot && lot.building
+    && accountCrewIds?.includes(lot.building.Control?.controller?.id)
     && ['PLANNED', 'UNDER_CONSTRUCTION', 'READY_TO_FINISH', 'FINISHING'].includes(constructionStatus);
 };
 

@@ -49,9 +49,9 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
 
   const { currentUndockingAction, undockShip } = manager;
   const blockTime = useBlockTime();
-  const { crew } = useCrewContext();
+  const { accountCrewIds, crew } = useCrewContext();
 
-  const isForceLaunch = crew?.id !== ship?.Control?.controller?.id;
+  const isForceLaunch = useMemo(() => !accountCrewIds?.includes(ship?.Control?.controller?.id), [accountCrewIds, ship?.Control?.controller?.id]);
   // TODO: in event of self-piloted launch, need to update with cached crew values on flightCrew (just like in other action dialogs while waiting on an action)
   const _flightCrew = useMemo(() => shipCrews.find((c) => c.id === ship.Control?.controller?.id), [shipCrews, ship]);
   const { data: flightCrew, ...other } = useHydratedCrew(_flightCrew?.id);

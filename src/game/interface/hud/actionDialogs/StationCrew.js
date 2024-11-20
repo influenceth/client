@@ -37,7 +37,7 @@ import useEntity from '~/hooks/useEntity';
 
 const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOrigin, stationCrewManager, stage, ...props }) => {
   const { stationCrew } = stationCrewManager;
-  const { crew, crewCan } = useCrewContext();
+  const { accountCrewIds, crew, crewCan } = useCrewContext();
 
   const crewTravelBonus = useMemo(() => {
     if (!crew) return {};
@@ -54,7 +54,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
     const newOrigin = cloneDeep(rawOrigin);
     newOrigin._location = locationsArrToObj(newOrigin?.Location?.locations || []);
     newOrigin._inOrbit = !newOrigin?._location.lotId;
-    newOrigin._crewOwned = newOrigin?.Control?.controller?.id === crew?.id;
+    newOrigin._crewOwned = accountCrewIds?.includes(newOrigin?.Control?.controller?.id);
     return newOrigin;
   }, [rawOrigin]);
 
@@ -63,11 +63,14 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
     const newDestination = cloneDeep(rawDestination);
     newDestination._location = locationsArrToObj(newDestination?.Location?.locations || []);
     newDestination._inOrbit = !newDestination?._location.lotId;
-    newDestination._crewOwned = newDestination?.Control?.controller?.id === crew?.id;
+    newDestination._crewOwned = accountCrewIds?.includes(newDestination?.Control?.controller?.id);
     return newDestination;
   }, [rawDestination]);
 
-  const crewIsOwner = destination?.Control?.controller?.id === crew?.id;
+  const [crewIsOwner, crewIsController] = useMemo(() => ([
+    accountCrewIds?.includes(destination?.Control?.controller?.id),
+    destination?.Control?.controller?.id === crew?.id
+  ]), [accountCrewIds, destination?.Control?.controller?.id, crew?.id]);
 
   const { data: destinationOwner } = useCrew(destination?.Control?.controller?.id);
   const { data: destinationLot } = useLot(destination?._location?.lotId);
@@ -127,11 +130,11 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
   }, [stage]);
 
   const actionDetails = useMemo(() => {
-    const icon = destination?.label === Entity.IDS.SHIP && !crewIsOwner
+    const icon = destination?.label === Entity.IDS.SHIP && !crewIsController
       ? <StationPassengersIcon />
       : <StationCrewIcon />;
     const label = destination?.label === Entity.IDS.SHIP
-      ? (crewIsOwner ? 'Station Flight Crew' : 'Station Passengers')
+      ? (crewIsController ? 'Station Flight Crew' : 'Station Passengers')
       : 'Station Crew';
     const status = stage === actionStages.NOT_STARTED
       ? (
@@ -141,7 +144,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
       )
       : undefined;
     return { icon, label, status };
-  }, [crewIsOwner, destination, stage]);
+  }, [crewIsController, crewIsOwner, destination, stage]);
 
   const stationConfig = destination ? Station.TYPES[destination.Station?.stationType] : null;
 
@@ -210,7 +213,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
           <CrewInputBlock
             title={
               destination.label === Entity.IDS.SHIP
-                ? (crewIsOwner ? 'Flight Crew' : 'Passengers')
+                ? (crewIsController ? 'Flight Crew' : 'Passengers')
                 : 'Stationed Crew'
             }
             crew={crew} />

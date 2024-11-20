@@ -41,6 +41,7 @@ import { TextInputWrapper } from '~/components/TextInputUncontrolled';
 import CrewIndicator from '~/components/CrewIndicator';
 import styled from 'styled-components';
 import theme from '~/theme';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const InputLabel = styled.div`
   align-items: center;
@@ -77,6 +78,7 @@ const Warning = styled.div`
 const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAction, stage, ...props }) => {
   const { startImproving, finishSampling } = coreSampleManager;
   const crew = useActionCrew(currentSamplingAction);
+  const { accountCrewIds } = useCrewContext();
 
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
@@ -100,13 +102,13 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
       .filter((c) => (
         (c.id === currentSamplingAction?.sampleId)
         || (
-          (c.Control.controller.id === crew?.id || c.PrivateSale?.amount > 0)
+          (accountCrewIds?.includes(c.Control.controller.id) || c.PrivateSale?.amount > 0)
           && c.Deposit.initialYield > 0
           && c.Deposit.status !== Deposit.STATUSES.USED
         )
       ))
       .map((c) => ({ ...c, tonnage: c.Deposit.initialYield * Product.TYPES[c.Deposit.resource].massPerUnit }));
-  }, [lot?.deposits]);
+  }, [accountCrewIds, lot?.deposits]);
 
   const [selectedSample, resourceId, initialYieldTonnage] = useMemo(() => {
     const selected = (improvableSamples || []).find((s) => s.id === sampleId);
@@ -285,8 +287,8 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
   }, [currentSamplingAction]);
 
   const isPurchase = useMemo(
-    () => selectedSample && selectedSample?.Control?.controller?.id !== crew?.id,
-    [crew?.id, selectedSample?.Control?.controller?.id]
+    () => selectedSample && !accountCrewIds?.includes(selectedSample?.Control?.controller?.id),
+    [accountCrewIds, selectedSample?.Control?.controller?.id]
   );
 
   const { data: depositOwner } = useCrew(isPurchase ? selectedSample?.Control?.controller?.id : null);

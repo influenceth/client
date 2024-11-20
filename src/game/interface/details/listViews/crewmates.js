@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { Address, Crewmate } from '@influenceth/sdk';
 
 import {
@@ -65,7 +66,12 @@ const useColumns = () => {
         icon: <CrewIcon />,
         label: 'Crew',
         sortField: 'meta.crew.name.raw',
-        selector: row => row.Control?.controller?.id ? (row.meta?.crew?.name || `#${row.Control?.controller?.id}`) : null
+        selector: row => {
+          if (row.Control?.controller?.id) {
+            return <Link to={`/crew/${row.Control.controller.id}`}>{row.meta?.crew?.name || `#${row.Control.controller.id}`}</Link>
+          }
+          return null;
+        }
       },
       {
         key: 'class',

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { Entity, Lot, Ship } from '@influenceth/sdk';
 
 import { MyAssetIcon, SwayIcon } from '~/components/Icons';
@@ -22,7 +23,7 @@ const Me = styled.span`
 
 const useColumns = () => {
   const { accountAddress } = useSession();
-  const { crew } = useCrewContext();
+  const { accountCrewIds, crew } = useCrewContext();
 
   return useMemo(() => {
     const columns = [
@@ -30,7 +31,9 @@ const useColumns = () => {
         key: 'my',
         align: 'center',
         icon: <MyAssetIcon />,
-        selector: row => row.Control?.controller?.id === crew?.id ? <MyAssetIcon /> : null,
+        selector: row => {
+          return accountCrewIds?.includes(row.Control?.controller?.id) ? <MyAssetIcon /> : null; 
+        },
         bodyStyle: { fontSize: '24px' },
         requireLogin: true,
         unhideable: true
@@ -117,10 +120,10 @@ const useColumns = () => {
         selector: row => {
           if (row.Control?.controller?.id) {
             return (
-              <>
+              <Link to={`/crew/${row.Control.controller.id}`}>
                 {row.meta.crew.name || <EntityName {...row.Control.controller} />}
                 {row.Control?.controller?.id === crew?.id && <Me />}
-              </>
+              </Link>
             );
           }
           return null;
@@ -146,7 +149,7 @@ const useColumns = () => {
     ];
 
     return columns.filter((c) => accountAddress || !c.requireLogin);
-  }, [accountAddress, crew?.id]);
+  }, [accountAddress, accountCrewIds, crew?.id]);
 };
 
 export default useColumns;

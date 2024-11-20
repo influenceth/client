@@ -76,7 +76,6 @@ const SurfaceTransfer = ({
   const currentDelivery = useMemo(() => currentDeliveryAction?.action, [currentDeliveryAction]);
   const crew = useActionCrew(currentDelivery);
   const { data: currentDeliveryCallerCrew } = useHydratedCrew(currentDelivery?.callerCrew?.id);
-  const { crewCan } = useCrewContext();
   const blockTime = useBlockTime();
 
   const crewTravelBonus = useMemo(() => {
@@ -261,7 +260,7 @@ const SurfaceTransfer = ({
       }
       return true;
     }
-    return crewCan(Permission.IDS.ADD_PRODUCTS, destination);
+    return currentCrewCan(Permission.IDS.ADD_PRODUCTS, destination);
   }, [blockTime, crew, currentDelivery, currentDeliveryCallerCrew, destination]);
 
   const isP2P = useMemo(() => currentDelivery?.isProposal || !senderHasDestPerm, [currentDelivery?.isProposal, senderHasDestPerm]);
@@ -607,7 +606,7 @@ const SurfaceTransfer = ({
 
       <ActionDialogFooter
         disabled={stage === actionStage.NOT_STARTED
-          ? (totalMass === 0 || !destination || !origin || willBeOverCapacity || !crewCan(Permission.IDS.REMOVE_PRODUCTS, origin))
+          ? (totalMass === 0 || !destination || !origin || willBeOverCapacity || !currentCrewCan(Permission.IDS.REMOVE_PRODUCTS, origin))
           : (currentDeliveryAction?.status === 'PACKAGED' && !(crew?._location?.lotId && crew?._location?.asteroidId === asteroid?.id))
         }
         goLabel="Transfer"
