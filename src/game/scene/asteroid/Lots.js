@@ -261,7 +261,6 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
       Object.keys(lotsByRegion.current).forEach((region) => {
         results[region] = lotsByRegion.current[region].filter((lotIndex) => lotResultMap[lotIndex]);
       });
-
       setResultsByRegion(results);
     }
   }, [lotResultMap, lastLotUpdate, positionsReady]);
@@ -583,13 +582,16 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
             dummy.scale.set(lotScale, lotScale, lotScale);
             dummy.updateMatrix();
 
+            // ensure lotMeshes.current[lotUse] has enough instances
+            if (lotMeshes.current[lotUse].count <= lotUseRendered) lotMeshes.current[lotUse].count = lotUseRendered + 1;
+
             // everything else is only in visible-lot area
-            if (lotUse !== 0 && (totalRendered < visibleLotTally || hasResult)) {
+            if (lotUse !== 0 && ((totalRendered < visibleLotTally) || hasResult)) {
               lotMeshes.current[lotUse].setMatrixAt(lotUseRendered, dummy.matrix);
               lotUsesRendered[lotUse] = (lotUsesRendered[lotUse] || 0) + 1;
               updateLotUseMatrix[lotUse] = true;
             }
-
+            
             if (lotUse === 0 && ((totalRendered < visibleLotTally && cameraAltitude <= PIP_VISIBILITY_ALTITUDE) || hasResult)) {
               lotMeshes.current[0].setMatrixAt(lotUseRendered, dummy.matrix);
               lotUsesRendered[0] = (lotUsesRendered[0] || 0) + 1;
@@ -598,7 +600,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
 
             // update mouseable matrix
             // TODO: should these always face the camera? or have a slight bias towards camera at least?
-            if (mouseableMesh.current) mouseableMesh.current.setMatrixAt(totalRendered, dummy.matrix);
+            if (mouseableMesh.current && totalRendered < mouseableMesh.current.count) mouseableMesh.current.setMatrixAt(totalRendered, dummy.matrix);
             updateMouseableMatrix = true;
 
             // COLOR
