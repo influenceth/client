@@ -213,7 +213,13 @@ const SurfaceTransfer = ({
 
       setSelectedItems(validated);
     }
-  }, [crew?._inventoryBonuses, originInventory, destinationInventory, destDeliveryManager.currentDeliveryActions]);
+  }, [
+    crew?._inventoryBonuses,
+    originInventory,
+    destinationInventory,
+    destDeliveryManager.currentDeliveryActions,
+    transferSelectorOpen
+  ]);
 
   const [transportDistance, transportTime] = useMemo(() => {
     if (!asteroid?.id || !originLot?.id || !destinationLot?.id) return [0, 0];
@@ -471,7 +477,8 @@ const SurfaceTransfer = ({
                   label="Items"
                   items={selectedItems}
                   onClick={stage === actionStage.NOT_STARTED ? (() => setTransferSelectorOpen(true)) : undefined}
-                  stage={stage} />
+                  stage={stage}
+                  errorMessage={willBeOverCapacity && 'Exceeds Destination Capacity'} />
               )
               : (
                 <FlexSection>
@@ -482,6 +489,7 @@ const SurfaceTransfer = ({
                       items={selectedItems}
                       onClick={stage === actionStage.NOT_STARTED ? (() => setTransferSelectorOpen(true)) : undefined}
                       stage={stage}
+                      errorMessage={willBeOverCapacity && 'Exceeds Destination Capacity'}
                       unwrapped />
                   </FlexSectionBlock>
 
