@@ -214,7 +214,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
       },
       meta
     );
-  }, [currentDeliveries, payload]);
+  }, [currentDeliveries, execute, payload]);
 
   const cancelDelivery = useCallback((selectedDeliveryId, meta) => {
     execute(
@@ -225,7 +225,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
       },
       meta
     );
-  }, [payload]);
+  }, [execute, payload]);
 
   const packageDelivery = useCallback(({ origin, originSlot, destination, destinationSlot, contents, price }, meta) => {
     execute(
@@ -241,7 +241,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
       },
       meta
     );
-  }, [payload]);
+  }, [execute, payload]);
 
   const startDelivery = useCallback(({ origin, originSlot, destination, destinationSlot, contents }, meta) => {
     execute(
@@ -256,7 +256,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
       },
       meta
     );
-  }, [payload]);
+  }, [execute, payload]);
 
   const finishDelivery = useCallback((selectedDeliveryId, meta) => {
     execute(
@@ -267,7 +267,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
       },
       meta
     )
-  }, [payload, deliveryId]);
+  }, [execute, payload, deliveryId]);
 
   return {
     isLoading,

@@ -58,7 +58,7 @@ const usePolicyManager = (target, permission) => {
       },
       meta
     );
-  }, [currentPolicy?.allowlist, currentPolicy?.accountAllowlist, meta, payload]);
+  }, [currentPolicy?.allowlist, currentPolicy?.accountAllowlist, execute, meta, payload]);
 
   const updatePolicy = useCallback(
     (newPolicyType, newPolicyDetails) => {
@@ -83,7 +83,7 @@ const usePolicyManager = (target, permission) => {
 
       execute('UpdatePolicy', params, meta);
     },
-    [currentPolicy, meta, payload]
+    [currentPolicy, execute, meta, payload]
   );
 
   const allowlistChangePending = useMemo(

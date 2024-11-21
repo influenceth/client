@@ -101,7 +101,7 @@ const useDryDockManager = (lotId, slot = 1) => {
         lotId
       }
     )
-  }, [payload]);
+  }, [execute, payload]);
 
   const finishShipAssembly = useCallback((destination) => {
     execute(
@@ -115,7 +115,7 @@ const useDryDockManager = (lotId, slot = 1) => {
         shipType: currentAssembly?.shipType
       }
     );
-  }, [currentAssembly?.shipType, payload]);
+  }, [currentAssembly?.shipType, execute, payload]);
 
   return {
     startShipAssembly,

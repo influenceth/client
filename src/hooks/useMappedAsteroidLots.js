@@ -21,7 +21,7 @@ const useMappedAsteroidLots = (i) => {
   const mappedLotSearch = useStore(s => s.assetSearch.lotsMapped);
   const openHudMenu = useStore(s => s.openHudMenu);
   const highlightConfig = useStore(s => s.assetSearch.lotsMapped.highlight);
-  const mapResourceId = useStore(s => s.asteroids.resourceMap?.active && s.asteroids.resourceMap?.selected);
+  // const mapResourceId = useStore(s => s.asteroids.resourceMap?.active && s.asteroids.resourceMap?.selected);
 
   const [rebuildTally, setRebuildTally] = useState(0);
 

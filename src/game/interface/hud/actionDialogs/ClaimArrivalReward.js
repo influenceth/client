@@ -52,7 +52,7 @@ const ClaimArrivalReward = ({ asteroid, crew, onClose }) => {
   const handleClaim = useCallback(async () => {
     await execute('ClaimArrivalReward', payload);
     onClose();
-  }, [payload]);
+  }, [execute, payload]);
 
   return (
     <ActionDialogInner>

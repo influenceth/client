@@ -117,11 +117,11 @@ const useExtractionManager = (lotId, slot = 1) => {
         lotId
       }
     )
-  }, [payload]);
+  }, [execute, payload]);
 
   const finishExtraction = useCallback(() => {
     execute('ExtractResourceFinish', payload, { lotId });
-  }, [payload]);
+  }, [execute, payload]);
 
   return {
     startExtraction,

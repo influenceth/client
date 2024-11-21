@@ -1912,13 +1912,15 @@ export const TransferSelectionDialog = ({
   }, [sourceContents, targetInventory, targetInventoryConstraints, targetInvConfig, selection]);
 
   const { tally, totalMass, totalVolume } = useMemo(() => {
+    const initialMass = (targetInventory?.mass || 0) || (targetInventory?.reservedMass || 0);
+    const initialVolume = (targetInventory?.volume || 0) || (targetInventory?.reservedVolume || 0);
     return items.reduce((acc, { selected, resource }) => {
       acc.tally += selected > 0 ? 1 : 0;
       acc.totalMass += (selected || 0) * resource.massPerUnit;
       acc.totalVolume += (selected || 0) * (resource.volumePerUnit || 0);
       return acc;
-    }, { tally: 0, totalMass: 0, totalVolume: 0 });
-  }, [items]);
+    }, { tally: 0, totalMass: initialMass, totalVolume: initialVolume });
+  }, [items, targetInventory?.mass, targetInventory?.reservedMass, targetInventory?.volume, targetInventory?.reservedVolume]);
 
   // TODO: should title be inventory type name instead?
 
@@ -3964,6 +3966,7 @@ export const LotControlWarning = ({ lot }) => {
 
 export const ResourceGridSectionInner = ({
   columns,
+  errorMessage,
   hideTotals = false,
   isGathering,
   items,
@@ -3973,6 +3976,7 @@ export const ResourceGridSectionInner = ({
   style,
   theming = 'default'
 }) => {
+  console.log({ errorMessage })
   const { totalItems, totalMass, totalVolume } = useMemo(() => {
     return items.reduce((acc, { i, numerator, denominator, selected }) => {
       if (!Product.TYPES[i]) {
@@ -4014,7 +4018,12 @@ export const ResourceGridSectionInner = ({
             {Array.from({ length: Math.max(0, minCells - items.length) }).map((_, i) => (
               <EmptyResourceImage key={i} noIcon outlineColor="transparent" style={{ background: 'rgba(0, 0, 0, 0.25)' }} />
             ))}
-            {!hideTotals && (
+            {errorMessage && (
+              <IngredientSummary theming="error">
+                <span><WarningIcon /> {errorMessage}</span>
+              </IngredientSummary>
+            )}
+            {!hideTotals && !errorMessage && (
               <IngredientSummary theming={theming}>
                 <span>{theming === 'warning' ? 'Total Requirements:' : 'Total Transfer:'}</span>
                 <span>{formatMass(totalMass)} | {formatVolume(totalVolume)}</span>

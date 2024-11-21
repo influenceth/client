@@ -116,11 +116,11 @@ const useProcessManager = (lotId, slot) => {
         lotId,
       }
     )
-  }, [lotId, payload, processor?.processorType]);
+  }, [execute, lotId, payload, processor?.processorType]);
 
   const finishProcess = useCallback(() => {
     execute('ProcessProductsFinish', payload, { lotId, process: processor?.runningProcess });
-  }, [lotId, payload, processor?.runningProcess]);
+  }, [execute, lotId, payload, processor?.runningProcess]);
 
   return {
     startProcess,
