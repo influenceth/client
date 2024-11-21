@@ -24,7 +24,7 @@ const useJettisonCargoManager = (origin) => {
         }, meta);
       }
     },
-    [payload]
+    [execute, payload]
   );
 
   const currentJettison = useMemo(

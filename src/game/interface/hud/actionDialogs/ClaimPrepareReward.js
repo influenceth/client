@@ -49,7 +49,7 @@ const ClaimPrepareReward = ({ asteroid, onClose }) => {
     }
 
     onClose();
-  }, [asteroid]);
+  }, [asteroid, execute]);
 
   return (
     <ActionDialogInner>

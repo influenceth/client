@@ -166,7 +166,7 @@ const useCoreSampleManager = (lotId) => {
       origin_slot: coreDrillSource.slot,
       ...payload
     })
-  }, [payload]);
+  }, [execute, payload]);
 
   const startImproving = useCallback((depositId, coreDrillSource, depositOwnerCrew) => {
     const sample = (lot?.deposits || []).find((c) => c.id === depositId);
@@ -185,7 +185,7 @@ const useCoreSampleManager = (lotId) => {
         resource: sample?.Deposit?.resource
       }
     )
-  }, [lotId, payload]);
+  }, [execute, lotId, payload]);
 
   const finishSampling = useCallback((sampleId) => {
     const selectedAction = currentSamplings.find((c) => c.action?.sampleId === sampleId);
@@ -198,7 +198,7 @@ const useCoreSampleManager = (lotId) => {
       },
       { lotId, isNew: selectedAction.action?.isNew }
     )
-  }, [currentSamplings, payload]);
+  }, [currentSamplings, execute, payload]);
 
   return {
     currentSamplingActions: currentSamplings,

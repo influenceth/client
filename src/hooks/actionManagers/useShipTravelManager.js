@@ -254,7 +254,7 @@ const useShipTravelManager = (shipId) => {
         usedPropellantMass: usedPropellantMass / 1e3
       }
     );
-  }, [caller_crew, destination, proposedTravelSolution, shipId]);
+  }, [caller_crew, destination, execute, proposedTravelSolution, shipId]);
 
   const arrive = useCallback(() => {
     execute(
@@ -267,7 +267,7 @@ const useShipTravelManager = (shipId) => {
         shipId
       }
     );
-  }, [caller_crew, destination, shipId]);
+  }, [caller_crew, destination, execute, shipId]);
 
   return {
     depart,

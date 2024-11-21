@@ -17,7 +17,7 @@ const useShipEmergencyManager = () => {
       { caller_crew },
       {/* TODO: meta? */}
     );
-  }, [caller_crew]);
+  }, [caller_crew, execute]);
 
   const deactivateEmergencyMode = useCallback(() => {
     execute(
@@ -25,7 +25,7 @@ const useShipEmergencyManager = () => {
       { caller_crew },
       {/* TODO: meta? */}
     );
-  }, []);
+  }, [execute]);
 
   const collectEmergencyPropellant = useCallback(() => {
     execute(
@@ -33,7 +33,7 @@ const useShipEmergencyManager = () => {
       { caller_crew },
       {/* TODO: meta? */}
     );
-  }, []);
+  }, [execute]);
 
   const isActivating = useMemo(
     () => getStatus('ActivateEmergency', { caller_crew }) === 'pending',

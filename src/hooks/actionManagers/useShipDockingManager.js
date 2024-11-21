@@ -26,7 +26,7 @@ const useShipDockingManager = (shipId) => {
         lotId: ship?._location?.lotId,
       }
     );
-  }, [caller_crew, ship]);
+  }, [caller_crew, execute, ship]);
 
   const dockShip = useCallback((destination, hopperAssisted, destLotId) => {
     execute(
@@ -42,7 +42,7 @@ const useShipDockingManager = (shipId) => {
         shipId
       }
     );
-  }, [caller_crew]);
+  }, [caller_crew, execute]);
 
   const currentDockingAction = useMemo(
     () => getPendingTx ? getPendingTx('DockShip', { caller_crew }) : null

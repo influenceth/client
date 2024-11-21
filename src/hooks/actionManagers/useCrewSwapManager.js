@@ -14,7 +14,7 @@ const useCrewSwapManager = (props) => {
       composition: newRoster,
       caller_crew: { id: crewId, label: Entity.IDS.CREW },
     })
-  }, []);
+  }, [execute]);
 
   const swapCrewmates = useCallback(({ crewId1, newRoster1, crewId2, newRoster2 }) => {
     execute('ExchangeCrew', {
@@ -23,7 +23,7 @@ const useCrewSwapManager = (props) => {
       _crew2: { id: crewId2, label: Entity.IDS.CREW },
       comp2: newRoster2
     })
-  }, []);
+  }, [execute]);
 
   const getPendingChange = useCallback(
     () => {
