@@ -41,6 +41,7 @@ import SellingList from './actionDialogs/SellingList';
 import ShoppingList from './actionDialogs/ShoppingList';
 import StationCrew from './actionDialogs/StationCrew';
 import SurfaceTransfer from './actionDialogs/SurfaceTransfer';
+import TransferAgreement from './actionDialogs/TransferAgreement';
 import TransferToSite from './actionDialogs/TransferToSite';
 import UnplanBuilding from './actionDialogs/UnplanBuilding';
 const cornerSize = 20;
@@ -268,6 +269,7 @@ const ActionDialog = ({ type, params }) => {
         {type === 'STATION_CREW' && <StationCrew {...allProps} />}
         {type === 'STATION_CREW_AS_GUESTS' && <StationCrew {...allProps} guests />}
         {type === 'SURFACE_TRANSFER' && <SurfaceTransfer {...allProps} />}
+        {type === 'TRANSFER_AGREEMENT' && <TransferAgreement {...allProps} />}
         {type === 'TRANSFER_TO_SITE' && <TransferToSite {...allProps} />}
       </ModalCushion>
     </Backdrop>

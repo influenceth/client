@@ -12,7 +12,10 @@ const Wrapper = styled.div`
   position: relative;
   & > span {
     display: inline-block;
-    height: 32px;
+    height: ${p => p.inputHeight}px;
+    & > input {
+      height: 100%;
+    }
   }
 `;
 
@@ -24,7 +27,7 @@ const Options = styled.div`
   overflow: auto;
   position: absolute;
   ${p => p.dropUp && `
-    bottom: 32px;
+    bottom: ${p.inputHeight}px;
   `}
 `;
 const Option = styled.div`
@@ -57,6 +60,7 @@ const AutocompleteComponent = ({
   formatLabel,
   onSelect,
   options: rawOptions,
+  inputHeight = 32,
   isLoading,
   searchTerm,
   selected,
@@ -145,7 +149,7 @@ const AutocompleteComponent = ({
   }, [focused, hovered]);
 
   return (
-    <Wrapper ref={setRef} onKeyDown={handleKeyDown}>
+    <Wrapper ref={setRef} inputHeight={inputHeight} onKeyDown={handleKeyDown}>
       <span ref={setReferenceEl}>
         <TextInput
           ref={textInputEl}
@@ -164,6 +168,7 @@ const AutocompleteComponent = ({
       {(focused || hovered) && createPortal(
         <div ref={setPopperEl} style={{ ...styles.popper, zIndex: 10002 }} {...attributes.popper}>
           <Options
+            inputHeight={inputHeight}
             onMouseEnter={handleOptionHover}
             onMouseLeave={handleOptionHover}
             width={width}
@@ -186,6 +191,7 @@ export const StaticAutocomplete = ({
   dropdownProps = {},
   footnoteKey,
   labelKey,
+  inputHeight,
   options = [],
   onSelect,
   selected,
@@ -217,6 +223,7 @@ export const StaticAutocomplete = ({
       dropdownProps={dropdownProps}
       formatFootnote={formatFootnote}
       formatLabel={formatLabel}
+      inputHeight={inputHeight}
       onSelect={onSelect}
       options={filteredOptions}
       selected={selected}
@@ -234,6 +241,7 @@ const Autocomplete = ({
   assetType,
   dropdownProps = {},
   excludeFunc,
+  inputHeight,
   meta,
   onSelect,
   selected,
@@ -259,6 +267,7 @@ const Autocomplete = ({
       formatLabel={formatLabel}
       onSelect={onSelect}
       options={options}
+      inputHeight={inputHeight}
       isLoading={isLoading}
       selected={selected}
       searchTerm={searchTerm}

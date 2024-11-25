@@ -79,6 +79,14 @@ const useAgreementManager = (target, permission, agreementPath) => {
     );
   }, [agreementPath, execute]);
 
+  const transferAgreement = useCallback((newPermitted) => {
+    execute(
+      'TransferPrepaidAgreement',
+      { new_permitted: newPermitted, ...payload },
+      meta
+    );
+  }, []);
+
   const pendingChange = useMemo(
     () => {
       if (getPendingTx) {
@@ -87,6 +95,7 @@ const useAgreementManager = (target, permission, agreementPath) => {
           || getPendingTx('AcceptPrepaidMerkleAgreement', { ...payload })
           || getPendingTx('ExtendPrepaidAgreement', { ...payload })
           || getPendingTx('CancelPrepaidAgreement', { ...payload })
+          || getPendingTx('TransferPrepaidAgreement', { ...payload })
       }
       return null;
     },
@@ -100,6 +109,7 @@ const useAgreementManager = (target, permission, agreementPath) => {
     enterAgreement,
     extendAgreement,
     cancelAgreement,
+    transferAgreement,
 
     pendingChange
   };

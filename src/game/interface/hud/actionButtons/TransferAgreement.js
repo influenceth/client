@@ -1,42 +1,39 @@
 import { useCallback, useMemo } from 'react';
 
-import { ExtendAgreementIcon } from '~/components/Icons';
+import { TransferAgreementIcon } from '~/components/Icons';
 import ActionButton from './ActionButton';
 import useAgreementManager from '~/hooks/actionManagers/useAgreementManager';
 import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 
 const isVisible = () => false;
 
-const ExtendAgreement = ({ entity, permission, onSetAction, _disabled }) => {
-  const { pendingChange, currentAgreement } = useAgreementManager(entity, permission);
+const TransferAgreement = ({ entity, permission, onSetAction, _disabled }) => {
+  const { currentAgreement, pendingChange } = useAgreementManager(entity, permission);
   const simulationEnabled = useSimulationEnabled();
   
   const handleClick = useCallback(() => {
-    onSetAction('EXTEND_AGREEMENT', { entity, permission });
+    onSetAction('TRANSFER_AGREEMENT', { entity, permission });
   }, [entity, permission]);
 
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (pendingChange) return 'updating...';
-    if (currentAgreement?.noticeTime > 0) return 'notice given';
+    if (!currentAgreement) return 'agreement expired';
     if (simulationEnabled) return 'simulation restricted';
     return '';
-  }, [_disabled, pendingChange, currentAgreement, simulationEnabled]);
+  }, [_disabled, !currentAgreement, pendingChange, simulationEnabled]);
 
-  // only flash green if no controller... button is always present if you own and
-  // do not currently have control (hopefully that is less distracting when admin'ed
-  // by a different one of your crews)
   return (
     <ActionButton
-      label="Extend Agreement"
+      label="Transfer Agreement"
       labelAddendum={disabledReason}
       flags={{
         disabled: _disabled || disabledReason,
         loading: pendingChange
       }}
-      icon={<ExtendAgreementIcon />}
+      icon={<TransferAgreementIcon />}
       onClick={handleClick} />
   );
 };
 
-export default { Component: ExtendAgreement, isVisible };
+export default { Component: TransferAgreement, isVisible };
