@@ -25,7 +25,9 @@ const usePolicyManager = (target, permission) => {
 
   // using json to avoid unnecessary re-renders
   const policyJSON = useMemo(() => {
-    return JSON.stringify(Permission.getPolicyDetails(target, crew, blockTime)[permission]);
+    return target
+      ? JSON.stringify(Permission.getPolicyDetails(target, crew, blockTime)[permission])
+      : undefined;
   }, [blockTime, crew, target, permission]);
 
   const currentPolicy = useMemo(() => {
@@ -58,7 +60,7 @@ const usePolicyManager = (target, permission) => {
       },
       meta
     );
-  }, [currentPolicy?.allowlist, currentPolicy?.accountAllowlist, meta, payload]);
+  }, [currentPolicy?.allowlist, currentPolicy?.accountAllowlist, execute, meta, payload]);
 
   const updatePolicy = useCallback(
     (newPolicyType, newPolicyDetails) => {
@@ -83,7 +85,7 @@ const usePolicyManager = (target, permission) => {
 
       execute('UpdatePolicy', params, meta);
     },
-    [currentPolicy, meta, payload]
+    [currentPolicy, execute, meta, payload]
   );
 
   const allowlistChangePending = useMemo(

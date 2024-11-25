@@ -151,7 +151,7 @@ const useConstructionManager = (lotId) => {
         ...planPayload
       }
     )
-  }, [planPayload]);
+  }, [execute, planPayload]);
 
   const unplanConstruction = useCallback(() => {
     execute(
@@ -159,15 +159,15 @@ const useConstructionManager = (lotId) => {
       payload,
       { ...txMeta, buildingType: lot?.building?.Building?.buildingType }
     )
-  }, [payload]);
+  }, [execute, payload]);
 
   const startConstruction = useCallback(() => {
     execute('ConstructionStart', payload, txMeta)
-  }, [payload]);
+  }, [execute, payload]);
 
   const finishConstruction = useCallback(() => {
     execute('ConstructionFinish', payload, txMeta)
-  }, [payload]);
+  }, [execute, payload]);
 
   const deconstruct = useCallback(() => {
     execute(
@@ -175,7 +175,7 @@ const useConstructionManager = (lotId) => {
       payload,
       { ...txMeta, buildingType: lot?.building?.Building?.buildingType }
     )
-  }, [payload]);
+  }, [execute, payload]);
 
   return {
     planConstruction,

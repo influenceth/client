@@ -2386,6 +2386,7 @@ const activities = {
   PrepaidAgreementAccepted: getPolicyAndAgreementConfig(true, true, true),
   PrepaidAgreementExtended: getPolicyAndAgreementConfig(false, true, true),
   PrepaidAgreementCancelled: getPolicyAndAgreementConfig(false, true, true),
+  PrepaidAgreementTransferred: getPolicyAndAgreementConfig(true, true, false),
 };
 
 /**

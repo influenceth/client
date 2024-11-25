@@ -914,6 +914,21 @@ const formatAsTx = (item) => {
       break;
     }
 
+    case 'TransferPrepaidAgreement': {
+      formatted.icon = <PermissionIcon />;
+      formatted.label = 'Transfer Prepaid Agreement';
+      formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.meta?.shipId;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog(
+          'TRANSFER_AGREEMENT',
+          { entity: item.vars.target, permission: item.vars.permission }
+        );
+      };
+      break;
+    }
+
     case 'CancelPrepaidAgreement': {
       formatted.icon = <PermissionIcon />;
       formatted.label = 'Cancel Prepaid Agreement';

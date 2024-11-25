@@ -217,6 +217,7 @@ export function ActionItemProvider({ children }) {
           ((a._agreement?.permitted?.id === crew?.id) || (crew?.Crew?.delegatedTo && a._agreement?.permitted === crew?.Crew?.delegatedTo))
           && !!a._agreement?.endTime
           && (a._agreement.endTime > blockTime - 7 * 86400) && (a._agreement.endTime < blockTime + 7 * 86400)
+          && !a._agreement.status // (status would indicate that transferred or cancelled instead of expired)
         ))
         .map((a) => ({
           ...a,

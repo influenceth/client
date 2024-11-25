@@ -33,6 +33,7 @@ import SetCourse from './SetCourse';
 import StationCrew from './StationCrew';
 import SurfaceTransferIncoming from './SurfaceTransferIncoming';
 import SurfaceTransferOutgoing from './SurfaceTransferOutgoing';
+import TransferAgreement from './TransferAgreement';
 import UnplanBuilding from './UnplanBuilding';
 import ViewAgreements from './ViewAgreements';
 
@@ -72,6 +73,7 @@ const ActionsButtons = {
   StationCrew,
   SurfaceTransferIncoming,
   SurfaceTransferOutgoing,
+  TransferAgreement,
   UnplanBuilding,
   ViewAgreements,
 };

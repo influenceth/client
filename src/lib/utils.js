@@ -447,3 +447,9 @@ export const getProcessorLeaseSelections = (leaseConfig, taskDuration, crewReady
   }
   return { leasePayment, desiredLeaseTerm, actualLeaseTerm };
 };
+
+export const getTerminatedAgreementStatus = (status) => {
+  if (status === 'CANCELLED') return 'Cancelled';
+  if (status === 'TRANSFERRED') return 'Transferred';
+  return 'Expired';
+};

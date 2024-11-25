@@ -77,6 +77,9 @@ const customConfigs = {
       ]
     })
   },
+  TransferPrepaidAgreement: {
+    equalityTest: ['target.id', 'target.label', 'permission'],
+  },
   ArrangeCrew: { equalityTest: ['caller_crew.id'] },
 
   AssembleShipStart: { equalityTest: ['dry_dock.id', 'dry_dock_slot'] },

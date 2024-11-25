@@ -27,7 +27,7 @@ import { ResourceImage } from '~/components/ResourceThumbnail';
 import { useShipLink } from '~/components/ShipLink';
 import { getShipIcon } from '~/lib/assetUtils';
 import formatters from '~/lib/formatters';
-import { formatFixed, formatTimer, locationsArrToObj } from '~/lib/utils';
+import { formatFixed, formatTimer, getTerminatedAgreementStatus, locationsArrToObj } from '~/lib/utils';
 import { majorBorderColor } from './components';
 import useSyncedTime from '~/hooks/useSyncedTime';
 import { useLotLink } from '~/components/LotLink';
@@ -253,7 +253,7 @@ export const AgreementBlock = ({ agreement, onSelectCrew, selectedCrew, setRef }
           timeRemaining < 7 * 86400 ? 'error' : 'main'
         ];
       }
-      return ['Expired', 1, 'error'];
+      return [getTerminatedAgreementStatus(agreement._agreement.status), 1, 'error'];
     }
     return [
       Permission.POLICY_TYPES[agreement._agreement._type]?.name || 'Allowlist',

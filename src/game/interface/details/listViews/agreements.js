@@ -9,7 +9,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import { LocationLink } from './components';
 import formatters from '~/lib/formatters';
 
-import { formatFixed, formatTimer, locationsArrToObj, monthsToSeconds, secondsToDays, secondsToMonths } from '~/lib/utils';
+import { formatFixed, formatTimer, getTerminatedAgreementStatus, locationsArrToObj, monthsToSeconds, secondsToDays, secondsToMonths } from '~/lib/utils';
 import useBlockTime from '~/hooks/useBlockTime';
 import actionButtons from '../../hud/actionButtons';
 import useActionButtons from '~/hooks/useActionButtons';
@@ -183,7 +183,11 @@ const useColumns = () => {
                   overrideColor={timeRemaining < 7 * 86400 ? 'error' : 'main'} />
               );
             }
-            return <Expired><WarningIcon /> <span>Expired</span></Expired>;
+            return (
+              <Expired>
+                <WarningIcon /> <span>{getTerminatedAgreementStatus(row._agreement.status)}</span>
+              </Expired>
+            );
           }
           return <>N / A</>;
         }
@@ -237,6 +241,10 @@ const useColumns = () => {
               return (
                 <div style={{ padding: '10px 15px' }}>
                   <actionButtons.ExtendAgreement.Component
+                    {...actionProps}
+                    entity={row}
+                    permission={row._agreement.permission} />
+                  <actionButtons.TransferAgreement.Component
                     {...actionProps}
                     entity={row}
                     permission={row._agreement.permission} />

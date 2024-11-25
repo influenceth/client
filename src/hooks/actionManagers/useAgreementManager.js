@@ -60,7 +60,7 @@ const useAgreementManager = (target, permission, agreementPath) => {
       { ...payload, ...details },
       meta
     );
-  }, [currentPolicy, meta, payload]);
+  }, [currentPolicy, execute, meta, payload]);
 
   const extendAgreement = useCallback((details = {}) => {
     const { term, ...params } = details;
@@ -69,7 +69,7 @@ const useAgreementManager = (target, permission, agreementPath) => {
       { ...payload, added_term: term, ...params },
       meta
     );
-  }, [meta, payload]);
+  }, [execute, meta, payload]);
 
   const cancelAgreement = useCallback((params = {}) => {
     execute(
@@ -77,7 +77,15 @@ const useAgreementManager = (target, permission, agreementPath) => {
       { agreementPath, ...params, ...payload },
       meta
     );
-  }, [agreementPath]);
+  }, [agreementPath, execute]);
+
+  const transferAgreement = useCallback((newPermitted) => {
+    execute(
+      'TransferPrepaidAgreement',
+      { new_permitted: newPermitted, ...payload },
+      meta
+    );
+  }, []);
 
   const pendingChange = useMemo(
     () => {
@@ -87,6 +95,7 @@ const useAgreementManager = (target, permission, agreementPath) => {
           || getPendingTx('AcceptPrepaidMerkleAgreement', { ...payload })
           || getPendingTx('ExtendPrepaidAgreement', { ...payload })
           || getPendingTx('CancelPrepaidAgreement', { ...payload })
+          || getPendingTx('TransferPrepaidAgreement', { ...payload })
       }
       return null;
     },
@@ -100,6 +109,7 @@ const useAgreementManager = (target, permission, agreementPath) => {
     enterAgreement,
     extendAgreement,
     cancelAgreement,
+    transferAgreement,
 
     pendingChange
   };

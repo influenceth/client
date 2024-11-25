@@ -114,6 +114,7 @@ import PurchaseButtonInner from '~/components/PurchaseButtonInner';
 import useUser from '~/hooks/useUser';
 import NotificationSettings from '~/components/NotificationSettings';
 import GenericDialog from '~/components/GenericDialog';
+import useCrew from '~/hooks/useCrew';
 
 const SECTION_WIDTH = 780;
 
@@ -1487,7 +1488,6 @@ const ListWrapper = styled.div`
   min-height: 250px;
   overflow: hidden auto;
 `;
-
 export const CrewSelectionDialog = ({ crews, disabler, onClose, onSelected, open, title }) => {
   const { height: screenHeight } = useScreenSize();
   const [selection, setSelection] = useState();
@@ -1574,6 +1574,40 @@ export const CrewSelectionDialog = ({ crews, disabler, onClose, onSelected, open
         />
       </ListWrapper>
     </SelectionDialog>
+  );
+};
+
+export const CrewTypeaheadInputBlock = ({ setSelectedCrewId, selectedCrewId, stage, title }) => {
+  const handleSelect = useCallback((crew) => {
+    setSelectedCrewId(crew.id);
+  }, [setSelectedCrewId]);
+
+  const { data: selectedCrew, isLoading } = useCrew(selectedCrewId);
+  if (selectedCrewId) {
+    if (isLoading) {
+      return (<div>Loading...</div>);
+    }
+    return (
+      <CrewInputBlock
+        title={title}
+        crew={selectedCrew}
+        select
+        isSelected={stage === actionStage.NOT_STARTED}
+        onClick={stage === actionStage.NOT_STARTED ? () => setSelectedCrewId() : undefined}
+        subtle
+      />
+    );
+  }
+  return (
+    <FlexSectionBlock title={title} bodyStyle={{ alignItems: 'center', background: `rgba(${theme.colors.mainRGB}, 0.15)`, display: 'flex' }}>
+      <Autocomplete
+        assetType="crews"
+        onSelect={handleSelect}
+        placeholder="Crew Name / ID..."
+        inputHeight={44}
+        width={336}
+      />
+    </FlexSectionBlock>
   );
 };
 
@@ -1912,13 +1946,15 @@ export const TransferSelectionDialog = ({
   }, [sourceContents, targetInventory, targetInventoryConstraints, targetInvConfig, selection]);
 
   const { tally, totalMass, totalVolume } = useMemo(() => {
+    const initialMass = (targetInventory?.mass || 0) || (targetInventory?.reservedMass || 0);
+    const initialVolume = (targetInventory?.volume || 0) || (targetInventory?.reservedVolume || 0);
     return items.reduce((acc, { selected, resource }) => {
       acc.tally += selected > 0 ? 1 : 0;
       acc.totalMass += (selected || 0) * resource.massPerUnit;
       acc.totalVolume += (selected || 0) * (resource.volumePerUnit || 0);
       return acc;
-    }, { tally: 0, totalMass: 0, totalVolume: 0 });
-  }, [items]);
+    }, { tally: 0, totalMass: initialMass, totalVolume: initialVolume });
+  }, [items, targetInventory?.mass, targetInventory?.reservedMass, targetInventory?.volume, targetInventory?.reservedVolume]);
 
   // TODO: should title be inventory type name instead?
 
@@ -3964,6 +4000,7 @@ export const LotControlWarning = ({ lot }) => {
 
 export const ResourceGridSectionInner = ({
   columns,
+  errorMessage,
   hideTotals = false,
   isGathering,
   items,
@@ -3973,6 +4010,7 @@ export const ResourceGridSectionInner = ({
   style,
   theming = 'default'
 }) => {
+  console.log({ errorMessage })
   const { totalItems, totalMass, totalVolume } = useMemo(() => {
     return items.reduce((acc, { i, numerator, denominator, selected }) => {
       if (!Product.TYPES[i]) {
@@ -4014,7 +4052,12 @@ export const ResourceGridSectionInner = ({
             {Array.from({ length: Math.max(0, minCells - items.length) }).map((_, i) => (
               <EmptyResourceImage key={i} noIcon outlineColor="transparent" style={{ background: 'rgba(0, 0, 0, 0.25)' }} />
             ))}
-            {!hideTotals && (
+            {errorMessage && (
+              <IngredientSummary theming="error">
+                <span><WarningIcon /> {errorMessage}</span>
+              </IngredientSummary>
+            )}
+            {!hideTotals && !errorMessage && (
               <IngredientSummary theming={theming}>
                 <span>{theming === 'warning' ? 'Total Requirements:' : 'Total Transfer:'}</span>
                 <span>{formatMass(totalMass)} | {formatVolume(totalVolume)}</span>

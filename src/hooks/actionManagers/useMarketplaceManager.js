@@ -64,7 +64,7 @@ const useMarketplaceManager = (buildingId) => {
         lotId: exchange?.Location?.location?.id
       },
     ),
-    [crew, payload]
+    [crew, execute, payload]
   );
   const createSellOrder = useCallback(
     ({ product, amount, price, origin, originSlot }) => execute(
@@ -81,7 +81,7 @@ const useMarketplaceManager = (buildingId) => {
         lotId: exchange?.Location?.location?.id
       },
     ),
-    [exchange, payload]
+    [exchange, execute, payload]
   );
 
   const fillBuyOrders = useCallback(
@@ -117,7 +117,7 @@ const useMarketplaceManager = (buildingId) => {
         },
       );
     },
-    [exchangeController, payload]
+    [exchangeController, execute, payload]
   );
 
   const fillSellOrders = useCallback(
@@ -152,7 +152,7 @@ const useMarketplaceManager = (buildingId) => {
         },
       );
     },
-    [exchangeController, payload]
+    [exchangeController, execute, payload]
   );
 
   const cancelBuyOrder = useCallback(
@@ -197,7 +197,7 @@ const useMarketplaceManager = (buildingId) => {
         lotId: exchange?.Location?.location?.id,
       },
     ),
-    [payload]
+    [execute, payload]
   );
 
   return {
