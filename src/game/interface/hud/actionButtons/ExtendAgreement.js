@@ -18,7 +18,8 @@ const ExtendAgreement = ({ entity, permission, onSetAction, _disabled }) => {
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (pendingChange) return 'updating...';
-    if (currentAgreement?.noticeTime > 0) return 'notice given';
+    if (!currentAgreement) return 'agreement inactive';
+    if (currentAgreement.noticeTime > 0) return 'notice given';
     if (simulationEnabled) return 'simulation restricted';
     return '';
   }, [_disabled, pendingChange, currentAgreement, simulationEnabled]);

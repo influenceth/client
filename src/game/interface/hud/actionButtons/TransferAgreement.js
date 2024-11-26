@@ -18,7 +18,7 @@ const TransferAgreement = ({ entity, permission, onSetAction, _disabled }) => {
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (pendingChange) return 'updating...';
-    if (!currentAgreement) return 'agreement expired';
+    if (!currentAgreement) return 'agreement inactive';
     if (simulationEnabled) return 'simulation restricted';
     return '';
   }, [_disabled, !currentAgreement, pendingChange, simulationEnabled]);
