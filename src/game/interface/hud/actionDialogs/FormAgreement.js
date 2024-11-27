@@ -218,7 +218,11 @@ const FormAgreement = ({
   }, [crew, currentAgreement, currentPolicy, initialPeriod, isExtension, isTermination, remainingPeriod]);
 
   const totalLeaseCost = useMemo(() => {
-    return (initialPeriod || 0) * 24 * (currentPolicy?.policyDetails?.rate || 0);
+    const p = initialPeriod || 0;
+    const r = currentPolicy?.policyDetails?.rate || 0;
+    const precision = TOKEN_SCALE[TOKEN.SWAY] * 1e3; // TODO: check contracts for what should actually use here
+    return Math.round(p * 24 * r * precision) / precision;
+    ;
   }, [initialPeriod, currentPolicy]);
 
   const insufficientAssets = useMemo(
@@ -278,6 +282,7 @@ const FormAgreement = ({
     const recipient = controller?.Crew?.delegatedTo;
     // TODO: should these conversions be in useAgreementManager?
     const term = daysToSeconds(initialPeriod);
+    console.log({ totalLeaseCost, x: totalLeaseCost * TOKEN_SCALE[TOKEN.SWAY] });
     const termPrice = Math.ceil(totalLeaseCost * TOKEN_SCALE[TOKEN.SWAY]);
     enterAgreement({ recipient, term, termPrice });
   }, [controller?.Crew?.delegatedTo, enterAgreement, initialPeriod, totalLeaseCost]);

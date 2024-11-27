@@ -114,6 +114,7 @@ import PurchaseButtonInner from '~/components/PurchaseButtonInner';
 import useUser from '~/hooks/useUser';
 import NotificationSettings from '~/components/NotificationSettings';
 import GenericDialog from '~/components/GenericDialog';
+import useCrew from '~/hooks/useCrew';
 
 const SECTION_WIDTH = 780;
 
@@ -1487,7 +1488,6 @@ const ListWrapper = styled.div`
   min-height: 250px;
   overflow: hidden auto;
 `;
-
 export const CrewSelectionDialog = ({ crews, disabler, onClose, onSelected, open, title }) => {
   const { height: screenHeight } = useScreenSize();
   const [selection, setSelection] = useState();
@@ -1574,6 +1574,40 @@ export const CrewSelectionDialog = ({ crews, disabler, onClose, onSelected, open
         />
       </ListWrapper>
     </SelectionDialog>
+  );
+};
+
+export const CrewTypeaheadInputBlock = ({ setSelectedCrewId, selectedCrewId, stage, title }) => {
+  const handleSelect = useCallback((crew) => {
+    setSelectedCrewId(crew.id);
+  }, [setSelectedCrewId]);
+
+  const { data: selectedCrew, isLoading } = useCrew(selectedCrewId);
+  if (selectedCrewId) {
+    if (isLoading) {
+      return (<div>Loading...</div>);
+    }
+    return (
+      <CrewInputBlock
+        title={title}
+        crew={selectedCrew}
+        select
+        isSelected={stage === actionStage.NOT_STARTED}
+        onClick={stage === actionStage.NOT_STARTED ? () => setSelectedCrewId() : undefined}
+        subtle
+      />
+    );
+  }
+  return (
+    <FlexSectionBlock title={title} bodyStyle={{ alignItems: 'center', background: `rgba(${theme.colors.mainRGB}, 0.15)`, display: 'flex' }}>
+      <Autocomplete
+        assetType="crews"
+        onSelect={handleSelect}
+        placeholder="Crew Name / ID..."
+        inputHeight={44}
+        width={336}
+      />
+    </FlexSectionBlock>
   );
 };
 

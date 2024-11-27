@@ -25,7 +25,9 @@ const usePolicyManager = (target, permission) => {
 
   // using json to avoid unnecessary re-renders
   const policyJSON = useMemo(() => {
-    return JSON.stringify(Permission.getPolicyDetails(target, crew, blockTime)[permission]);
+    return target
+      ? JSON.stringify(Permission.getPolicyDetails(target, crew, blockTime)[permission])
+      : undefined;
   }, [blockTime, crew, target, permission]);
 
   const currentPolicy = useMemo(() => {
