@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-// import { useQuery } from 'react-query';
+import { useQuery } from 'react-query';
 
 import useSession from '~/hooks/useSession';
 
@@ -7,20 +7,17 @@ const useAccountFormatted = (props) => {
   const { address, doNotReplaceYou, truncate, doNotUseName } = props;
   const { accountAddress, provider } = useSession();
 
-  // TODO: this just errors at the moment
-  let starkName = undefined;
-  // const { data: starkName } = useQuery(
-  //   [ 'starkName', address ],
-  //   () => {
-  //     try {
-  //       return provider.getStarkName(address)
-  //     } catch (e) {
-  //       // fail silently... most do not have starkname
-  //     }
-  //     return '';
-  //   },
-  //   { enabled: !!address }
-  // );
+  const { data: starkName } = useQuery(
+    [ 'starkName', address ],
+    () => {
+      try {
+        return provider.getStarkName(address)
+      } catch (e) {
+        return '';
+      }
+    },
+    { enabled: !!address }
+  );
 
   const label = useMemo(() => {
     return (accountAddress && accountAddress === address && !doNotReplaceYou)
