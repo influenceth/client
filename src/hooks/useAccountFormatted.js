@@ -16,7 +16,7 @@ const useAccountFormatted = (props) => {
         return '';
       }
     },
-    { enabled: !!address }
+    { enabled: !!address, retry: false }
   );
 
   const label = useMemo(() => {
