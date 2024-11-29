@@ -8,7 +8,7 @@ import useBlockTime from '~/hooks/useBlockTime';
 const useWalletLeasedLots = (asteroidId, enabled = true) => {
   const blockTime = useBlockTime();
   const { crews, loading: crewsLoading } = useCrewContext();
-  const { data, isLoading: dataLoading } = useWalletAgreements();
+  const { data, isLoading: dataLoading, dataUpdatedAt } = useWalletAgreements();
 
   const crewIds = useMemo(() => {
     if (crewsLoading) return [];
@@ -28,7 +28,7 @@ const useWalletLeasedLots = (asteroidId, enabled = true) => {
       dataUpdatedAt: Date.now(),
       isLoading: dataLoading || crewsLoading
     }
-  }, [blockTime, crewIds, crewsLoading, data, dataLoading, enabled])
+  }, [blockTime, crewIds, crewsLoading, data, dataLoading, dataUpdatedAt, enabled])
 };
 
 export default useWalletLeasedLots;

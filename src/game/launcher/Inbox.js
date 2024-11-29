@@ -1,29 +1,29 @@
-import { forwardRef, Fragment, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQueryClient } from 'react-query';
+import moment from 'moment';
 import styled from 'styled-components';
 import { Address, Encryption } from '@influenceth/sdk';
 
-import PageLoader from '~/components/PageLoader';
-import useWalletInbox from '~/hooks/useWalletInbox';
-
-import LauncherDialog from './components/LauncherDialog';
-import moment from 'moment';
-import useWalletCrews from '~/hooks/useWalletCrews';
-import formatters from '~/lib/formatters';
-import AddressLink from '~/components/AddressLink';
-import useStore from '~/hooks/useStore';
-import Button from '~/components/ButtonAlt';
-import useSession from '~/hooks/useSession';
-import useAccountFormatted from '~/hooks/useAccountFormatted';
-import api from '~/lib/api';
-import useUser from '~/hooks/useUser';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import useIpfsContent from '~/hooks/useIpfsContent';
-import DirectMessageDialog from '~/components/DirectMessageDialog';
-import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
-import { ChevronRightIcon, ConstructionSiteBuildingIcon, InboxReceivedIcon, InboxSentIcon, InboxSentReadIcon } from '~/components/Icons';
+import AddressLink from '~/components/AddressLink';
 import AttentionDot from '~/components/AttentionDot';
-import { useQueryClient } from 'react-query';
+import Button from '~/components/ButtonAlt';
+import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
+import DirectMessageDialog from '~/components/DirectMessageDialog';
+import { ChevronRightIcon, InboxReceivedIcon, InboxSentIcon, InboxSentReadIcon } from '~/components/Icons';
+import PageLoader from '~/components/PageLoader';
+import useAccountFormatted from '~/hooks/useAccountFormatted';
+import useIpfsContent from '~/hooks/useIpfsContent';
+import useSession from '~/hooks/useSession';
+import useStore from '~/hooks/useStore';
+import useUser from '~/hooks/useUser';
+import useWalletCrews from '~/hooks/useWalletCrews';
+import useWalletInbox from '~/hooks/useWalletInbox';
+import api from '~/lib/api';
+import formatters from '~/lib/formatters';
+import { resolveChainId } from '~/lib/utils';
+import LauncherDialog from './components/LauncherDialog';
 
 const Wrapper = styled.div`
   display: flex;
@@ -355,7 +355,11 @@ const EnableInbox = () => {
 
   const getPrivateKeyFromSeed = useCallback(async (seed) => {
     const signature = await walletAccount.signMessage({
-      domain: { name: 'Influence', chainId, version: '1.1.0' },
+      domain: {
+        name: 'Influence',
+        chainId: resolveChainId(chainId, 'hex'),
+        version: '1.1.0'
+      },
       message: { message: 'Messaging Hash', nonce: seed.substr(0, 24) },
       primaryType: 'Message',
       types: {

@@ -13,9 +13,8 @@ const useAccountFormatted = (props) => {
       try {
         return provider.getStarkName(address)
       } catch (e) {
-        // fail silently... most do not have starkname
+        return '';
       }
-      return '';
     },
     { enabled: !!address }
   );
