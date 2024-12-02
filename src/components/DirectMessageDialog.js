@@ -1,13 +1,10 @@
-import React, { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 
 import AddressLink from '~/components/AddressLink';
 import GenericDialog from '~/components/GenericDialog';
 import UncontrolledTextArea from '~/components/TextAreaUncontrolled';
-import useInboxPublicKey from '~/hooks/useInboxPublicKey';
-import useSession from '~/hooks/useSession';
 import useWalletCrews from '~/hooks/useWalletCrews';
-import api from '~/lib/api';
 import formatters from '~/lib/formatters';
 import { nativeBool } from '~/lib/utils';
 import { LockIcon } from './Icons';
@@ -75,6 +72,10 @@ const DirectMessageDialog = ({ onClose, recipient }) => {
   const [encryptedMessage, setEncryptedMessage] = useState();
   const [message, setMessage] = useState('');
 
+  const sortedCrews = useMemo(() => {
+    return crews?.sort((a, b) => (a.Name?.name || `Crew #${a.id}`).toLowerCase() < (b.Name?.name || `Crew #${b.id}`).toLowerCase() ? -1 : 1);
+  }, [crews]);
+
   const sendMessage = useCallback(async () => {
     if (message?.length > 0) {
       const encryptedData = await encryptMessage(message);
@@ -127,8 +128,8 @@ const DirectMessageDialog = ({ onClose, recipient }) => {
       <Wrapper>
         <Recipient>
           <label><AddressLink address={recipient} doNotReplaceYou /></label>
-          <div>
-            {crews?.map((c, i) => (
+          <div style={{ maxHeight: 54, overflow: 'auto' }}>
+            {sortedCrews?.map((c, i) => (
               <Fragment key={c.id}>
                 {i > 0 && ', '}{formatters.crewName(c)}
               </Fragment>
