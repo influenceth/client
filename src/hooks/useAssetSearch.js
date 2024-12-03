@@ -213,7 +213,22 @@ filtersToQuery.orders = (filters) => {
 
 filtersToQuery.ships = (filters) => {
   const queryBuilder = esb.boolQuery();
-  // TODO: ...
+  
+  if (filters.asteroid) {
+    queryBuilder.filter(esbLocationQuery({ asteroidId: filters.asteroid }));
+  }
+
+  if (filters.name) {
+    queryBuilder.filter(esb.termQuery('Name.name', `${filters.name.toLowerCase()}`));
+  }
+
+  if (filters.type) {
+    queryBuilder.filter(esb.termsQuery('Ship.shipType', filters.type.map((t) => parseInt(t))));
+  }
+
+  if (filters.variant) {
+    queryBuilder.filter(esb.termsQuery('Ship.variant', filters.variant.map((t) => parseInt(t))));
+  }
   return queryBuilder;
 };
 
