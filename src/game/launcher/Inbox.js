@@ -415,12 +415,13 @@ const EnableInbox = () => {
   }, [isRekeying]);
 
   // once detect the user's public key has updated to the expected value, set private key in state
+  // (only set if seed was saved effectively too... otherwise, will end up in unrecoverable state)
   useEffect(() => {
-    if (pendingKeypair && user?.publicKey && pendingKeypair[0] === user.publicKey) {
+    if (pendingKeypair && user?.hasSeed && user?.publicKey && pendingKeypair[0] === user.publicKey) {
       dispatchDmPrivateKey(pendingKeypair[1]);
       setPendingKeypair();
     }
-  }, [user?.publicKey]);
+  }, [user?.hasSeed, user?.publicKey]);
 
   const [isRecovering, setIsRecovering] = useState();
   const recoverKey = useCallback(async () => {
@@ -437,7 +438,7 @@ const EnableInbox = () => {
 
   if (isLoading) return <PageLoader />;
 
-  if (user?.publicKey) {
+  if (user?.hasSeed && user?.publicKey) {
     return (
       <Wrapper>
         <Title>Connect to Your Inbox</Title>
@@ -530,7 +531,7 @@ const InboxWrapper = () => {
     return <PageLoader />;
   }
 
-  if (!user?.publicKey || !dmPrivateKey) {
+  if (!user?.publicKey || !user?.hasSeed || !dmPrivateKey) {
     return <LauncherDialog singlePane={<EnableInbox />} />
   }
 
