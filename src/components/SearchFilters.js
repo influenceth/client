@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { Asteroid, Building, Crewmate, Permission, Product } from '@influenceth/sdk';
+import { Asteroid, Building, Crewmate, Permission, Product, Ship } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
 import AsteroidNameFilter from './filters/AsteroidNameFilter';
+import BooleanFilter from './filters/BooleanFilter';
+import BuildingAccessFilter from './filters/BuildingAccessFilter';
 import BuildingNameFilter from './filters/BuildingNameFilter';
-import OwnershipFilter from './filters/OwnershipFilter';
+import CheckboxFilter from './filters/CheckboxFilter';
 import CrewOwnershipFilter from './filters/CrewOwnershipFilter';
 import LotIdFilter from './filters/LotIdFilter';
 import LotOccupiedFilter from './filters/LotOccupiedFilter';
 import LotLeaseFilter from './filters/LotLeaseFilter';
-import BooleanFilter from './filters/BooleanFilter';
-import BuildingAccessFilter from './filters/BuildingAccessFilter';
-import CheckboxFilter from './filters/CheckboxFilter';
+import OwnershipFilter from './filters/OwnershipFilter';
 import RangeFilter from './filters/RangeFilter';
 import SurfaceAreaFilter from './filters/SurfaceAreaFilter';
 import TextFilter from './filters/TextFilter';
@@ -70,6 +70,21 @@ const buildingTypeOptions = Object.keys(Building.TYPES)
   .reduce((acc, key) => ([
     ...acc,
     { key, label: Building.TYPES[key].name, initialValue: true }
+  ]), []);
+
+// building type filter configs
+const shipTypeOptions = Object.keys(Ship.TYPES)
+  .filter((k) => k > 0 && Number(k) !== Ship.IDS.ESCAPE_MODULE)
+  .reduce((acc, key) => ([
+    ...acc,
+    { key, label: Ship.TYPES[key].name, initialValue: true }
+  ]), []);
+
+const shipVariantOptions = Object.keys(Ship.VARIANT_TYPES)
+  .filter((k) => k > 0)
+  .reduce((acc, key) => ([
+    ...acc,
+    { key, label: Ship.VARIANT_TYPES[key].name, initialValue: true }
   ]), []);
 
 const buildingCategoryColors = {
@@ -201,7 +216,7 @@ const SearchFilters = ({ assetType, highlighting, isListView = false }) => {
 
   useEffect(() => {
     // for most types, default filter to asteroid if one is selected
-    if (['buildings','coresamples','leases','lots'].includes(assetType)) {
+    if (['buildings','coresamples','leases','lots','ships'].includes(assetType)) {
       onFiltersChange({ asteroid: asteroidId });
     }
     else if (['actionitems'].includes(assetType)) {
@@ -444,6 +459,36 @@ const SearchFilters = ({ assetType, highlighting, isListView = false }) => {
           fieldName="construction"
           options={constructionStatusOptions}
           title="Construction Status" />
+      </>
+    );
+  }
+  if (assetType === 'ships') {
+    return (
+      <>
+        <TextFilter
+          {...filterProps}
+          fieldName="asteroid"
+          isId
+          placeholder="Filter by Asteroid Id..."
+          title="Asteroid" />
+
+        <TextFilter
+          {...filterProps}
+          fieldName="name"
+          placeholder="Filter by Name..."
+          title="Ship Name" />
+
+        <CheckboxFilter
+          {...filterProps}
+          fieldName="type"
+          options={shipTypeOptions}
+          title="Type" />
+
+        <CheckboxFilter
+          {...filterProps}
+          fieldName="variant"
+          options={shipVariantOptions}
+          title="Variant" />
       </>
     );
   }
