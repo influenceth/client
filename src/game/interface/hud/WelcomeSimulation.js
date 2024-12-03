@@ -59,7 +59,7 @@ const CrewmateImage = styled.div`
     ? `url("${appConfig.get('Api.influenceImage')}/v1/crew/provided/image.svg?bustOnly=true&options=${escape(p.crewmateImageOptionString)}")`
     : (
       p.crewmateId
-      ? `url("${appConfig.get('Api.influenceImage')}/v1/crew/${p.crewmateId}/image.svg?bustOnly=true")`
+      ? `url("${appConfig.get('Api.influenceImage')}/v1/crew/${p.crewmateId}/image.png?bustOnly=true")`
       : 'none'
     )
   };
