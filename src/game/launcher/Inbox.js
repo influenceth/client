@@ -129,7 +129,7 @@ const ThreadTitle = styled.div`
 const ThreadWrapper = styled(Wrapper)`
   padding: 0;
   ${Body} {
-    flex: 1 0 calc(100% - 200px);
+    flex: 1 0 0;
     overflow: hidden auto;
     padding: 10px 20px 30px;
   }
@@ -285,6 +285,10 @@ const Thread = ({ correspondent }) => {
   const { threads, dataUpdatedAt } = useWalletInbox();
   const { data: crews } = useWalletCrews(correspondent);
 
+  const sortedCrews = useMemo(() => {
+    return crews?.sort((a, b) => (a.Name?.name || `Crew #${a.id}`).toLowerCase() < (b.Name?.name || `Crew #${b.id}`).toLowerCase() ? -1 : 1);
+  }, [crews]);
+
   const messages = useMemo(() => {
     return (threads.find((t) => t.correspondent === correspondent)?.messages || [])
       .sort((a, b) => a.createdAt < b.createdAt ? -1 : 1);
@@ -317,14 +321,14 @@ const Thread = ({ correspondent }) => {
     <ThreadWrapper>
       <ThreadTitle>
         <CrewCaptainCardFramed crewId={crews?.[0]?.id} width={56} />
-        <div style={{ paddingLeft: 12 }}>
+        <div style={{ flex: 1, paddingLeft: 12 }}>
           <div>
             <label>Wallet: </label>
             <AddressLink address={correspondent} doNotReplaceYou reverseUnderline />
           </div>
-          <div>
+          <div style={{ maxHeight: 62, overflow: 'auto' }}>
             <label>Crew{crews?.length === 1 ? '' : 's'}: </label>
-            {crews?.map((c, i) => (
+            {sortedCrews?.map((c, i) => (
               <Fragment key={c.id}>
                 {i > 0 && ', '}
                 <StyledLink onClick={dismissLauncher} to={`/crew/${c.id}`}>{formatters.crewName(c)}</StyledLink>
@@ -411,12 +415,13 @@ const EnableInbox = () => {
   }, [isRekeying]);
 
   // once detect the user's public key has updated to the expected value, set private key in state
+  // (only set if seed was saved effectively too... otherwise, will end up in unrecoverable state)
   useEffect(() => {
-    if (pendingKeypair && user?.publicKey && pendingKeypair[0] === user.publicKey) {
+    if (pendingKeypair && user?.hasSeed && user?.publicKey && pendingKeypair[0] === user.publicKey) {
       dispatchDmPrivateKey(pendingKeypair[1]);
       setPendingKeypair();
     }
-  }, [user?.publicKey]);
+  }, [user?.hasSeed, user?.publicKey]);
 
   const [isRecovering, setIsRecovering] = useState();
   const recoverKey = useCallback(async () => {
@@ -433,7 +438,7 @@ const EnableInbox = () => {
 
   if (isLoading) return <PageLoader />;
 
-  if (user?.publicKey) {
+  if (user?.hasSeed && user?.publicKey) {
     return (
       <Wrapper>
         <Title>Connect to Your Inbox</Title>
@@ -526,7 +531,7 @@ const InboxWrapper = () => {
     return <PageLoader />;
   }
 
-  if (!user?.publicKey || !dmPrivateKey) {
+  if (!user?.publicKey || !user?.hasSeed || !dmPrivateKey) {
     return <LauncherDialog singlePane={<EnableInbox />} />
   }
 
