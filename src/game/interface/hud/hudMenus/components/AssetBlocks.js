@@ -300,7 +300,7 @@ export const AsteroidBlock = ({ asteroid, onClick, onRenderReady, selectedCrew, 
 
   const isMine = useMemo(() => (
     selectedCrew?.id && (
-      selectedCrew?.id === asteroid.Control?.controller?.id
+      selectedCrew.id === asteroid.Control?.controller?.id
       || (selectedCrew._siblingCrewIds || []).includes(asteroid.Control?.controller?.id)
     )
   ), [selectedCrew, asteroid.Control?.controller?.id]);
@@ -428,7 +428,7 @@ export const BuildingBlock = ({ building, onSelectCrew, selectedCrew, setRef }) 
 
   const isMine = useMemo(() => (
     selectedCrew?.id && (
-      selectedCrew?.id === building.Control?.controller?.id
+      selectedCrew.id === building.Control?.controller?.id
       || (selectedCrew._siblingCrewIds || []).includes(building.Control?.controller?.id)
     )
   ), [selectedCrew, building.Control?.controller?.id]);
@@ -475,7 +475,7 @@ export const ShipBlock = ({ ship, onSelectCrew, selectedCrew, setRef }) => {
 
   const isMine = useMemo(() => (
     selectedCrew?.id && (
-      selectedCrew?.id === ship.Control?.controller?.id
+      selectedCrew.id === ship.Control?.controller?.id
       || (selectedCrew._siblingCrewIds || []).includes(ship.Control?.controller?.id)
     )
   ), [selectedCrew, ship.Control?.controller?.id]);

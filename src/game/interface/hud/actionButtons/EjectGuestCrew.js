@@ -41,9 +41,9 @@ const EjectGuestCrew = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dia
         // only need to worry about permissions w/r/t station controller, which
         // is { crew } in this case... so add { crew } as a sibling when true,
         // otherwise leave empty (this will help us avoid a bunch) of extra calls
-        _siblingCrewIds: crew._siblingCrewIds.includes(c.id) ? [crew.id] : []
+        _siblingCrewIds: crew?._siblingCrewIds?.includes(c.id) ? [crew.id] : []
       }));
-  }, [allStationedCrews, crew?.id]);
+  }, [allStationedCrews, crew?.id, crew?._siblingCrewIds]);
 
   const handleClick = useCallback(() => {
     onSetAction('EJECT_GUEST_CREW', { origin: station, ...dialogProps });
