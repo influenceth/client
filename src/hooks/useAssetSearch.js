@@ -94,7 +94,7 @@ filtersToQuery.buildings = (filters) => {
   }
 
   if (filters.name) {
-    queryBuilder.filter(esb.termQuery('Name.name', filters.name));
+    queryBuilder.filter(esb.matchQuery(['Name.name'], filters.name));
   }
 
   if (filters.type) {
@@ -158,7 +158,7 @@ filtersToQuery.crewmates = (filters) => {
   const queryBuilder = esb.boolQuery();
   if (filters.name) {
     queryBuilder.filter(
-      esb.termQuery('Name.name', filters.name)
+      esb.matchQuery(['Name.name'], filters.name)
     );
   }
   if (filters.crew) {
@@ -188,7 +188,7 @@ filtersToQuery.crews = (filters) => {
 
   if (filters.name) {
     queryBuilder.filter(
-      esb.termQuery('Name.name', filters.name)
+      esb.matchQuery(['Name.name'], filters.name)
     );
   }
 
@@ -219,7 +219,7 @@ filtersToQuery.ships = (filters) => {
   }
 
   if (filters.name) {
-    queryBuilder.filter(esb.termQuery('Name.name', `${filters.name.toLowerCase()}`));
+    queryBuilder.filter(esb.matchQuery(['Name.name'], filters.name));
   }
 
   if (filters.type) {
