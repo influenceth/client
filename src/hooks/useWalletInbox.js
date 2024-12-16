@@ -13,7 +13,7 @@ const useWalletInbox = () => {
   const { data: messages, isLoading, dataUpdatedAt } = useQuery(
     [ 'inbox', accountAddress ],
     () => api.getInboxMessages(),
-    { enabled: !!accountAddress }
+    { enabled: !!accountAddress && !!user?.publicKey }
   );
 
   const { threads, unreadTally } = useMemo(() => {
