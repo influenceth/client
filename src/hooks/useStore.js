@@ -828,7 +828,7 @@ const useStore = create(
 
     }), {
       name: STORE_NAME,
-      version: 6,
+      version: 7,
       migrate: (persistedState, oldVersion) => {
         const migrations = [
           (state, version) => {
@@ -860,6 +860,11 @@ const useStore = create(
           (state, version) => {
             if (version >= 6) return;
             state.crewTutorials = {};
+            return state;
+          },
+          (state, version) => {
+            if (version >= 7) return; // reset simulation to ensure bug fixed
+            state.simulation = { ...simulationStateDefault };
             return state;
           },
         ];

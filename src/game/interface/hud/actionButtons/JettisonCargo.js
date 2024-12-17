@@ -29,7 +29,12 @@ const JettisonCargo = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dial
     if (!hasMass) return 'inventory empty';
 
     return getCrewDisabledReason({
-      asteroid, blockTime, crew, permission: Permission.IDS.REMOVE_PRODUCTS, permissionTarget: origin, requireReady: false
+      asteroid,
+      blockTime,
+      crew,
+      permission: Permission.IDS.REMOVE_PRODUCTS,
+      permissionTarget: origin,
+      requireReady: false
     });
   }, [asteroid, blockTime, crew, _disabled, _disabledReason, currentJettison]);
 

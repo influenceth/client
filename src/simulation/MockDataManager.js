@@ -449,16 +449,28 @@ const MockDataManager = () => {
       );
     }
 
-    // unresolved activities
-    // configs.push({
-    //   queryKey: [ 'activities', Entity.IDS.CREW, SIMULATION_CONFIG.crewId, 'unresolved' ],
-    //   transformer: (data) => (simulation.actionItems || [])
-    // });
+    // unresolved activities (action items)
     configs.push({
       queryKey: [ 'actionItems', SIMULATION_CONFIG.crewId ],
       transformer: (data) => (simulation.actionItems || [])
-    })
+    });
 
+    // unresolved activities (entities)
+    const entityUnresolveds = {};
+    (simulation.actionItems || []).forEach((actionItem) => {
+      actionItem.entities.forEach(({ label, id }) => {
+        const entityKey = `${label}|${id}`;
+        if (!entityUnresolveds[entityKey]) entityUnresolveds[entityKey] = [];
+        entityUnresolveds[entityKey].push(actionItem);
+      })
+    });
+    Object.keys(entityUnresolveds).forEach((entityKey) => {
+      configs.push({
+        queryKey: [ 'activities', ...entityKey.split('|').map(Number), 'unresolved' ],
+        transformer: (data) => entityUnresolveds[entityKey] || []
+      });
+    });
+    
     // open orders
     configs.push({
       queryKey: [ 'crewOpenOrders', SIMULATION_CONFIG.crewId ],

@@ -278,7 +278,7 @@ const ActionDialog = ({ type, params }) => {
 
 const ActionDialogWrapper = () => {
   const actionDialog = useStore(s => s.actionDialog);
-  // const actionDialog = { params: { asteroidId: 1, lotId: 1 }, type: 'NEW_CORE_SAMPLE' }; // (for debugging)
+  // const actionDialog = { params: { origin: { id: 755, label: 6 }, originSlot: 2 }, type: 'JETTISON_CARGO' }; // (for debugging)
   return actionDialog?.type ? <ActionDialog {...actionDialog} /> : null;
 };
 
