@@ -4,13 +4,14 @@ import { Time } from '@influenceth/sdk';
 import useConstants from '~/hooks/useConstants';
 import useStore from '~/hooks/useStore';
 
-const useGetTime = () => {
+const useGetTime = (ignoreSimulatedTimeAnchor = false) => {
   const timeOverride = useStore(s => s.timeOverride);
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
 
   return useCallback((overrideNow) => {
     const now = overrideNow || Date.now();
-    let preciseTime = timeOverride?.anchor || Time.fromUnixMilliseconds(now, TIME_ACCELERATION).toOrbitADays();
+    let preciseTime = (ignoreSimulatedTimeAnchor ? null : timeOverride?.anchor)
+      || Time.fromUnixMilliseconds(now, TIME_ACCELERATION).toOrbitADays();
 
     // console.log('override.speed', now - override.ts);
     // if (override.speed) preciseTime += override.speed * (now - override.ts) / 30;
