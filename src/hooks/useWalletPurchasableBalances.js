@@ -12,7 +12,7 @@ import { safeBigInt } from '~/lib/utils';
 export const GAS_BUFFER_VALUE_USDC = 2 * TOKEN_SCALE[TOKEN.USDC];
 
 const useWalletPurchasableBalances = (overrideAccount) => {
-  const { payGasWithSwayIfPossible } = useSession();
+  const { payGasWith } = useSession();
   const { data: priceConstants } = usePriceConstants();
   const { data: ethBalance, isLoading: isLoading1, refetch: refetch1 } = useEthBalance(overrideAccount);
   const { data: usdcBalance, isLoading: isLoading2, refetch: refetch2 } = useUSDCBalance(overrideAccount);
@@ -29,9 +29,9 @@ const useWalletPurchasableBalances = (overrideAccount) => {
   // or have <10% of target reserve amount available in sway
   const maintainEthGasReserve = useMemo(() => {
     const targetSwayReserve = priceHelper.from(GAS_BUFFER_VALUE_USDC * 0.1, TOKEN.USDC).to(TOKEN.SWAY);
-    // reserve needed if setting is to pay w/ sway AND have sway
-    return !(payGasWithSwayIfPossible && swayBalance > targetSwayReserve)
-  }, [payGasWithSwayIfPossible, priceHelper, swayBalance]);
+    // reserve needed if NOT (paying with rewards OR (paying with SWAY and have sway))
+    return !(payGasWith === 'REWARDS' || (payGasWith && swayBalance > targetSwayReserve))
+  }, [payGasWith, priceHelper, swayBalance]);
 
   const ethGasReserveBalance = useMemo(() => {
     if (maintainEthGasReserve && ethBalance) {

@@ -47,7 +47,7 @@ export function ActivitiesProvider({ children }) {
     accountAddress,
     blockNumber,
     blockNumberIsProvisional,
-    payGasWithSwayIfPossible,
+    payGasWith,
     setBlockNumber,
     setIsBlockMissing,
     token,
@@ -163,9 +163,14 @@ export function ActivitiesProvider({ children }) {
 
           // sway gas invalidation
           // (if no caller or if caller matches my account)
-          if (payGasWithSwayIfPossible && accountAddress) {
+          if (accountAddress) {
             if (!activity.event?.returnValues?.caller || Address.areEqual(accountAddress, activity.event.returnValues.caller)) {
-              extraInvalidations.push(['walletBalance', 'sway', accountAddress]);
+              if (payGasWith === 'REWARDS') {
+                extraInvalidations.push(['walletRewards', accountAddress]);
+              }
+              if (payGasWith === 'SWAY') {
+                extraInvalidations.push(['walletBalance', 'sway', accountAddress]);
+              }
             }
           }
 
@@ -315,7 +320,7 @@ export function ActivitiesProvider({ children }) {
       }
 
     }, 2500);
-  }, [accountAddress, crew, getActivityConfig, payGasWithSwayIfPossible, pendingTransactions, refreshReadyAt]);
+  }, [accountAddress, crew, getActivityConfig, payGasWith, pendingTransactions, refreshReadyAt]);
 
   // try to process WS activities grouped by block
   const processPendingWSBatch = useCallback(async () => {
