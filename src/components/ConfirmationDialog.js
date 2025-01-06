@@ -10,7 +10,8 @@ const ConfirmationDialog = ({ loading, onConfirm, onReject, isTransaction, title
     isTransaction={isTransaction}
     title={title || 'Are you sure?'}
     confirmText="Confirm"
-    rejectText="Back">
+    rejectText="Back"
+    {...props}>
     {props.body}
   </GenericDialog>
 );
