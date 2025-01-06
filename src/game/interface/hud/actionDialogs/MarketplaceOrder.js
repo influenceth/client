@@ -538,32 +538,6 @@ const MarketplaceOrder = ({
     lastStatus.current = orderStatus;
   }, [orderStatus]);
 
-  const handleChangeQuantity = useCallback((e) => {
-    let input = parseInt(e.currentTarget.value) || 0;
-    if (input && type === 'market') {
-      if (mode === 'buy') input = Math.max(0, Math.min(input, totalForSale));
-      if (mode === 'sell') input = Math.max(0, Math.min(input, totalForBuy));
-    }
-    // TODO: set limits for limit orders
-    setQuantity(input);
-  }, [mode, totalForSale, totalForBuy, type]);
-
-  const handleChangeLimitPrice = useCallback((e) => {
-    setLimitPrice(Number(e.currentTarget.value));
-  }, []);
-
-  const matchBestLimitOrder = useCallback((e) => {
-    if (mode === 'buy') {
-      setLimitPrice(buyOrders[0]?.price || sellOrders[sellOrders.length - 1].price);
-    } else {
-      setLimitPrice(sellOrders[sellOrders.length - 1].price);
-    }
-  }, [mode, buyOrders, sellOrders]);
-
-  const handleOrderRefresh = useCallback(() => {
-    refetch();
-  }, [refetch]);
-
   const [competingOrderTally, betterOrderTally, bestOrderPrice] = useMemo(() => {
     if (mode === 'buy') {
       return [
@@ -595,6 +569,93 @@ const MarketplaceOrder = ({
     return sum + (mode === 'buy' ? feeTotal : -feeTotal);
   }, [feeTotal, mode, totalLimitPrice, totalMarketPrice, type]);
 
+  const amountInInventory = useMemo(() => {
+    return (storageInventory?.contents || []).find((c) => Number(c.product) === Number(resourceId))?.amount || 0;
+  }, [storageInventory, resourceId]);
+
+  const insufficientAssets = useMemo(() => {
+    if (isCancellation) return false;
+    if (mode === 'buy') {
+      return total > safeBigInt(swayBalance) / safeBigInt(TOKEN_SCALE[TOKEN.SWAY]);
+    } else {
+      return quantityToUnits(quantity) > amountInInventory;
+    }
+  }, [isCancellation, mode, quantity, amountInInventory, swayBalance, total]);
+
+  const buyInventoryLimit = useMemo(() => {
+    if (mode === 'buy' && storageInventory) {
+      const invConfig = Inventory.getType(storageInventory.inventoryType, crew?._inventoryBonuses) || {};
+
+      let maxDueToMass = Infinity, maxDueToVolume = Infinity, maxDueToProduct = Infinity;
+      if (invConfig.massConstraint) {
+        maxDueToMass = invConfig.massConstraint - (storageInventory.mass + storageInventory.reservedMass);
+        maxDueToMass = Math.floor(maxDueToMass / resource.massPerUnit);
+      }
+      if (invConfig.volumeConstraint) {
+        maxDueToVolume = invConfig.volumeConstraint - (storageInventory.volume + storageInventory.reservedVolume);
+        maxDueToVolume = Math.floor(maxDueToVolume / resource.volumePerUnit);
+      }
+      if (invConfig.productConstraints) {
+        if (invConfig.productConstraints.hasOwnProperty(resourceId)) {
+          if (invConfig.productConstraints[resourceId] > 0) {
+            maxDueToProduct = invConfig.productConstraints[resourceId] - amountInInventory;
+          }
+        } else {
+          maxDueToProduct = 0;
+        }
+      }
+      return Math.min(maxDueToMass, maxDueToVolume, maxDueToProduct);
+    }
+    return Infinity;
+  }, [amountInInventory, crew?._inventoryBonuses, mode, resource, storageInventory]);
+
+  const insufficientCapacity = useMemo(() => {
+    return quantityToUnits(quantity) > buyInventoryLimit;
+  }, [buyInventoryLimit, quantity]);
+
+  const [maxLabel, maxAmount] = useMemo(() => {
+    if (type === 'limit' && !storageInventory) return [];
+
+    // can limit sell up to whatever is in inventory
+    // can market sell up to min(amountInInventory, totalForBuy)
+    if (mode === 'sell') {
+      if (storageInventory && (type === 'limit' || amountInInventory < totalForBuy)) {
+        return ['In Inventory', amountInInventory || 0];
+      }
+      return ['Total Demand', unitsToQuantity(totalForBuy || 0)];
+
+    // can limit buy up to inventory capacity / product constraints
+    // can market buy up to min(inventory capacity / product constraints, totalForSale)
+    } else {
+      if (storageInventory && (type === 'limit' || buyInventoryLimit < totalForSale)) {
+        return ['Inventory Capacity', buyInventoryLimit || 0];
+      }
+      return ['Total Supply', unitsToQuantity(totalForSale || 0)];
+    }
+  }, [type, mode, storageInventory, totalForSale, totalForBuy, amountInInventory, unitsToQuantity]);
+
+  const maxInput = useMemo(() => quantityToUnits(maxAmount === undefined ? Infinity : maxAmount), [maxAmount, quantityToUnits]);
+
+  const handleChangeQuantity = useCallback((e) => {
+    setQuantity(Math.max(0, Math.min(parseInt(e.currentTarget.value) || 0, maxInput)));
+  }, [maxInput]);
+
+  const handleChangeLimitPrice = useCallback((e) => {
+    setLimitPrice(Number(e.currentTarget.value));
+  }, []);
+
+  const matchBestLimitOrder = useCallback((e) => {
+    if (mode === 'buy') {
+      setLimitPrice(buyOrders[0]?.price || sellOrders[sellOrders.length - 1].price);
+    } else {
+      setLimitPrice(sellOrders[sellOrders.length - 1].price);
+    }
+  }, [mode, buyOrders, sellOrders]);
+
+  const handleOrderRefresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
   const dialogAction = useMemo(() => {
     let a = {};
     if (type === 'market' && mode === 'buy') {
@@ -625,35 +686,6 @@ const MarketplaceOrder = ({
     if (type === 'limit' && mode === 'sell') return `Limit Sell`;
   }, [type, isCancellation]);
 
-  const amountInInventory = useMemo(() => {
-    return (storageInventory?.contents || []).find((c) => Number(c.product) === Number(resourceId))?.amount || 0;
-  }, [storageInventory, resourceId]);
-
-  const insufficientAssets = useMemo(() => {
-    if (isCancellation) return false;
-    if (mode === 'buy') {
-      return total > safeBigInt(swayBalance) / safeBigInt(TOKEN_SCALE[TOKEN.SWAY]);
-    } else {
-      return quantityToUnits(quantity) > amountInInventory;
-    }
-  }, [isCancellation, mode, quantity, amountInInventory, swayBalance, total]);
-
-  const insufficientCapacity = useMemo(() => {
-    if (mode === 'buy' && storageInventory) {
-      const buyUnits = quantityToUnits(quantity);
-      const buyMass = buyUnits * resource.massPerUnit;
-      const buyVolume = buyUnits * resource.volumePerUnit;
-      const invConfig = Inventory.getType(storageInventory.inventoryType, crew?._inventoryBonuses) || {};
-      if ((storageInventory.mass + storageInventory.reservedMass + buyMass) > invConfig.massConstraint) return true;
-      if ((storageInventory.volume + storageInventory.reservedVolume + buyVolume) > invConfig.volumeConstraint) return true;
-      if (invConfig.productConstraints) {
-        if (!invConfig.productConstraints.hasOwnProperty(resourceId)) return true;
-        if (invConfig.productConstraints[resourceId] > 0 && ((amountInInventory + buyUnits) > invConfig.productConstraints[resourceId])) return true;
-      }
-    }
-    return false;
-  }, [amountInInventory, crew?._inventoryBonuses, mode, quantity, storageInventory]);
-
   const isPermitted = useMemo(() => {
     let perm = 0;
     if (isCancellation) return true;
@@ -663,7 +695,7 @@ const MarketplaceOrder = ({
     if (type === 'market' && mode === 'sell') perm = Permission.IDS.SELL;
     return crewCan(perm, exchange);
   }, [crewCan, exchange, mode, type, isCancellation]);
-
+  
   return (
     <>
       <ActionDialogHeader
@@ -700,18 +732,13 @@ const MarketplaceOrder = ({
             <FormSection>
               <InputLabel>
                 <label>{type === 'market' ? '' : 'Max'} Quantity</label>
-                {type === 'market' && (
-                  <span>Max <b>{((mode === 'buy' ? totalForSale : totalForBuy) || 0).toLocaleString()}{resourceByMass ? ' kg' : ''}</b></span>
-                )}
-                {type === 'limit' && mode === 'sell' && (
-                  <span>In Inventory <b>{formatResourceAmount(Math.floor(amountInInventory) || 0, resourceId)}</b></span>
-                )}
+                {maxLabel && <span>{maxLabel} <b>{formatResourceAmount(maxAmount || 0, resourceId)}</b></span>}
               </InputLabel>
               <TextInputWrapper rightLabel={resourceByMass ? ' kg' : ''}>
                 <UncontrolledTextInput
                   disabled={isCancellation || stage !== actionStages.NOT_STARTED}
                   min={0}
-                  max={type === 'market' ? (mode === 'buy' ? totalForSale : totalForBuy) : (mode === 'sell' ? amountInInventory : undefined)}
+                  max={maxInput}
                   onChange={handleChangeQuantity}
                   placeholder="Specify Quantity"
                   step={1}

@@ -14,9 +14,9 @@ const formatAsCoarseTime = (preciseTime, denom) => {
   return Math.floor(denom * preciseTime) / denom;
 }
 
-const useCoarseTime = (denom = defaultDenom) => {
+const useCoarseTime = (ignoreSimulatedTimeAnchor = false, denom = defaultDenom) => {
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
-  const getTime = useGetTime();
+  const getTime = useGetTime(ignoreSimulatedTimeAnchor);
 
   const timeOverride = useStore(s => s.timeOverride);
 
