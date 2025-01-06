@@ -987,7 +987,7 @@ const useSimulationSteps = () => {
           // select ship
           // TODO: don't need these if no lot selected
           // TODO: should use 
-          [COACHMARK_IDS.hudCrewLocation]: !inTravelMode && !actionDialog?.type && currentZoomScene?.shipId !== shipLot?.shipId,
+          [COACHMARK_IDS.hudCrewLocation]: !['out', 'zooming-out'].includes(zoomStatus) && !actionDialog?.type && currentZoomScene?.shipId !== shipLot?.shipId,
 
           // plan travel
           [COACHMARK_IDS.actionButtonSelectDestination]: !inTravelMode && !actionDialog?.type,

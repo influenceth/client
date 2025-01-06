@@ -68,7 +68,8 @@ const MockTransactionManager = () => {
             initial_term: 30,
             notice_period: 30, // may not be accurate, but not important
             caller: SIMULATION_CONFIG.accountAddress
-          })
+          }),
+          _entities: [tx.vars.target, tx.vars.permitted, tx.vars.caller_crew]
         });
         break;
       }
@@ -99,7 +100,13 @@ const MockTransactionManager = () => {
             building: { id: buildingId, label: Entity.IDS.BUILDING },
             grace_period_end: nowSec() + 86400,
             caller: SIMULATION_CONFIG.accountAddress
-          })
+          }),
+          _entities: [
+            { id: asteroidId, label: Entity.IDS.ASTEROID },
+            { id: buildingId, label: Entity.IDS.BUILDING },
+            tx.vars.lot,
+            tx.vars.caller_crew
+          ]
         });
 
         crewBusyTime = Time.toRealDuration(
@@ -127,7 +134,8 @@ const MockTransactionManager = () => {
             ...tx.vars,
             finish_time: nowSec() + taskBusyTime,
             caller: SIMULATION_CONFIG.accountAddress
-          })
+          }),
+          _entities: [ tx.vars.building, tx.vars.caller_crew ]
         };
         events.push(event);
 
@@ -167,7 +175,8 @@ const MockTransactionManager = () => {
           returnValues: transformReturnValues({
             ...tx.vars,
             caller: SIMULATION_CONFIG.accountAddress
-          })
+          }),
+          _entities: [ tx.vars.destination, tx.vars.exchange, tx.vars.storage, tx.vars.caller_crew ] // NOTE: missing seller
         });
         break;
       }
@@ -197,7 +206,8 @@ const MockTransactionManager = () => {
           transactionIndex: 1,
           transactionHash: tx.txHash,
           timestamp: nowSec(),
-          returnValues
+          returnValues,
+          _entities: [ tx.vars.exchange, tx.vars.storage, tx.vars.caller_crew ]
         });
         break;
       }
@@ -225,7 +235,13 @@ const MockTransactionManager = () => {
             deposit: { id: SIMULATION_CONFIG.depositId, label: Entity.IDS.DEPOSIT },
             finish_time: nowSec() - 100,// + taskBusyTime,
             caller: SIMULATION_CONFIG.accountAddress
-          })
+          }),
+          _entities: [
+            { id: SIMULATION_CONFIG.depositId, label: Entity.IDS.DEPOSIT },
+            tx.vars.lot,
+            tx.vars.origin, // NOTE: this is not in db entities
+            tx.vars.caller_crew
+          ]
         };
         events.push(event);
 
@@ -244,8 +260,8 @@ const MockTransactionManager = () => {
 
         // mimic event
         events.push({
-          event: 'SampleDepositFinished',
-          name: 'SampleDepositFinished',
+          event: 'SamplingDepositFinished',
+          name: 'SamplingDepositFinished',
           logIndex: 1,
           transactionIndex: 1,
           transactionHash: tx.txHash,
@@ -254,13 +270,19 @@ const MockTransactionManager = () => {
             ...tx.vars,
             initial_yield: initialYield,
             caller: SIMULATION_CONFIG.accountAddress
-          })
+          }),
+          _entities: [
+            tx.vars.deposit,
+            tx.vars.caller_crew
+          ]
         });
         activityResolutions.push('SamplingDepositStarted')
         break;
       }
 
+      case 'FlexibleExtractResourceStart':
       case 'ExtractResourceStart': {
+
         // subtract yield from deposit, add to warehouse
         dispatchSimulationLotState(tx.meta.lotId, { depositYieldRemaining: simulation.lots[tx.meta.lotId].depositYield - tx.vars.yield });
         dispatchSimulationAddToInventory(tx.vars.destination, tx.vars.destination_slot, tx.meta.resourceId, tx.vars.yield);
@@ -270,8 +292,8 @@ const MockTransactionManager = () => {
 
         // mimic event
         events.push({
-          event: 'ExtractResourceStarted',
-          name: 'ExtractResourceStarted',
+          event: 'ResourceExtractionStarted',
+          name: 'ResourceExtractionStarted',
           logIndex: 1,
           transactionIndex: 1,
           transactionHash: tx.txHash,
@@ -281,7 +303,13 @@ const MockTransactionManager = () => {
             resource: tx.meta.resourceId,
             finish_time: nowSec() + taskBusyTime,
             caller: SIMULATION_CONFIG.accountAddress
-          })
+          }),
+          _entities: [
+            tx.vars.deposit,
+            tx.vars.destination,
+            tx.vars.extractor,
+            tx.vars.caller_crew
+          ]
         });
         break;
       }
@@ -317,7 +345,13 @@ const MockTransactionManager = () => {
             // outputs,
             finish_time: nowSec() + taskBusyTime,
             caller: SIMULATION_CONFIG.accountAddress
-          })
+          }),
+          _entities: [
+            tx.vars.destination,
+            tx.vars.origin,
+            tx.vars.processor,
+            tx.vars.caller_crew
+          ]
         });
         break;
       }
@@ -350,7 +384,13 @@ const MockTransactionManager = () => {
             ship: { id: SIMULATION_CONFIG.shipId, label: Entity.IDS.SHIP },
             finish_time: nowSec() + taskBusyTime,
             caller: SIMULATION_CONFIG.accountAddress
-          })
+          }),
+          _entities: [
+            { id: SIMULATION_CONFIG.shipId, label: Entity.IDS.SHIP },
+            tx.vars.dry_dock,
+            tx.vars.origin,
+            tx.vars.caller_crew
+          ]
         });
         break;
       }
@@ -378,7 +418,12 @@ const MockTransactionManager = () => {
             finish_time: nowSec() + crewBusyTime,
             destination_station: tx.vars.destination,
             caller: SIMULATION_CONFIG.accountAddress
-          })
+          }),
+          _entities: [
+            tx.vars.destination,
+            { id: 1, label: Entity.IDS.BUILDING },
+            tx.vars.caller_crew
+          ]
         });
         break;
       }
@@ -403,7 +448,12 @@ const MockTransactionManager = () => {
             ...tx.vars,
             dock: { id: shipLotId, label: Entity.IDS.LOT },
             caller: SIMULATION_CONFIG.accountAddress
-          })
+          }),
+          _entities: [
+            { id: shipLotId, label: Entity.IDS.LOT },
+            tx.vars.ship,
+            tx.vars.caller_crew
+          ]
         });
         break;
       }
@@ -447,7 +497,13 @@ const MockTransactionManager = () => {
             arrival: tx.vars.arrival_time,
             finish_time: nowSec() + taskBusyTime,
             caller: SIMULATION_CONFIG.accountAddress
-          })
+          }),
+          _entities: [
+            { id: SIMULATION_CONFIG.shipId, label: Entity.IDS.SHIP },
+            tx.vars.destination,
+            tx.vars.origin,
+            tx.vars.caller_crew
+          ]
         });
         break;
       }
@@ -475,14 +531,18 @@ const MockTransactionManager = () => {
           returnValues: transformReturnValues({
             ...tx.vars,
             caller: SIMULATION_CONFIG.accountAddress
-          })
+          }),
+          _entities: [
+            tx.vars.entity,
+            tx.vars.caller_crew
+          ]
         });
         break;
       }
     }
 
     // no need to invalidate data b/c no real updates made
-    events.forEach((e) => {
+    events.forEach(({ _entities, ...e }) => {
       const mockActivity = {
         id: getUuid(),
         // addresses: [],
@@ -491,7 +551,7 @@ const MockTransactionManager = () => {
           crewmates: crew._crewmates.map((c) => ({ id: c.id, label: c.label, uuid: c.uuid, Crewmate: c.Crewmate })),
           station: crew._station
         },
-        // entities: [],
+        entities: _entities || [],
         event: e,
         hash: getUuid(),
         hiddenBy: [],
