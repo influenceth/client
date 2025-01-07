@@ -753,6 +753,11 @@ const api = {
     return response.data;
   },
 
+  requestFeeRewards: async () => {
+    const response = await instance.post(`/${apiVersion}/user/rewards`);
+    return response.data;
+  },
+
   // AVNU endpoints
   getSwapQuote: async ({ sellToken, buyToken, amount, account }) => {
     const options = { baseUrl: appConfig.get('Api.avnu') };
