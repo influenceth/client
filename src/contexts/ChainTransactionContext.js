@@ -572,8 +572,8 @@ export function ChainTransactionProvider({ children }) {
     const txOptions = {};
 
     // Check and store the gasless compatibility status
+    console.log({ payGasWith })
     if (!!payGasWith) {
-      let maxFee;
       try {
         // Use gasless via relayer for non-ETH / STRK transactions
         const simulation = await account.simulateTransaction(
@@ -585,17 +585,48 @@ export function ChainTransactionProvider({ children }) {
         const gasTokenOptions = await gasless.fetchGasTokenPrices({ baseUrl: appConfig.get('Api.avnu') });
         console.log('fetchGasTokenPrices', gasTokenOptions);
 
-        const gasTokenAddress = payGasWith === 'SWAY' && swayRef.current > 0n ? TOKEN.SWAY : TOKEN.ETH;
+        const gasTokenAddress = payGasWith?.method === 'SWAY' && swayRef.current > 0n ? TOKEN.SWAY : TOKEN.ETH;
         const gasToken = gasTokenOptions.find((t) => Address.areEqual(t.tokenAddress, gasTokenAddress));
         console.log('gasToken', gasToken);
 
-        const maxFee = gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken)
-          * (appConfig.get('App.deployment') === 'production' ? 3n : 100n);
-        if (maxFee < 0n) maxFee *= -1n; // neg max fee has happened on dev before
+        const maxFee = appConfig.get('App.deployment') === 'production'
+          ? 3n * Math.abs(gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken))
+          : BigInt(1e16);
         console.log('maxFee', maxFee);
 
         // pay gas with rewards if available
-        if (payGasWith === 'REWARDS') {
+        if (payGasWith?.method === 'REWARDS') {
+          // NOTE: vvv this is a fuller example from avnu, BUT ours should theoretically return
+          // basically the same thing because payGasWith's overheads are both 0
+
+          // const contractVersion = await provider.getContractVersion(accountAddress);
+          // const nonce = await provider.getNonceForAddress(accountAddress);
+          // const details = stark.v3Details({ skipValidate: true });
+          // const invocation = {
+          //   ...details,
+          //   contractAddress: accountAddress,
+          //   calldata: transaction.getExecuteCalldata(formattedCalls, contractVersion.cairo),
+          //   signature: [],
+          // };
+          // const fees = await provider.getInvokeEstimateFee(invocation, { ...details, nonce, version: 1 }, 'pending', true);
+          // console.log({ fees });
+          // const estimatedGasFeesInGasToken = gasless.getGasFeesInGasToken(
+          //   BigInt(fees.overall_fee),
+          //   gasToken,
+          //   BigInt(fees.gas_price),
+          //   BigInt(fees.data_gas_price ?? '0x1'),
+          //   payGasWith.gasConsumedOverhead,
+          //   payGasWith.dataGasConsumedOverhead,
+          // );
+
+          // ^^^
+
+          console.log('REWARDS EXECUTION', {
+            account,
+            formattedCalls,
+            x: { gasTokenAddress, maxGasTokenAmount: maxFee },
+            y: { baseUrl: appConfig.get('Api.avnu') }
+          });
           return gasless.executeCalls(
             account,
             formattedCalls,
@@ -608,7 +639,7 @@ export function ChainTransactionProvider({ children }) {
         // Check if wallet has sufficient funds for gas fees
         // (skip this check in testnet since the allowed gas tokens are inconsistent)
         // if (appConfig.get('App.deployment') !== 'production' || gasTokenBalance >= maxFee) {
-        else if (payGasWith === 'SWAY' && swayRef.current >= maxFee) {
+        else if (payGasWith?.method === 'SWAY' && swayRef.current >= maxFee) {
           const { typedData, signature } = await getOutsideExecutionData(formattedCalls, gasToken.tokenAddress, maxFee, canUseSessionKey);
           return await gasless.fetchExecuteTransaction(
             accountAddress,

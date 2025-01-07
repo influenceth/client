@@ -1,7 +1,7 @@
 import { createContext, useCallback, useEffect, useRef, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { isExpired } from 'react-jwt';
-import { num, RpcProvider, WalletAccount, shortString } from 'starknet';
+import { hash, num, RpcProvider, WalletAccount, shortString } from 'starknet';
 import { connect as starknetConnect, disconnect as starknetDisconnect } from 'starknetkit';
 import { ArgentMobileConnector, isInArgentMobileAppBrowser } from 'starknetkit/argentMobile';
 import { InjectedConnector } from 'starknetkit/injected';
@@ -53,6 +53,58 @@ const allowedMethods = [
   { 'Contract Address': appConfig.get('Starknet.Address.escrow'), selector: 'deposit' }
 ];
 
+const useAvnuRewards = (currentSession) => {
+  const [avnuRewardsEnabled, setAvnuRewardsEnabled] = useState(true);
+
+  const { data, isLoading, refetch: refreshFeeRewards } = useQuery(
+    ['walletRewards', currentSession?.accountAddress],
+    () => {
+      return gasless.fetchAccountsRewards(
+        currentSession?.accountAddress,
+        { baseUrl: appConfig.get('Api.avnu') }
+      );
+    },
+    { enabled: !!currentSession?.isDeployed && !!currentSession?.accountAddress }
+  );
+
+  const freeTxRemaining = useMemo(() => {
+    if (isLoading || !Array.isArray(data)) return null;
+
+    return data.reduce((acc, reward) => {
+      const isMatchingWhitelist = allowedMethods.every((allowed) => !!reward.whitelistedCalls.find((wlc) => (
+        Address.areEqual(wlc.contractAddress, allowed['Contract Address']) && wlc.entrypoint === hash.getSelectorFromName(allowed.selector)
+      )));
+      return acc + (isMatchingWhitelist ? reward.remainingTx : 0);
+    }, 0);
+  }, [data, isLoading]);
+
+  const requestMoreRewards = useCallback(async () => {
+    try {
+      const response = await api.requestFeeRewards();
+      if (response?.added) {
+        refreshFeeRewards();
+      } else {
+        // if gracefully failed, not eligible for any (more) rewards...
+        // do we want to show a message?
+        setAvnuRewardsEnabled(false);
+      }
+    } catch (e) {
+      // TODO: exponential backoff? eventually give up?
+      setTimeout(() => {
+        requestMoreRewards();
+      }, 15000);
+    }
+  }, [refreshFeeRewards]);
+
+  useEffect(() => {
+    if (freeTxRemaining === 0 && currentSession?.walletId === 'argentWebWallet' && avnuRewardsEnabled) {
+      requestMoreRewards();
+    }
+  }, [avnuRewardsEnabled, currentSession?.walletId, requestMoreRewards, freeTxRemaining]);
+
+  return useMemo(() => freeTxRemaining || 0, [freeTxRemaining]);
+};
+
 const SessionContext = createContext();
 
 export function SessionProvider({ children }) {
@@ -67,6 +119,8 @@ export function SessionProvider({ children }) {
   const dispatchSessionSuspended = useStore(s => s.dispatchSessionSuspended);
   const dispatchSessionResumed = useStore(s => s.dispatchSessionResumed);
   const dispatchSessionEnded = useStore(s => s.dispatchSessionEnded);
+
+  const feeRewards = useAvnuRewards(currentSession);
 
   const [readyForChildren, setReadyForChildren] = useState(false);
 
@@ -481,20 +535,6 @@ export function SessionProvider({ children }) {
 
   const [feeAbstractionCompatibility, setFeeAbstractionCompatibility] = useState();
 
-  const { data: feeRewards, refetch: refreshFeeRewards } = useQuery(
-    ['walletRewards', currentSession?.accountAddress],
-    () => {
-      return gasless.fetchAccountsRewards(
-        currentSession.accountAddress,
-        {
-          baseUrl: appConfig.get('Api.avnu'),
-          protocol: 'gasless-sdk'
-        }
-      );
-    },
-    { enabled: currentSession?.isDeployed && !!currentSession?.accountAddress }
-  );
-
   useEffect(() => {
     if (currentSession?.isDeployed) {
       gasless.fetchAccountCompatibility(currentSession.accountAddress, { baseUrl: appConfig.get('Api.avnu') })
@@ -505,16 +545,18 @@ export function SessionProvider({ children }) {
   }, [currentSession.accountAddress, currentSession?.isDeployed]);
 
   const payGasWith = useMemo(() => {
-    if (authenticated) {
+    if (authenticated && feeAbstractionCompatibility?.isCompatible) {
       // if wallet has gas rewards available, use those
-      if (feeRewards) {
-        return 'REWARDS';
+      if (feeRewards > 0) {
+        return {
+          method: 'REWARDS',
+          gasConsumedOverhead: feeAbstractionCompatibility.gasConsumedOverhead,
+          dataGasConsumedOverhead: feeAbstractionCompatibility.dataGasConsumedOverhead
+        };
 
       // check if we should use fee abstraction (is set to use sway or is set to default + using webwallet)
       } else if (gameplay.feeToken === 'SWAY' || (!gameplay.feeToken && currentSession?.walletId === 'argentWebWallet')) {
-        if (!!feeAbstractionCompatibility?.isCompatible) {
-          return 'SWAY';
-        }
+        return { method: 'SWAY' };
       }
     }
     return null;
@@ -525,7 +567,6 @@ export function SessionProvider({ children }) {
     feeRewards,
     feeAbstractionCompatibility
   ]);
-
 
   // Retrieves an outside execution call and signs it
   const getOutsideExecutionData = useCallback(async (calldata, gasTokenAddress, maxGasTokenAmount, canUseSessionKey) => {

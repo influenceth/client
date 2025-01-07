@@ -165,10 +165,10 @@ export function ActivitiesProvider({ children }) {
           // (if no caller or if caller matches my account)
           if (accountAddress) {
             if (!activity.event?.returnValues?.caller || Address.areEqual(accountAddress, activity.event.returnValues.caller)) {
-              if (payGasWith === 'REWARDS') {
+              if (payGasWith?.method === 'REWARDS') {
                 extraInvalidations.push(['walletRewards', accountAddress]);
               }
-              if (payGasWith === 'SWAY') {
+              if (payGasWith?.method === 'SWAY') {
                 extraInvalidations.push(['walletBalance', 'sway', accountAddress]);
               }
             }
@@ -320,7 +320,7 @@ export function ActivitiesProvider({ children }) {
       }
 
     }, 2500);
-  }, [accountAddress, crew, getActivityConfig, payGasWith, pendingTransactions, refreshReadyAt]);
+  }, [accountAddress, crew, getActivityConfig, payGasWith?.method, pendingTransactions, refreshReadyAt]);
 
   // try to process WS activities grouped by block
   const processPendingWSBatch = useCallback(async () => {

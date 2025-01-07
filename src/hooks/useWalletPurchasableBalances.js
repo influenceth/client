@@ -30,7 +30,7 @@ const useWalletPurchasableBalances = (overrideAccount) => {
   const maintainEthGasReserve = useMemo(() => {
     const targetSwayReserve = priceHelper.from(GAS_BUFFER_VALUE_USDC * 0.1, TOKEN.USDC).to(TOKEN.SWAY);
     // reserve needed if NOT (paying with rewards OR (paying with SWAY and have sway))
-    return !(payGasWith === 'REWARDS' || (payGasWith && swayBalance > targetSwayReserve))
+    return !(payGasWith?.method === 'REWARDS' || (payGasWith?.method === 'SWAY' && swayBalance > targetSwayReserve))
   }, [payGasWith, priceHelper, swayBalance]);
 
   const ethGasReserveBalance = useMemo(() => {
