@@ -97,7 +97,8 @@ const useAvnuRewards = (currentSession) => {
   }, [refreshFeeRewards]);
 
   useEffect(() => {
-    if (freeTxRemaining === 0 && currentSession?.walletId === 'argentWebWallet' && avnuRewardsEnabled) {
+    if (freeTxRemaining === 0 && avnuRewardsEnabled) {
+      if (currentSession?.walletId === 'argentWebWallet' || appConfig.get('App.feeRewardsForAllWallets'))
       requestMoreRewards();
     }
   }, [avnuRewardsEnabled, currentSession?.walletId, requestMoreRewards, freeTxRemaining]);
