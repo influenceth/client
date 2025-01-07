@@ -89,7 +89,7 @@ const useDryDockManager = (lotId, slot = 1) => {
 
   const startShipAssembly = useCallback((shipType, origin, originSlot, leaseDetails) => {
     execute(
-      leaseDetails ? 'LeaseAssembleShipStart' : 'AssembleShipStart',
+      leaseDetails ? 'LeaseAndAssembleShipStart' : 'AssembleShipStart',
       {
         ...payload,
         ship_type: shipType,

@@ -203,7 +203,7 @@ const LocationDiamond = () => (
 const propellantProduct = Product.TYPES[Product.IDS.HYDROGEN_PROPELLANT];
 
 const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, ...props }) => {
-  const coarseTime = useCoarseTime();
+  const coarseTime = useCoarseTime(true);
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
   const dispatchTravelMode = useStore(s => s.dispatchTravelMode);

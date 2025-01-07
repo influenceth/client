@@ -10,7 +10,6 @@ import useAsteroid from '~/hooks/useAsteroid';
 import actionStage from '~/lib/actionStages';
 
 const useConstructionManager = (lotId) => {
-  const { data: actionItems } = useUnresolvedActivities();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
   const blockTime = useBlockTime();
   const { accountCrewIds, crew } = useCrewContext();
@@ -19,6 +18,8 @@ const useConstructionManager = (lotId) => {
   const asteroidId = useMemo(() => Lot.toPosition(lotId)?.asteroidId, [lotId]);
   const { data: asteroid } = useAsteroid(asteroidId);
   const buildingId = lot?.building?.id;
+
+  const { data: actionItems } = useUnresolvedActivities(buildingId ? { label: Entity.IDS.BUILDING, id: buildingId } : { label: Entity.IDS.LOT, id: lotId });
 
   const planPayload = useMemo(() => ({
     lot: { id: lotId, label: Entity.IDS.LOT },

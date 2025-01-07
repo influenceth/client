@@ -511,7 +511,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
   ]);
 
   const inventoryConstrained = useMemo(() => {
-    if (invConfig.productConstraints) {
+    if (invConfig?.productConstraints) {
       const allowed = Object.keys(invConfig.productConstraints);
       if (Object.keys(selectionSummary).find((k) => selectionSummary[k].totalFilled > 0 && !allowed.includes(k))) return 'error';
       if (shoppingList.find(({ product }) => !allowed.includes(String(product.i)))) return 'warning';
