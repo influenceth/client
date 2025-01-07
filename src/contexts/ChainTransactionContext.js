@@ -256,6 +256,30 @@ const customConfigs = {
     equalityTest: ['processor.id', 'processor_slot'],
     isVirtual: true
   },
+  LeaseAndAssembleShipStart: {
+    multisystemCalls: ({ lease, ...vars }) => {
+      return [
+        lease && {
+          system: 'AcceptPrepaidAgreement',
+          vars: { 
+            caller_crew: vars.caller_crew,
+            target: vars.dry_dock,
+            permission: Permission.IDS.ASSEMBLE_SHIP,
+            permitted: vars.caller_crew,
+            termPrice: lease.termPrice,
+            recipient: lease.recipient,
+            term: lease.term,
+          }
+        },
+        {
+          system: 'AssembleShipStart',
+          vars
+        }
+      ].filter((c) => !!c);
+    },
+    equalityTest: ['dry_dock.id', 'dry_dock_slot'],
+    isVirtual: true
+  },
   FlexibleExtractResourceStart: {
     multisystemCalls: ({ lease, purchase, ...vars }) => {
       return [
@@ -1196,6 +1220,7 @@ export function ChainTransactionProvider({ children }) {
       return;
     }
 
+    console.log({ walletAccount, key, x: contracts[key] });
     if (!walletAccount || !contracts || !contracts[key]) {
       createAlert({
         type: 'GenericAlert',
