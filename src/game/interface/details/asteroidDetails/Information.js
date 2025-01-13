@@ -315,8 +315,9 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
   }, [asteroid, priceConstants]);
 
   const usdcPrice = useMemo(() => {
-    if (!price || !priceConstants?.ASTEROID_PURCHASE_TOKEN) return 0;
-    return priceHelper.from(price, priceConstants.ASTEROID_PURCHASE_TOKEN).to(TOKEN.USDC) / TOKEN_SCALE[TOKEN.USDC];
+    return priceHelper
+      .from(price || 0n, priceConstants.ASTEROID_PURCHASE_TOKEN || TOKEN.USDC)
+      .to(TOKEN.USDC) / TOKEN_SCALE[TOKEN.USDC];
   }, [price, priceConstants?.ASTEROID_PURCHASE_TOKEN, priceHelper]);
 
   const onBuyAsteroid = useCallback(async () => {
@@ -336,8 +337,9 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
   }, [accountAddress, buyAsteroid, checkForLimit, usdcPrice]);
 
   const attemptBuyAsteroid = useCallback(() => {
+    if (!price || !priceConstants?.ASTEROID_PURCHASE_TOKEN) return;
     onVerifyFunds(
-      priceHelper.from(price, priceConstants?.ASTEROID_PURCHASE_TOKEN),
+      priceHelper.from(price, priceConstants.ASTEROID_PURCHASE_TOKEN),
       onBuyAsteroid
     );
   }, [onBuyAsteroid, onVerifyFunds, price, priceConstants, priceHelper]);
