@@ -201,8 +201,10 @@ const useStarterPackPricing = () => {
   const { data: wallet } = useWalletPurchasableBalances();
 
   const adalianPrice = useMemo(() => {
-    if (!priceConstants) return priceHelper.from(0);
-    return priceHelper.from(priceConstants?.ADALIAN_PURCHASE_PRICE, priceConstants?.ADALIAN_PURCHASE_TOKEN);
+    return priceHelper.from(
+      priceConstants?.ADALIAN_PURCHASE_PRICE || 0n,
+      priceConstants?.ADALIAN_PURCHASE_TOKEN || TOKEN.USDC
+    );
   }, [priceConstants]);
 
   const {

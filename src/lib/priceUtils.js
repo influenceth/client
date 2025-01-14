@@ -55,10 +55,12 @@ export const TOKEN_FORMATTER = {
 };
 
 export const asteroidPrice = (lots, priceConstants) => {
+  if (!priceConstants?.ASTEROID_PURCHASE_BASE_PRICE || !priceConstants?.ASTEROID_PURCHASE_LOT_PRICE) return 0n;
   const roundedLots = safeBigInt(Number(lots));
   return priceConstants.ASTEROID_PURCHASE_BASE_PRICE + roundedLots * priceConstants.ASTEROID_PURCHASE_LOT_PRICE;
 };
 
 export const asteroidPriceToLots = (priceObj, priceConstants) => {
+  if (!priceObj || !priceConstants?.ASTEROID_PURCHASE_BASE_PRICE || !priceConstants?.ASTEROID_PURCHASE_LOT_PRICE) return 0;
   return parseInt((safeBigInt(priceObj.to(priceConstants.ASTEROID_PURCHASE_TOKEN)) - priceConstants.ASTEROID_PURCHASE_BASE_PRICE) / priceConstants.ASTEROID_PURCHASE_LOT_PRICE);
 };

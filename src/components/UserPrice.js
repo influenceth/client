@@ -10,7 +10,7 @@ const UserPrice = ({ price, priceToken, format }) => {
   const priceHelper = usePriceHelper();
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
 
-  if (!priceToken) return <>-</>;
+  if (!priceToken || priceToken === 'undefined') return <>-</>;
   return (
     <>
       {

@@ -39,11 +39,11 @@ export const AsteroidSwayPrice = ({ lots = 0n, format = true, noLiquidityThresho
   const priceHelper = usePriceHelper();
 
   const price = useMemo(() => {
-    return asteroidPrice(lots, priceConstants);
+    return priceConstants ? asteroidPrice(lots, priceConstants) : 0n;
   }, [lots, priceConstants]);
 
   const isOverThreshold = useMemo(() => {
-    if (noLiquidityThreshold || !price || !priceConstants || !priceHelper) return false;
+    if (noLiquidityThreshold || !price || !priceConstants?.ASTEROID_PURCHASE_TOKEN || !priceHelper) return false;
     return priceHelper.from(price, priceConstants.ASTEROID_PURCHASE_TOKEN).to(TOKEN.USDC, false) > 1000e6;
   }, [noLiquidityThreshold, price, priceConstants, priceHelper]);
 

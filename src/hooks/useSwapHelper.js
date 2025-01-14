@@ -24,7 +24,7 @@ const useSwapHelper = () => {
   walletRef.current = walletSource;
 
   const buildMultiswapFromSellAmount = useCallback(async (sellAmountUSDC, targetToken, allowableSlippage = 0.1) => {
-    const swappableTokens = Object.keys(walletRef.current?.tokenBalances).filter((t) => t !== targetToken);
+    const swappableTokens = Object.keys(walletRef.current?.tokenBalances).filter((t) => !!t && t !== targetToken);
     swappableTokens.sort((a) => a === preferredUiCurrency ? -1 : 1);
     
     const calls = [];
