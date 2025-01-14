@@ -14,7 +14,7 @@ export const statuses = [
   Building.CONSTRUCTION_STATUSES.OPERATIONAL,
 ];
 
-const useWalletBuildings = () => {
+const useWalletBuildings = (includeRecoverables) => {
   const { accountAddress } = useSession();
   const { accountCrewIds, loading: crewsLoading } = useCrewContext();
 
@@ -24,7 +24,6 @@ const useWalletBuildings = () => {
     try {
       const qb = esb.boolQuery();
       qb.filter(esb.termsQuery('Control.controller.id', accountCrewIds));
-      qb.mustNot(esb.termQuery('Building.status', Building.CONSTRUCTION_STATUSES.UNPLANNED));
       
       const q = esb.requestBodySearch();
       q.query(qb);
@@ -40,7 +39,7 @@ const useWalletBuildings = () => {
     return null;
   }, [accountAddress, accountCrewIds, crewsLoading]);
 
-  return useQuery(
+  const queryResponse = useQuery(
     entitiesCacheKey(Entity.IDS.BUILDING, { controllerId: accountCrewIds, status: statuses }),
     async () => {
       const response = await api.searchAssets('buildings', query);
@@ -48,6 +47,14 @@ const useWalletBuildings = () => {
     },
     { enabled: !!query }
   );
+
+  return useMemo(() => ({
+    ...queryResponse,
+    data: (queryResponse.data || []).filter((building) => (
+      building.Building.status !== Building.CONSTRUCTION_STATUSES.UNPLANNED
+      || (includeRecoverables && !!building.Inventories.find((i) => i.mass || i.reservedMass))
+    ))
+  }), [queryResponse?.dataUpdatedAt, includeRecoverables])
 };
 
 export default useWalletBuildings;

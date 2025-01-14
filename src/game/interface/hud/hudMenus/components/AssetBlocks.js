@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import styled, { keyframes } from 'styled-components';
+import styled from 'styled-components';
 import { Asteroid, Building, Dock, Entity, Inventory, Permission, Station } from '@influenceth/sdk';
 
 import AsteroidRendering from '~/components/AsteroidRendering';
@@ -20,18 +20,19 @@ import {
   SpaceportBuildingIcon,
   WarehouseBuildingIcon
 } from '~/components/Icons';
+import { ResourceImage } from '~/components/ResourceThumbnail';
+import { useShipLink } from '~/components/ShipLink';
 import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
 import useProcessManager from '~/hooks/actionManagers/useProcessManager';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
-import { ResourceImage } from '~/components/ResourceThumbnail';
-import { useShipLink } from '~/components/ShipLink';
 import { getShipIcon } from '~/lib/assetUtils';
 import formatters from '~/lib/formatters';
 import { formatFixed, formatTimer, getTerminatedAgreementStatus, locationsArrToObj } from '~/lib/utils';
-import { majorBorderColor } from './components';
 import useSyncedTime from '~/hooks/useSyncedTime';
 import { useLotLink } from '~/components/LotLink';
 import useBlockTime from '~/hooks/useBlockTime';
+import useStore from '~/hooks/useStore';
+import { majorBorderColor } from './components';
 
 const thumbnailDimension = 65;
 const iconThumbnailDimension = 36;
@@ -451,6 +452,47 @@ export const BuildingBlock = ({ building, onSelectCrew, selectedCrew, setRef }) 
           </span>
         </Details>
         <BarWrapper><Bar progress={progress} progressColor={progressColor} /></BarWrapper>
+      </Info>
+    </SelectableRow>
+  );
+};
+
+export const RecoverableBuildingBlock = ({ building, onSelectCrew, selectedCrew, setRef }) => {
+  const buildingLoc = locationsArrToObj(building?.Location?.locations);
+  const onClickBuilding = useLotLink(buildingLoc);
+  const onSetAction = useStore(s => s.dispatchActionDialog);
+
+  const onClick = useCallback(() => {
+    onClickBuilding();
+    onSelectCrew(building.Control?.controller?.id);
+    onSetAction('SURFACE_TRANSFER', { deliveryId: 0, origin: building });
+  }, [onClickBuilding, onSelectCrew, building?.Control?.controller?.id, buildingLoc?.lotId]);
+
+  const isMine = useMemo(() => (
+    selectedCrew?.id && (
+      selectedCrew.id === building.Control?.controller?.id
+      || (selectedCrew._siblingCrewIds || []).includes(building.Control?.controller?.id)
+    )
+  ), [selectedCrew, building.Control?.controller?.id]);
+
+  return (
+    <SelectableRow ref={setRef} onClick={onClick}>
+      <IconThumbnail>
+        {isMine && <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>}
+        {getBuildingIcon(building?.Building?.buildingType)}
+        <ClipCorner dimension={8} color={majorBorderColor} />
+      </IconThumbnail>
+      <Info>
+        <Details>
+          <label>
+            {formatters.buildingName(building)}
+          </label>
+          <span>
+            <HoverContent>{formatters.lotName(buildingLoc?.lotIndex)}</HoverContent>
+            <NotHoverContent>Recoverable</NotHoverContent>
+          </span>
+        </Details>
+        <BarWrapper><Bar progress={1} progressColor="error" /></BarWrapper>
       </Info>
     </SelectableRow>
   );

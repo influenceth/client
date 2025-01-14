@@ -11,7 +11,7 @@ import useWalletAsteroids from '~/hooks/useWalletAsteroids';
 import useWalletBuildings from '~/hooks/useWalletBuildings';
 import useWalletShips from '~/hooks/useWalletShips';
 import { HudMenuCollapsibleSection, Scrollable, majorBorderColor, scrollbarPadding } from './components/components';
-import { AgreementBlock, AsteroidBlock, BuildingBlock, ShipBlock } from './components/AssetBlocks';
+import { AgreementBlock, AsteroidBlock, BuildingBlock, RecoverableBuildingBlock, ShipBlock } from './components/AssetBlocks';
 import { CheckedIcon, RadioCheckedIcon, RadioUncheckedIcon, UncheckedIcon } from '~/components/Icons';
 import useSession from '~/hooks/useSession';
 import formatters from '~/lib/formatters';
@@ -199,7 +199,7 @@ const MyAssets = () => {
   const { crew, crews, selectCrew } = useCrewContext();
   const { data: walletAgreementsWithDupes, isLoading: agreementsLoading } = useWalletAgreements();
   const { data: walletAsteroids, isLoading: asteroidsLoading } = useWalletAsteroids();
-  const { data: walletBuildings, isLoading: buildingsLoading } = useWalletBuildings();
+  const { data: walletBuildings, isLoading: buildingsLoading } = useWalletBuildings(true);
   const { data: walletShips, isLoading: shipsLoading } = useWalletShips();
 
   const origin = useStore((s) => s.asteroids.origin);
@@ -292,6 +292,7 @@ const MyAssets = () => {
   const [buildings, buildingTally] = useMemo(() => {
     const ungrouped = (walletBuildings || [])
       .filter((a) => {
+        if (a.Building?.status === Building.CONSTRUCTION_STATUSES.UNPLANNED) return false;
         const asteroidId = (a.Location?.locations || []).find((l) => l.label === Entity.IDS.ASTEROID)?.id;
         if (allAsteroidsMode || asteroidId === origin) {
           if (allCrewsMode || a.Control?.controller?.id === crew?.id) {
@@ -314,6 +315,34 @@ const MyAssets = () => {
     const groups = groupAssets(ungrouped);
     return [groups, ungrouped.length];
   }, [walletBuildings, allAsteroidsMode, allCrewsMode]);
+
+  const [recoverables, recoverableTally] = useMemo(() => {
+    const ungrouped = (walletBuildings || [])
+      .filter((a) => {
+        if (a.Building?.status !== Building.CONSTRUCTION_STATUSES.UNPLANNED) return false;
+        const asteroidId = (a.Location?.locations || []).find((l) => l.label === Entity.IDS.ASTEROID)?.id;
+        if (allAsteroidsMode || asteroidId === origin) {
+          if (allCrewsMode || a.Control?.controller?.id === crew?.id) {
+            return true;
+          }
+        }
+        return false;
+      })
+      .sort((a, b) => {
+        const aTypeName = Building.TYPES[a.Building.buildingType].name;
+        const bTypeName = Building.TYPES[b.Building.buildingType].name;
+        if (a.Building.buildingType === b.Building.buildingType) {
+          if (a.Name?.name || b.Name?.name) {
+            return (a.Name?.name || aTypeName) < (b.Name?.name || bTypeName) ? -1 : 1;
+          }
+          return a.id - b.id;
+        }
+        return aTypeName < bTypeName ? -1 : 1
+      });
+    const groups = groupAssets(ungrouped);
+    return [groups, ungrouped.length];
+  }, [walletBuildings, allAsteroidsMode, allCrewsMode]);
+  console.log({ recoverables})
 
   const [ships, shipTally] = useMemo(() => {
     const ungrouped = (walletShips || [])
@@ -439,6 +468,27 @@ const MyAssets = () => {
             onCollapsedChange={onCollapsedChange}
             path="buildings"
             singleGroupMode={!allAsteroidsMode} />
+
+          {recoverableTally > 0 && (
+            <GroupedAssets
+              title="Recoverable Inventories"
+              groupedAssets={recoverables}
+              assetTally={recoverableTally}
+              isLoading={buildingsLoading}
+              itemGetter={(building) => (
+                <RecoverableBuildingBlock
+                  key={building.id}
+                  onSelectCrew={onClickCrewAsset}
+                  selectedCrew={crew}
+                  building={building}
+                />
+              )}
+              itemHeight={55}
+              collapsedPaths={collapsedPaths}
+              onCollapsedChange={onCollapsedChange}
+              path="recoverables"
+              singleGroupMode={!allAsteroidsMode} />
+          )}
 
           <HudMenuCollapsibleSection
             titleText={<>Asteroids{asteroidsLoading && <LoadingMessage />}</>}
