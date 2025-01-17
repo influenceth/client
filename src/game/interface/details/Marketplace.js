@@ -122,7 +122,7 @@ const Marketplace = () => {
   const { data: marketplaceOwner } = useCrew(lot?.building?.Control?.controller?.id);
 
   const { data: myOpenOrders } = useCrewOrders(crew?.id);
-  const { data: orderSummary } = useOrderSummaryByProduct(lotIndex === 'all' ? { label: Entity.IDS.ASTEROID, id: asteroidId } : { label: Entity.IDS.LOT, id: lotId });
+  const { data: orderSummary } = useOrderSummaryByProduct(lotIndex === 'all' ? { label: Entity.IDS.ASTEROID, id: Number(asteroidId) } : { label: Entity.IDS.LOT, id: Number(lotId) });
 
   const [marketplaceTally, setMarketplaceTally] = useState(0);
   const [products, setProducts] = useState([]);

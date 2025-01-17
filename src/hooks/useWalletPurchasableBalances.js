@@ -38,7 +38,7 @@ const useWalletPurchasableBalances = (overrideAccount) => {
       const ethValueInUSDC = Math.floor(priceHelper.from(ethBalance, TOKEN.ETH)?.usdcValue);
       return priceHelper.from(Math.min(ethValueInUSDC, GAS_BUFFER_VALUE_USDC), TOKEN.USDC);
     }
-    return priceHelper.from(0n);
+    return priceHelper.from(0n, TOKEN.USDC);
   }, [maintainEthGasReserve, ethBalance, priceHelper]);
 
   // NOTE: do not add SWAY here unless want SWAY to be auto-swappable for
@@ -57,7 +57,7 @@ const useWalletPurchasableBalances = (overrideAccount) => {
   return useMemo(() => {
     if (isLoading) return { data: null, refetch: () => {}, isLoading: true };
 
-    const combinedBalance = priceHelper.from(0n);
+    const combinedBalance = priceHelper.from(0n, TOKEN.USDC);
     Object.keys(swappableTokenBalances).forEach((tokenAddress) => {
       combinedBalance.usdcValue += priceHelper.from(swappableTokenBalances[tokenAddress], tokenAddress)?.usdcValue;
     });

@@ -147,7 +147,9 @@ const AsteroidSize = ({ sizeLabel }) => {
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
   const minPriceUSDC = useMemo(() => {
-    if (sizeLabel === 'small') return priceHelper.from(asteroidPrice(13n, priceConstants), priceConstants.ASTEROID_PURCHASE_TOKEN).to(TOKEN.USDC);
+    if (sizeLabel === 'small' && priceConstants?.ASTEROID_PURCHASE_TOKEN) {
+      return priceHelper.from(asteroidPrice(13n, priceConstants), priceConstants.ASTEROID_PURCHASE_TOKEN).to(TOKEN.USDC);
+    }
     if (sizeLabel === 'medium') return sizeUI.small.maxPriceUSDC * TOKEN_SCALE[TOKEN.USDC];
     if (sizeLabel === 'large') return sizeUI.medium.maxPriceUSDC * TOKEN_SCALE[TOKEN.USDC];
   }, [priceHelper, priceConstants, sizeLabel]);

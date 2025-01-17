@@ -638,13 +638,33 @@ const api = {
   getOrderSummaryByProduct: async (entity) => {
     const queryBuilder = esb.boolQuery();
 
-    // asteroid or lot
-    queryBuilder.filter(
-      esbLocationQuery(
-        entity.label === Entity.IDS.ASTEROID ? { asteroidId: entity.id } : { lotId: entity.id },
-        'locations'
-      )
-    );
+    // at asteroid-level
+    if (entity.label === Entity.IDS.ASTEROID) {
+      queryBuilder.filter(esbLocationQuery({ asteroidId: entity.id }, 'locations'));
+
+      // get decommissioned exchanges so can exclude...
+      const buildingQueryBuilder = esb.boolQuery();
+      buildingQueryBuilder.filter(esbLocationQuery({ asteroidId: entity.id }));
+      buildingQueryBuilder.filter(
+        esb.boolQuery().mustNot([ esb.termQuery('Building.status', Building.CONSTRUCTION_STATUSES.OPERATIONAL) ])
+      );
+      buildingQueryBuilder.filter(esb.existsQuery('Exchange'));
+
+      const buildingQ = esb.requestBodySearch();
+      buildingQ.query(buildingQueryBuilder);
+      buildingQ.from(0);
+      buildingQ.size(10000);
+      const response = await instance.post(`/_search/building`, buildingQ.toJSON());
+      const excludeBuildings = formatESEntityData(response.data);
+
+      if (excludeBuildings.length > 0) {
+        queryBuilder.mustNot(esb.termsQuery('entity.id', excludeBuildings.map((b) => b.id)));
+      }
+
+    // at market-level
+    } else {
+      queryBuilder.filter(esbLocationQuery({ lotId: entity.id }, 'locations'));
+    }
 
     // only return aggregations
     const aggregation = esb

@@ -463,10 +463,10 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
     let s = 0, d = 0, m = 0;
 
     const nonzeroCenterMarkets = (resourceMarketplaces || []).filter((n) => {
-      s += m.supply;
-      d += m.demand;
+      s += n.supply;
+      d += n.demand;
 
-      return n.centerPrice != 0;
+      return Number(n.centerPrice) !== 0;
     });
 
     if (nonzeroCenterMarkets.length > 0) {

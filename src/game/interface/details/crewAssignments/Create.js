@@ -1249,6 +1249,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
       }
     }
 
+    if (!priceConstants?.ADALIAN_PURCHASE_PRICE || !priceConstants?.ADALIAN_PURCHASE_TOKEN) return;
     const price = priceHelper.from(priceConstants.ADALIAN_PURCHASE_PRICE, priceConstants.ADALIAN_PURCHASE_TOKEN);
     if (price.usdcValue > wallet?.combinedBalance?.to(TOKEN.USDC)) {
       // if (appConfig.get('Starknet.chainId') === '0x534e5f5345504f4c4941' && ethClaimEnabled) {

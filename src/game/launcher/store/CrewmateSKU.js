@@ -99,10 +99,12 @@ const CrewmateSKU = () => {
   }, [getPendingCreditPurchase]);
 
   const totalPrice = useMemo(() => {
+    if (!priceConstants?.ADALIAN_PURCHASE_PRICE || !priceConstants?.ADALIAN_PURCHASE_TOKEN) return null;
+
     const cleanQuantity = cleanseCrewmates(quantity) || 1;
     return priceHelper.from(
-      safeBigInt(cleanQuantity) * priceConstants?.ADALIAN_PURCHASE_PRICE,
-      priceConstants?.ADALIAN_PURCHASE_TOKEN
+      safeBigInt(cleanQuantity) * priceConstants.ADALIAN_PURCHASE_PRICE,
+      priceConstants.ADALIAN_PURCHASE_TOKEN
     );
   }, [quantity, priceConstants, priceHelper]);
 
@@ -117,10 +119,8 @@ const CrewmateSKU = () => {
   }, [quantity]);
 
   const onClick = useCallback(() => {
-    onVerifyFunds(
-      totalPrice,
-      onPurchase
-    )
+    if (!totalPrice) return;
+    onVerifyFunds(totalPrice, onPurchase);
   }, [onPurchase, onVerifyFunds, totalPrice]);
 
   return (
@@ -203,7 +203,7 @@ const CrewmateSKU = () => {
             isPurchasing={isPurchasing}
             isSway
             onClick={onClick}
-            usdcPrice={totalPrice.usdcValue}
+            usdcPrice={totalPrice?.usdcValue || 0n}
             style={{ width: '100%' }}
           />
         </Body>

@@ -1252,7 +1252,6 @@ export function ChainTransactionProvider({ children }) {
       return;
     }
 
-    console.log({ walletAccount, key, x: contracts[key] });
     if (!walletAccount || !contracts || !contracts[key]) {
       createAlert({
         type: 'GenericAlert',
