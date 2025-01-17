@@ -11,6 +11,8 @@ import PageLoader from '~/components/PageLoader';
 import useStore from '~/hooks/useStore';
 import api from '~/lib/api';
 import { nativeBool } from '~/lib/utils';
+import { useEffect, useState } from 'react';
+import { WarningIcon } from '~/components/Icons';
 
 const stripePromise = loadStripe(appConfig.get('Api.ClientId.stripe'));
 
@@ -20,10 +22,28 @@ const PaymentButton = styled(BrightButton).attrs({ success: true })`
   width: calc(100% - 8px);
 `;
 
+const ErrorMessage = styled.div`
+  align-items: center;
+  background: rgba(${p => p.theme.colors.errorRGB}, 0.25);
+  color: white;
+  display: flex;
+  margin: 20px 0;
+  min-height: 21px;
+  padding: 15px 25px;
+  justify-content: center;
+  width: 100%;
+  & > svg {
+    font-size: 125%;
+    margin-right: 8px;
+  }
+`;
+
 const StripeInner = ({ onClose, price, productId, productName, metadata = {} }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const elements = useElements();
   const stripe = useStripe();
+
+  const [errMsg, setErrMsg] = useState();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -35,36 +55,50 @@ const StripeInner = ({ onClose, price, productId, productName, metadata = {} }) 
         elements,
         redirect: 'if_required',
         confirmParams: {
-          return_url: `${window.location.origin}/launcher/store`,
+          return_url: `${window.location.origin}${window.location.pathname || '/launcher/store'}`,
         }
       });
-      console.log('result', result);
       if (result.error) {
         errMsg = result.error.message;
       } else if (result.paymentIntent.status === 'succeeded') {
-        window.alert('Payment succeeded!');
+        createAlert({
+          type: 'GenericAlert',
+          data: { content: 'Payment submitted successfully. Processing...' },
+          level: 'success',
+          duration: 5000
+        });
+        onClose();
         return;
       } else {
-        console.log('wtf');
+        console.log('unexpected stripe result!', result);
       }
     } catch (e) {
       errMsg = e.message;
     }
 
-    createAlert({
-      type: 'GenericAlert',
-      level: 'warning',
-      data: { content: errMsg || 'Something went wrong. Please try again.' },
-      duration: 5000
-    });
+    setErrMsg(errMsg || 'Something went wrong. Please try again.');
   };
+
+  useEffect(() => {
+    if (errMsg) {
+      const to = setTimeout(() => {
+        setErrMsg();
+      }, 5000);
+      return () => clearTimeout(to);
+    }
+  }, [errMsg]);
 
   return (
     <CheckoutForm onSubmit={handleSubmit}>
       <PaymentElement />
-      <PaymentButton disabled={nativeBool(!stripe)} type="submit">
-        Submit Payment{price ? ` ($${price / 100})` : ''}
-      </PaymentButton>
+      {errMsg
+        ? <ErrorMessage><WarningIcon /> <span>{errMsg}</span></ErrorMessage>
+        : (
+          <PaymentButton disabled={nativeBool(!stripe)} type="submit">
+            Submit Payment{price ? ` ($${price / 100})` : ''}
+          </PaymentButton>
+        )
+      }
     </CheckoutForm>
   );
 };

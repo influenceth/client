@@ -336,6 +336,10 @@ export function SessionProvider({ children }) {
     }
   }, [connectedAccount, provider]);
 
+  const deployWithSubsidy = useCallback(async () => {
+
+  }, []);
+
   // Authenticate with a signed message against the API and create a new session
   const authenticate = useCallback(async ({ isUpgradeInsecure = false, isUpgradeSessionKey = false } = {}) => {
     const newSession = {};
@@ -715,6 +719,7 @@ export function SessionProvider({ children }) {
       authenticating: [STATUSES.AUTHENTICATING, STATUSES.CONNECTING].includes(status),
       chainId: authenticated ? connectedChainId : null,
       connecting: connecting || !!promptLogin,
+      deployWithSubsidy,
       payGasWith,
       getOutsideExecutionData,
       isDeployed: authenticated ? currentSession?.isDeployed : null,
