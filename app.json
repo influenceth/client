@@ -26,6 +26,10 @@
       "description": "Ramp API Key (optional)",
       "required": false
     },
+    "REACT_APP_API_CLIENTID_STRIPE": {
+      "description": "Stripe Publishable API Key (optional)",
+      "required": false
+    },
     "REACT_APP_STARKNET_PROVIDER": {
       "description": "Custom Starknet rpc provider (optional)",
       "required": false

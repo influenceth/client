@@ -885,6 +885,16 @@ const api = {
   markMessageAsRead: async (id) => {
     const response = await instance.patch(`/${apiVersion}/messages/${id}/read`);
     return response.data;
+  },
+
+  getStripeProducts: async () => {
+    const response = await instance.get(`/${apiVersion}/stripe`);
+    return response.data;
+  },
+
+  createStripePaymentIntent: async (sku) => {
+    const response = await instance.post(`/${apiVersion}/stripe/${sku}`);
+    return response.data;
   }
 };
 
