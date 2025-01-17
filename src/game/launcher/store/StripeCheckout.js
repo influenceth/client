@@ -120,14 +120,14 @@ const StripeCheckout = (props) => {
         <div style={{ ...(isLoading ? { height: 300 } : { minHeight: 300 }), minWidth: 440 }}>
           {isLoading && <PageLoader message="Connecting to Stripe..." />}
           {!isLoading && !intent && <div>Failed to connect to Stripe. Please refresh and try again.</div>}
-          {intent?.clientSecret && (
+          {intent?.client_secret && (
             <Elements
               stripe={stripePromise}
               options={{
                 appearance: {
                   theme: 'night'
                 },
-                clientSecret: intent?.clientSecret
+                clientSecret: intent?.client_secret
               }}>
               <StripeInner {...props} />
             </Elements>

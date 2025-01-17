@@ -1131,8 +1131,20 @@ export function ChainTransactionProvider({ children }) {
         duration: 0,
         hideCloseIcon: true,
         onRemoval: () => {
-          // TODO: would be nice if could use this format instead, but it's not clear how that works
-          // walletAccount.deployAccount({ contractAddress: accountAddress });
+          // NOTE: this would theoretically be more straightforward, but there is an error trying to sign it
+          // walletAccount.walletProvider.request({ type: 'wallet_deploymentData' })
+          //   .then((deploymentData) => {
+          //     walletAccount.deploySelf(
+          //       {
+          //         classHash: deploymentData.class_hash,
+          //         constructorCalldata: deploymentData.calldata,
+          //         addressSalt: deploymentData.salt,
+          //         contractAddress: deploymentData.address
+          //       }, 
+          //       { version: deploymentData.version }
+          //     )
+          //   });
+          
           executeCalls([
             System.getFormattedCall(
               appConfig.get('Starknet.Address.ethToken'),

@@ -203,8 +203,7 @@ export function SessionProvider({ children }) {
         setConnectedAccount(Address.toStandard(connectorData.account));
         setConnectedChainId(chainId);
         setConnectedWalletId(wallet.id);
-        const newAccount = new WalletAccount(provider, wallet, '1');
-        setWalletAccount(newAccount);
+        setWalletAccount(new WalletAccount(provider, wallet, '1'));
 
         // Default to provider chainId if not set (starknetkit doesn't set for braavos)
         if (!isAllowedChain(chainId)) {
@@ -335,10 +334,6 @@ export function SessionProvider({ children }) {
       return false;
     }
   }, [connectedAccount, provider]);
-
-  const deployWithSubsidy = useCallback(async () => {
-
-  }, []);
 
   // Authenticate with a signed message against the API and create a new session
   const authenticate = useCallback(async ({ isUpgradeInsecure = false, isUpgradeSessionKey = false } = {}) => {
@@ -490,6 +485,39 @@ export function SessionProvider({ children }) {
     setStarknetSession(offchainSessionAccount);
   }, [currentSession, provider]);
 
+  const deployWithSubsidy = useCallback(async () => {
+    if ((currentSession?.walletId === 'argentWebWallet' || appConfig.get('App.feeRewardsForAllWallets')) && walletAccount?.walletProvider && !currentSession.isDeployed) {
+      try {
+        const deploymentData = await walletAccount.walletProvider.request({ type: 'wallet_deploymentData' });
+        try {
+          const deployment = await api.deployWallet({
+            calldata: [
+              deploymentData.class_hash,
+              deploymentData.salt,
+              '0x0',
+              `0x${deploymentData.calldata.length.toString(16)}`,
+              ...deploymentData.calldata
+            ]
+          });
+          if (deployment?.transaction_hash) {
+            await provider.waitForTransaction(deployment.transaction_hash);
+            upgradeInsecureSession();
+          }
+        } catch (e) {
+          console.log('e', e);
+          createAlert({
+            type: 'GenericAlert',
+            level: 'warning',
+            data: { content: `Subsidized account deployment failed: "${e.message}". Please refresh the page to try again.` },
+            duration: 0
+          });
+        }
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  }, [currentSession, upgradeInsecureSession, walletAccount]);
+
   // Start a session with the Argent Web Wallet
   useEffect(() => {
     if (!currentSession?.isDeployed) return;
@@ -548,6 +576,21 @@ export function SessionProvider({ children }) {
       setFeeAbstractionCompatibility();
     }
   }, [currentSession.accountAddress, currentSession?.isDeployed]);
+
+  // if logged in webwallet and not deployed, check payments endpoint... if there are payments, do subsidized deployment
+  useEffect(() => {
+    if (status === STATUSES.AUTHENTICATED && (currentSession?.walletId === 'argentWebWallet' || appConfig.get('App.feeRewardsForAllWallets')) && !currentSession.isDeployed) {
+      api.getStripePayments()
+        .then((payments) => {
+          if (payments?.length) {
+            deployWithSubsidy();
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+        })
+    }
+  }, [currentSession?.walletId, currentSession?.isDeployed, deployWithSubsidy, status]);
 
   const payGasWith = useMemo(() => {
     if (authenticated && feeAbstractionCompatibility?.isCompatible) {

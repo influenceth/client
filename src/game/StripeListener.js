@@ -34,9 +34,7 @@ const StripeListener = () => {
       createAlert({
         type: 'GenericAlert',
         data: {
-          content: body?.payment?.last_payment_error?.message
-            ? `Payment processing failed: "${body?.payment?.last_payment_error?.message}"`
-            : 'Payment processing failed. Please try again.'
+          content: `Payment processing failed${body?.error ? `: "${body.error}"` : '. Please try again.'}`
         },
         duration: 0,
         level: 'warning',

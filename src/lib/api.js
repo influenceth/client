@@ -88,6 +88,11 @@ const api = {
     return response.data;
   },
 
+  deployWallet: async (data) => {
+    const response = await instance.post(`/${apiVersion}/user/wallet/deploy`, data);
+    return response.data;
+  },
+
   getInboxSeed: async () => {
     const response = await instance.get(`/${apiVersion}/user/inboxseed`);
     return response.data;
@@ -904,6 +909,11 @@ const api = {
 
   markMessageAsRead: async (id) => {
     const response = await instance.patch(`/${apiVersion}/messages/${id}/read`);
+    return response.data;
+  },
+
+  getStripePayments: async () => {
+    const response = await instance.get(`/${apiVersion}/stripe/payments`);
     return response.data;
   },
 
