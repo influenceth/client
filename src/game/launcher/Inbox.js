@@ -404,24 +404,18 @@ const EnableInbox = () => {
     return getStatus('RekeyInbox') === 'pending';
   }, [getStatus]);
 
-  // once detect the rekeying is underway, clear the local private key and save the new seed
+  // once detect the rekeying is underway, clear the local private key, then save the new seed and new private key
   useEffect(() => {
     if (isRekeying) {
       dispatchDmPrivateKey();
-      if (pendingKeypair[2]) {
-        api.updateUser({ directMessagingSeed: pendingKeypair[2] })
+      if (pendingKeypair[1] && pendingKeypair[2]) {
+        api.updateUser({ directMessagingSeed: pendingKeypair[2] }).then(() => {
+          dispatchDmPrivateKey(pendingKeypair[1]);
+          setPendingKeypair();
+        });
       }
     }
   }, [isRekeying]);
-
-  // once detect the user's public key has updated to the expected value, set private key in state
-  // (only set if seed was saved effectively too... otherwise, will end up in unrecoverable state)
-  useEffect(() => {
-    if (pendingKeypair && user?.hasSeed && user?.publicKey && pendingKeypair[0] === user.publicKey) {
-      dispatchDmPrivateKey(pendingKeypair[1]);
-      setPendingKeypair();
-    }
-  }, [user?.hasSeed, user?.publicKey]);
 
   const [isRecovering, setIsRecovering] = useState();
   const recoverKey = useCallback(async () => {
