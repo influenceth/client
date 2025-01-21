@@ -645,16 +645,10 @@ export function ChainTransactionProvider({ children }) {
 
           // ^^^
 
-          console.log('REWARDS EXECUTION', {
-            account,
-            formattedCalls,
-            x: { gasTokenAddress, maxGasTokenAmount: maxFee },
-            y: { baseUrl: appConfig.get('Api.avnu') }
-          });
           return gasless.executeCalls(
             account,
             formattedCalls,
-            { gasTokenAddress, maxGasTokenAmount: maxFee },
+            {},
             { baseUrl: appConfig.get('Api.avnu') }
           )
         }
