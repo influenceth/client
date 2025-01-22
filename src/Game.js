@@ -4,8 +4,6 @@ import { ThemeProvider, createGlobalStyle } from 'styled-components';
 import { BrowserRouter as Router, Switch, Route, useHistory, useLocation } from 'react-router-dom';
 import { useDetectGPU } from '@react-three/drei';
 
-import { initializeTagManager } from './gtm';
-
 import { appConfig } from '~/appConfig';
 import FullpageInterstitial from '~/components/FullpageInterstitial';
 import { ActionItemProvider } from '~/contexts/ActionItemContext';
@@ -24,12 +22,15 @@ import Interface from '~/game/Interface';
 import LandingPage from '~/game/Landing';
 import Referral from '~/game/Referral';
 import Scene from '~/game/Scene';
+import StripeListener from '~/game/StripeListener';
 import useSession from '~/hooks/useSession';
 import useServiceWorker from '~/hooks/useServiceWorker';
 import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
 import ScreensizeWarning from '~/ScreensizeWarning';
 import theme from '~/theme';
+
+import { initializeTagManager } from './gtm';
 
 const { GRAPHICS_DEFAULTS } = constants;
 
@@ -218,6 +219,7 @@ const Game = () => {
           <CrewProvider>
             <WebsocketProvider>
               <ChatListener />
+              <StripeListener />
               <Router>
                 <Referral />
                 <CrewSwitcher />

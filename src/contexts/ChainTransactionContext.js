@@ -522,7 +522,7 @@ export function ChainTransactionProvider({ children }) {
     getOutsideExecutionData,
     isDeployed,
     logout,
-    payGasWithSwayIfPossible,
+    payGasWith,
     provider,
     starknetSession,
     upgradeInsecureSession,
@@ -596,12 +596,9 @@ export function ChainTransactionProvider({ children }) {
     const txOptions = {};
 
     // Check and store the gasless compatibility status
-    if (payGasWithSwayIfPossible && swayRef.current > 0n) {
-      let canPayGasWithSway = false;
-      let gasToken;
-      let maxFee;
+    console.log({ payGasWith })
+    if (!!payGasWith) {
       try {
-
         // Use gasless via relayer for non-ETH / STRK transactions
         const simulation = await account.simulateTransaction(
           [{ type: 'INVOKE_FUNCTION', payload: calls }],
@@ -609,39 +606,68 @@ export function ChainTransactionProvider({ children }) {
         );
         console.log('simulation', simulation);
 
-        const tokens = await gasless.fetchGasTokenPrices({ baseUrl: appConfig.get('Api.avnu') });
-        console.log('fetchGasTokenPrices', tokens);
-        gasToken = tokens.find((t) => Address.areEqual(t.tokenAddress, TOKEN.SWAY));
-        console.log('gasToken', gasToken);
-        console.log('swayBalance', swayRef.current);
+        const gasTokenOptions = await gasless.fetchGasTokenPrices({ baseUrl: appConfig.get('Api.avnu') });
+        console.log('fetchGasTokenPrices', gasTokenOptions);
 
-        // Triple the fee estimation and check for sufficient funds to ensure transaction success
-        // TODO: figure out why some txs require this
-        
-        maxFee = gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken)
-          * (appConfig.get('App.deployment') === 'production' ? 3n : 100n);
-        
-        // (not sure why this would ever be negative, but it is on dev at least)
-        if (maxFee < 0n) maxFee *= -1n;
-        
+        const gasTokenAddress = payGasWith?.method === 'SWAY' && swayRef.current > 0n ? TOKEN.SWAY : TOKEN.ETH;
+        const gasToken = gasTokenOptions.find((t) => Address.areEqual(t.tokenAddress, gasTokenAddress));
+        console.log('gasToken', gasToken);
+
+        const maxFee = appConfig.get('App.deployment') === 'production'
+          ? 3n * Math.abs(gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken))
+          : BigInt(1e16);
         console.log('maxFee', maxFee);
 
-        canPayGasWithSway = (swayRef.current >= maxFee);
+        // pay gas with rewards if available
+        if (payGasWith?.method === 'REWARDS') {
+          // NOTE: vvv this is a fuller example from avnu, BUT ours should theoretically return
+          // basically the same thing because payGasWith's overheads are both 0
+
+          // const contractVersion = await provider.getContractVersion(accountAddress);
+          // const nonce = await provider.getNonceForAddress(accountAddress);
+          // const details = stark.v3Details({ skipValidate: true });
+          // const invocation = {
+          //   ...details,
+          //   contractAddress: accountAddress,
+          //   calldata: transaction.getExecuteCalldata(formattedCalls, contractVersion.cairo),
+          //   signature: [],
+          // };
+          // const fees = await provider.getInvokeEstimateFee(invocation, { ...details, nonce, version: 1 }, 'pending', true);
+          // console.log({ fees });
+          // const estimatedGasFeesInGasToken = gasless.getGasFeesInGasToken(
+          //   BigInt(fees.overall_fee),
+          //   gasToken,
+          //   BigInt(fees.gas_price),
+          //   BigInt(fees.data_gas_price ?? '0x1'),
+          //   payGasWith.gasConsumedOverhead,
+          //   payGasWith.dataGasConsumedOverhead,
+          // );
+
+          // ^^^
+
+          return gasless.executeCalls(
+            account,
+            formattedCalls,
+            {},
+            { baseUrl: appConfig.get('Api.avnu') }
+          )
+        }
+
+        // pay gas with sway if possible
+        // Check if wallet has sufficient funds for gas fees
+        // (skip this check in testnet since the allowed gas tokens are inconsistent)
+        // if (appConfig.get('App.deployment') !== 'production' || gasTokenBalance >= maxFee) {
+        else if (payGasWith?.method === 'SWAY' && swayRef.current >= maxFee) {
+          const { typedData, signature } = await getOutsideExecutionData(formattedCalls, gasToken.tokenAddress, maxFee, canUseSessionKey);
+          return await gasless.fetchExecuteTransaction(
+            accountAddress,
+            JSON.stringify(typedData),
+            signature,
+            { baseUrl: appConfig.get('Api.avnu') }
+          );
+        }
       } catch (e) {
         console.warn('Could not pay gas with sway! Trying with eth/strk...', e);
-      }
-
-      // Check if wallet has sufficient funds for gas fees
-      // (skip this check in testnet since the allowed gas tokens are inconsistent)
-      // if (appConfig.get('App.deployment') !== 'production' || gasTokenBalance >= maxFee) {
-      if (canPayGasWithSway) {
-        const { typedData, signature } = await getOutsideExecutionData(formattedCalls, gasToken.tokenAddress, maxFee, canUseSessionKey);
-        return await gasless.fetchExecuteTransaction(
-          accountAddress,
-          JSON.stringify(typedData),
-          signature,
-          { baseUrl: appConfig.get('Api.avnu') }
-        );
       }
     }
         
@@ -669,7 +695,7 @@ export function ChainTransactionProvider({ children }) {
     createAlert,
     chainId,
     getOutsideExecutionData,
-    payGasWithSwayIfPossible,
+    payGasWith,
     nonce,
     starknetSession,
     walletAccount
@@ -1099,8 +1125,20 @@ export function ChainTransactionProvider({ children }) {
         duration: 0,
         hideCloseIcon: true,
         onRemoval: () => {
-          // TODO: would be nice if could use this format instead, but it's not clear how that works
-          // walletAccount.deployAccount({ contractAddress: accountAddress });
+          // NOTE: this would theoretically be more straightforward, but there is an error trying to sign it
+          // walletAccount.walletProvider.request({ type: 'wallet_deploymentData' })
+          //   .then((deploymentData) => {
+          //     walletAccount.deploySelf(
+          //       {
+          //         classHash: deploymentData.class_hash,
+          //         constructorCalldata: deploymentData.calldata,
+          //         addressSalt: deploymentData.salt,
+          //         contractAddress: deploymentData.address
+          //       }, 
+          //       { version: deploymentData.version }
+          //     )
+          //   });
+          
           executeCalls([
             System.getFormattedCall(
               appConfig.get('Starknet.Address.ethToken'),

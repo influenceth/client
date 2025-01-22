@@ -7,6 +7,7 @@
     "defaultMuted": false,
     "disableScreensizeWarning": false,
     "enableDevTools": false,
+    "feeRewardsForAllWallets": false,
     "hideSocial": true,
     "verboseLogs": false
   },
@@ -22,7 +23,8 @@
       "google": "",
       "gtm": "",
       "layerswap": "",
-      "ramp": ""
+      "ramp": "",
+      "stripe": ""
     }
   },
   "Cloudfront": {

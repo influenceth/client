@@ -12,13 +12,13 @@ import { PurchaseForm, PurchaseFormRows } from './components/PurchaseForm';
 import SKUTitle from './components/SKUTitle';
 import AdalianFlourish from '~/components/AdalianFlourish';
 import CrewmateCardFramed from '~/components/CrewmateCardFramed';
-import { barebonesCrewmateAppearance } from './StarterPackSKU';
 import theme from '~/theme';
 import SKUInputRow from './components/SKUInputRow';
 import { CrewmateSwayPrice } from '~/components/SwayPrice';
 import SKUHighlight from './components/SKUHighlight';
 import { CrewmateCreditIcon } from '~/components/Icons';
 import SKUButton from './components/SKUButton';
+import { barebonesCrewmateAppearance } from '~/hooks/useStarterPacks';
 
 const Wrapper = styled.div`
   align-items: flex-end;

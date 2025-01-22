@@ -88,6 +88,11 @@ const api = {
     return response.data;
   },
 
+  deployWallet: async (data) => {
+    const response = await instance.post(`/${apiVersion}/user/wallet/deploy`, data);
+    return response.data;
+  },
+
   getInboxSeed: async () => {
     const response = await instance.get(`/${apiVersion}/user/inboxseed`);
     return response.data;
@@ -773,6 +778,11 @@ const api = {
     return response.data;
   },
 
+  requestFeeRewards: async () => {
+    const response = await instance.post(`/${apiVersion}/user/rewards`);
+    return response.data;
+  },
+
   // AVNU endpoints
   getSwapQuote: async ({ sellToken, buyToken, amount, account }) => {
     const options = { baseUrl: appConfig.get('Api.avnu') };
@@ -899,6 +909,21 @@ const api = {
 
   markMessageAsRead: async (id) => {
     const response = await instance.patch(`/${apiVersion}/messages/${id}/read`);
+    return response.data;
+  },
+
+  getStripePayments: async () => {
+    const response = await instance.get(`/${apiVersion}/stripe/payments`);
+    return response.data;
+  },
+
+  getStripeProducts: async () => {
+    const response = await instance.get(`/${apiVersion}/stripe`);
+    return response.data;
+  },
+
+  createStripePaymentIntent: async (sku) => {
+    const response = await instance.post(`/${apiVersion}/stripe/${sku}`);
     return response.data;
   }
 };

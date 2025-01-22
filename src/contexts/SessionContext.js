@@ -1,7 +1,7 @@
 import { createContext, useCallback, useEffect, useRef, useMemo, useState } from 'react';
-import { useQueryClient } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 import { isExpired } from 'react-jwt';
-import { num, RpcProvider, WalletAccount, shortString } from 'starknet';
+import { hash, num, RpcProvider, WalletAccount, shortString } from 'starknet';
 import { connect as starknetConnect, disconnect as starknetDisconnect } from 'starknetkit';
 import { ArgentMobileConnector, isInArgentMobileAppBrowser } from 'starknetkit/argentMobile';
 import { InjectedConnector } from 'starknetkit/injected';
@@ -53,6 +53,59 @@ const allowedMethods = [
   { 'Contract Address': appConfig.get('Starknet.Address.escrow'), selector: 'deposit' }
 ];
 
+const useAvnuRewards = (currentSession) => {
+  const [avnuRewardsEnabled, setAvnuRewardsEnabled] = useState(true);
+
+  const { data, isLoading, refetch: refreshFeeRewards } = useQuery(
+    ['walletRewards', currentSession?.accountAddress],
+    () => {
+      return gasless.fetchAccountsRewards(
+        currentSession?.accountAddress,
+        { baseUrl: appConfig.get('Api.avnu') }
+      );
+    },
+    { enabled: !!currentSession?.isDeployed && !!currentSession?.accountAddress }
+  );
+
+  const freeTxRemaining = useMemo(() => {
+    if (isLoading || !Array.isArray(data)) return null;
+
+    return data.reduce((acc, reward) => {
+      const isMatchingWhitelist = allowedMethods.every((allowed) => !!reward.whitelistedCalls.find((wlc) => (
+        Address.areEqual(wlc.contractAddress, allowed['Contract Address']) && wlc.entrypoint === hash.getSelectorFromName(allowed.selector)
+      )));
+      return acc + (isMatchingWhitelist ? reward.remainingTx : 0);
+    }, 0);
+  }, [data, isLoading]);
+
+  const requestMoreRewards = useCallback(async () => {
+    try {
+      const response = await api.requestFeeRewards();
+      if (response?.added) {
+        refreshFeeRewards();
+      } else {
+        // if gracefully failed, not eligible for any (more) rewards...
+        // do we want to show a message?
+        setAvnuRewardsEnabled(false);
+      }
+    } catch (e) {
+      // TODO: exponential backoff? eventually give up?
+      setTimeout(() => {
+        requestMoreRewards();
+      }, 15000);
+    }
+  }, [refreshFeeRewards]);
+
+  useEffect(() => {
+    if (freeTxRemaining === 0 && avnuRewardsEnabled) {
+      if (currentSession?.walletId === 'argentWebWallet' || appConfig.get('App.feeRewardsForAllWallets'))
+      requestMoreRewards();
+    }
+  }, [avnuRewardsEnabled, currentSession?.walletId, requestMoreRewards, freeTxRemaining]);
+
+  return useMemo(() => freeTxRemaining || 0, [freeTxRemaining]);
+};
+
 const SessionContext = createContext();
 
 export function SessionProvider({ children }) {
@@ -67,6 +120,8 @@ export function SessionProvider({ children }) {
   const dispatchSessionSuspended = useStore(s => s.dispatchSessionSuspended);
   const dispatchSessionResumed = useStore(s => s.dispatchSessionResumed);
   const dispatchSessionEnded = useStore(s => s.dispatchSessionEnded);
+
+  const feeRewards = useAvnuRewards(currentSession);
 
   const [readyForChildren, setReadyForChildren] = useState(false);
 
@@ -148,8 +203,7 @@ export function SessionProvider({ children }) {
         setConnectedAccount(Address.toStandard(connectorData.account));
         setConnectedChainId(chainId);
         setConnectedWalletId(wallet.id);
-        const newAccount = new WalletAccount(provider, wallet, '1');
-        setWalletAccount(newAccount);
+        setWalletAccount(new WalletAccount(provider, wallet, '1'));
 
         // Default to provider chainId if not set (starknetkit doesn't set for braavos)
         if (!isAllowedChain(chainId)) {
@@ -431,6 +485,39 @@ export function SessionProvider({ children }) {
     setStarknetSession(offchainSessionAccount);
   }, [currentSession, provider]);
 
+  const deployWithSubsidy = useCallback(async () => {
+    if ((currentSession?.walletId === 'argentWebWallet' || appConfig.get('App.feeRewardsForAllWallets')) && walletAccount?.walletProvider && !currentSession.isDeployed) {
+      try {
+        const deploymentData = await walletAccount.walletProvider.request({ type: 'wallet_deploymentData' });
+        try {
+          const deployment = await api.deployWallet({
+            calldata: [
+              deploymentData.class_hash,
+              deploymentData.salt,
+              '0x0',
+              `0x${deploymentData.calldata.length.toString(16)}`,
+              ...deploymentData.calldata
+            ]
+          });
+          if (deployment?.transaction_hash) {
+            await provider.waitForTransaction(deployment.transaction_hash);
+            upgradeInsecureSession();
+          }
+        } catch (e) {
+          console.log('e', e);
+          createAlert({
+            type: 'GenericAlert',
+            level: 'warning',
+            data: { content: `Subsidized account deployment failed: "${e.message}". Please refresh the page to try again.` },
+            duration: 0
+          });
+        }
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  }, [currentSession, upgradeInsecureSession, walletAccount]);
+
   // Start a session with the Argent Web Wallet
   useEffect(() => {
     if (!currentSession?.isDeployed) return;
@@ -479,31 +566,54 @@ export function SessionProvider({ children }) {
     }
   }, [error, createAlert, logout]);
 
-  const [isFeeAbstractionCompatible, setIsFeeAbstractionCompatible] = useState();
+  const [feeAbstractionCompatibility, setFeeAbstractionCompatibility] = useState();
+
   useEffect(() => {
     if (currentSession?.isDeployed) {
-      gasless.fetchAccountCompatibility(
-        currentSession.accountAddress,
-        { baseUrl: appConfig.get('Api.avnu') }
-      )
-      .then((response) => {
-        setIsFeeAbstractionCompatible(!!response?.isCompatible)
-      })
+      gasless.fetchAccountCompatibility(currentSession.accountAddress, { baseUrl: appConfig.get('Api.avnu') })
+        .then((compatibility) => setFeeAbstractionCompatibility(compatibility));
     } else {
-      setIsFeeAbstractionCompatible(false);
+      setFeeAbstractionCompatibility();
     }
   }, [currentSession.accountAddress, currentSession?.isDeployed]);
 
-  const payGasWithSwayIfPossible = useMemo(() => {
-    // check if we should use fee abstraction (is set to use sway or is set to default + using webwallet)
-    if (gameplay.feeToken === 'SWAY' || (!gameplay.feeToken && currentSession?.walletId === 'argentWebWallet')) {
-      return !!isFeeAbstractionCompatible;
+  // if logged in webwallet and not deployed, check payments endpoint... if there are payments, do subsidized deployment
+  useEffect(() => {
+    if (status === STATUSES.AUTHENTICATED && (currentSession?.walletId === 'argentWebWallet' || appConfig.get('App.feeRewardsForAllWallets')) && !currentSession.isDeployed) {
+      api.getStripePayments()
+        .then((payments) => {
+          if (payments?.length) {
+            deployWithSubsidy();
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+        })
     }
-    return false;
+  }, [currentSession?.walletId, currentSession?.isDeployed, deployWithSubsidy, status]);
+
+  const payGasWith = useMemo(() => {
+    if (authenticated && feeAbstractionCompatibility?.isCompatible) {
+      // if wallet has gas rewards available, use those
+      if (feeRewards > 0) {
+        return {
+          method: 'REWARDS',
+          gasConsumedOverhead: feeAbstractionCompatibility.gasConsumedOverhead,
+          dataGasConsumedOverhead: feeAbstractionCompatibility.dataGasConsumedOverhead
+        };
+
+      // check if we should use fee abstraction (is set to use sway or is set to default + using webwallet)
+      } else if (gameplay.feeToken === 'SWAY' || (!gameplay.feeToken && currentSession?.walletId === 'argentWebWallet')) {
+        return { method: 'SWAY' };
+      }
+    }
+    return null;
   }, [
+    authenticated,
     currentSession?.walletId,
     gameplay.feeToken,
-    isFeeAbstractionCompatible
+    feeRewards,
+    feeAbstractionCompatibility
   ]);
 
   // Retrieves an outside execution call and signs it
@@ -652,9 +762,10 @@ export function SessionProvider({ children }) {
       authenticating: [STATUSES.AUTHENTICATING, STATUSES.CONNECTING].includes(status),
       chainId: authenticated ? connectedChainId : null,
       connecting: connecting || !!promptLogin,
+      deployWithSubsidy,
+      payGasWith,
       getOutsideExecutionData,
       isDeployed: authenticated ? currentSession?.isDeployed : null,
-      payGasWithSwayIfPossible: authenticated ? payGasWithSwayIfPossible : null,
       provider,
       shouldUseSessionKeys,
       starknetSession,
