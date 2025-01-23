@@ -24,7 +24,7 @@ const useAgreementManager = (target, permission, agreementPath) => {
 
     if (agreement) {
       const agg = cloneDeep(agreement);
-      if (agg?.rate) {
+      if (agg?.rate > 0 || (agg?.rate === 0 && permission === Permission.IDS.LOT_USE)) {
         agg.rate_swayPerSec = agg.rate / TOKEN_SCALE[TOKEN.SWAY] / 3600; // (need this precision to avoid rounding issues)
         agg.rate = agg.rate / TOKEN_SCALE[TOKEN.SWAY] * 24;  // stored in microsway per hour, UI in sway/day
       }

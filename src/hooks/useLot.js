@@ -121,7 +121,7 @@ const useLot = (rawLotId) => {
         return p;
       }),
       // 'ContractAgreement', 'PrepaidAgreement' should be on lot record
-      // unclear what happens to 'WhitelistAgreement' or PublicPolicies
+      // unclear what happens to 'WhitelistAgreement'
     };
   }, [lotEntity?.uuid, isLoading, asteroid, blockTime, buildings, deposits, ships, objArrDataUpdatedAt]);
 

@@ -346,6 +346,9 @@ const FormAgreement = ({
     if (initialPeriod === '' || initialPeriod <= 0) return true;
     return false;
   }, [blockTime, initialPeriod, insufficientAssets, isTermination, currentAgreement]);
+
+  // NOTE: anywhere rate === 0 here (i.e. for "free" LOT_USE permissions), we could display
+  // the "refund period" stuff, but it is sort of irrelevant since there is no cost to refund
   return (
     <>
       <ActionDialogHeader

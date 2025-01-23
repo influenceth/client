@@ -273,7 +273,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
 
   const isIncomplete = useMemo(() => {
     if (policyType === Permission.POLICY_IDS.PREPAID) {
-      if (!details.rate || details.rate < 0) return true;
+      if (!(details.rate > 0 || (permission === Permission.IDS.USE_LOT && Number(details.rate) === 0))) return true;
       if (details.initialTerm < 0 || details.noticePeriod < 0) return true;
       return parseFloat(details.initialTerm) + parseFloat(details.noticePeriod) > Permission.MAX_POLICY_DURATION;
     }
@@ -471,12 +471,14 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                     isSelected={policyType === Permission.POLICY_IDS.PREPAID}>
                     <RadioCheckedIcon /><RadioUncheckedIcon /> {Permission.POLICY_TYPES[Permission.POLICY_IDS.PREPAID].name}
                   </Policy>
-                  <Policy
-                    onClick={(saving || entity?.label === Entity.IDS.ASTEROID) ? null : () => setPolicyType(Permission.POLICY_IDS.PUBLIC)}
-                    disabled={nativeBool(entity?.label === Entity.IDS.ASTEROID)}
-                    isSelected={policyType === Permission.POLICY_IDS.PUBLIC}>
-                    <RadioCheckedIcon /><RadioUncheckedIcon /> {Permission.POLICY_TYPES[Permission.POLICY_IDS.PUBLIC].name}
-                  </Policy>
+                  {entity?.label !== Entity.IDS.ASTEROID && (
+                    <Policy
+                      onClick={(saving || entity?.label === Entity.IDS.ASTEROID) ? null : () => setPolicyType(Permission.POLICY_IDS.PUBLIC)}
+                      disabled={nativeBool(entity?.label === Entity.IDS.ASTEROID)}
+                      isSelected={policyType === Permission.POLICY_IDS.PUBLIC}>
+                      <RadioCheckedIcon /><RadioUncheckedIcon /> {Permission.POLICY_TYPES[Permission.POLICY_IDS.PUBLIC].name}
+                    </Policy>
+                  )}
                   <Policy
                     onClick={saving ? null : () => setPolicyType(Permission.POLICY_IDS.CONTRACT)}
                     isSelected={policyType === Permission.POLICY_IDS.CONTRACT}>
