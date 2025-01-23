@@ -8,7 +8,7 @@ const useUnresolvedActivities = (entity) => {
   return useQuery(
     [ 'activities', entity?.label, Number(entity?.id), 'unresolved' ],
     () => api.getEntityActivities(entity, { unresolved: true }),
-    { enabled: !!entity }
+    { enabled: !!(entity?.id && entity?.label) }
   );
 };
 
