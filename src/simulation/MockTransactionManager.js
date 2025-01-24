@@ -98,7 +98,6 @@ const MockTransactionManager = () => {
             ...tx.vars,
             asteroid: { id: asteroidId, label: Entity.IDS.ASTEROID },
             building: { id: buildingId, label: Entity.IDS.BUILDING },
-            grace_period_end: nowSec() + 86400,
             caller: SIMULATION_CONFIG.accountAddress
           }),
           _entities: [

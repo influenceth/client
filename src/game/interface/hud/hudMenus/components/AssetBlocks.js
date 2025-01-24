@@ -381,10 +381,7 @@ export const BuildingBlock = ({ building, onSelectCrew, selectedCrew, setRef }) 
     }
 
     if (building?.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED) {
-      return [
-        Math.min(1, 1 - (building?.Building?.plannedAt + Building.GRACE_PERIOD - syncedTime) / Building.GRACE_PERIOD),
-        'error'
-      ];
+      return [1, 'error']; // TODO: different color?
     }
 
     if (building?.Building?.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION && currentConstructionAction) {
@@ -411,12 +408,6 @@ export const BuildingBlock = ({ building, onSelectCrew, selectedCrew, setRef }) 
         return `${formatFixed(100 * progress, 1)}% Full`
       }
       return 'Idle';
-    }
-    if (
-      building?.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED
-      && building?.Building?.plannedAt + Building.GRACE_PERIOD < syncedTime
-    ) {
-      return 'At Risk';
     }
     return `${Building.CONSTRUCTION_STATUS_LABELS[building?.Building?.status || 0]}`;
   }, [building, progress, syncedTime]);

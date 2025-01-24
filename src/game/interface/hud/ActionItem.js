@@ -219,7 +219,7 @@ const ActionItem = ({ data, getActivityConfig }) => {
   const item = useMemo(() => {
     return formatActionItem(
       data,
-      !['randomEvent', 'plan', 'agreement', 'pending'].includes(data.type) ? getActivityConfig(data)?.actionItem : {}
+      !['randomEvent', 'agreement', 'pending'].includes(data.type) ? getActivityConfig(data)?.actionItem : {}
     );
   }, [data, getActivityConfig]);
 
@@ -303,7 +303,7 @@ const ActionItem = ({ data, getActivityConfig }) => {
         {type === 'failed' && <FailedIcon />}
         {type === 'randomEvent' && <RandomEventIcon size="0.77em" />}
         {type === 'ready' && <ReadyIcon />}
-        {['pending', 'unready', 'unstarted', 'plan', 'agreement'].includes(type) && <span>{item.icon}</span>}
+        {['pending', 'unready', 'unstarted', 'agreement'].includes(type) && <span>{item.icon}</span>}
       </Icon>
       <Status>{statuses[item._expired ? '_expired' : item.type]}</Status>
       <Label>{item.label}</Label>
@@ -320,16 +320,6 @@ const ActionItem = ({ data, getActivityConfig }) => {
             <LiveTimer target={item.finishTime} maxPrecision={2}>
               {(formattedTime, isTimer) => isTimer ? <><b style={{ marginRight: 4 }}>Ready In</b> {formattedTime}</> : <b>{formattedTime}</b>}
             </LiveTimer>
-          )}
-          {/* TODO: would be nice for this to have different level warning intensity based on time-left and/or presence of inventory on the lot */}
-          {type === 'plan' && (
-            item.finishTime
-              ? (
-                <LiveTimer target={item.finishTime} maxPrecision={2}>
-                  {(formattedTime, isTimer) => isTimer ? <><b style={{ marginRight: 4 }}>Expiring In</b> {formattedTime}</> : <b>{formattedTime}</b>}
-                </LiveTimer>
-              )
-              : <b>Materials at Risk</b>
           )}
           {type === 'agreement' && (
             item.finishTime
@@ -355,7 +345,7 @@ const ActionItem = ({ data, getActivityConfig }) => {
               <span>{formatters.asteroidName(asteroid)}</span>
               {/* TODO: use <EntityName /> instead? */}
             </Location>
-            {(type === 'plan' || type === 'agreement') && (
+            {type === 'agreement' && (
               <IconButton
                 borderless
                 dataTip={data.hidden ? 'Unhide' : 'Hide'}

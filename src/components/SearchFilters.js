@@ -131,7 +131,6 @@ const actionItemStatusOptions = [
   { key: 'ready', label: 'Ready', initialValue: true },
   { key: 'unready', label: 'In Progress', initialValue: true },
   { key: 'unstarted', label: 'Scheduled', initialValue: true },
-  { key: 'plan', label: 'Planned', initialValue: true },
   { key: 'agreement', label: 'Expiring Agreements', initialValue: true },
 ];
 

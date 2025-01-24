@@ -90,10 +90,6 @@ const LotInfo = () => {
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
 
-  const gracePeriodPretty = useMemo(() => {
-    return moment(Date.now() - Building.GRACE_PERIOD * 1e3).fromNow(true)
-  }, []);
-
   const isZoomedToLot = zoomScene?.type === 'LOT';
 
   const toggleZoomScene = useCallback(() => {
@@ -126,9 +122,7 @@ const LotInfo = () => {
                   ? Building.TYPES[lot.building.Building.buildingType].description
                   : `
                     Construction sites are used to reserve a lot and stage materials there
-                    prior to building construction. They have a limited reservation period
-                    of ${gracePeriodPretty}, after which any materials already sent to the site
-                    become public.
+                    prior to building construction.
                   `}
               </Description>
             </HudMenuCollapsibleSection>

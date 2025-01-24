@@ -687,7 +687,6 @@ const PolicyPanels = ({ editable, entity }) => {
   const { accountAddress } = useSession();
   const { crew } = useCrewContext();
   const { data: lot } = useLot(entity?.label === Entity.IDS.BUILDING ? entity.Location.location.id : null);
-  const { isAtRisk } = useConstructionManager(lot?.id);
   const { data: entityController } = useHydratedCrew(entity?.Control?.controller?.id);
 
   const permPolicies = useMemo(
@@ -708,15 +707,6 @@ const PolicyPanels = ({ editable, entity }) => {
 
   const buildingOrSite = useMemo(() => lot?.building?.Building?.status < Building.CONSTRUCTION_STATUSES.OPERATIONAL ? 'Construction Site' : 'Building', [lot]);
 
-  const showStagingWarning = useMemo(() => {
-    if (isAtRisk) {
-      return 2;
-    } else if (lot && lot.building && lot.building.Building?.status < Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION) {
-      return 1;
-    }
-    return 0;
-  }, [lot]);
-
   // find out if any others have access to this asset via any perm
   const othersHaveAgreementsOnThisAsset = useMemo(() => {
     return !!Object.keys(permPolicies).find((permission) => {
@@ -731,8 +721,6 @@ const PolicyPanels = ({ editable, entity }) => {
   return (
     <div>
       {showLotWarning && <PermSummaryWarning style={{ paddingBottom: 10 }}><WarningIcon /><span>Lot not controlled. {buildingOrSite} is vulnerable to <EntityLink {...(lot?.Control?.controller || {})} />.</span></PermSummaryWarning>}
-      {showStagingWarning === 2 && <PermSummaryWarning><WarningIcon /><span>Staging Time expired. Construction Site is vulnerable to any crew.</span></PermSummaryWarning>}
-      {showStagingWarning === 1 && <PermSummary><WarningIcon /><span><LiveTimer target={lot?.building?.Building?.plannedAt + Building.GRACE_PERIOD} maxPrecision={2} /> Staging Time Remaining</span></PermSummary>}
 
       {othersHaveAgreementsOnThisAsset && (
         <PermSummary>
