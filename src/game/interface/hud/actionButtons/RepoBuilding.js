@@ -5,22 +5,13 @@ import ActionButton, { getCrewDisabledReason } from './ActionButton';
 import useRepoManager from '~/hooks/actionManagers/useRepoManager';
 import theme from '~/theme';
 
-const isVisible = ({ crew, isAtRisk, lot }) => {
-  if (!crew || !lot) return false;
+const isVisible = ({ accountCrewIds, lot }) => {
+  if (!accountCrewIds || !lot) return false;
 
-  if (lot?.building) {
-    // if i am the lot controller but not the building controller...
-    if (crew?.id === lot?.Control?.controller?.id && crew?.id !== lot?.building?.Control?.controller?.id) {
-      return true;
-    }
-
-    // if i am NOT the controller and the building is expired...
-    if (crew?.id !== lot?.building?.Control?.controller?.id && isAtRisk) {
-      return true;
-    }
-  }
-
-  return false;
+  // if there is a building and i am the lot controller but not the building controller...
+  return lot.building
+    && accountCrewIds.includes(lot.Control?.controller?.id)
+    && !accountCrewIds.includes(lot.building?.Control?.controller?.id);
 };
 
 const RepoBuilding = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
