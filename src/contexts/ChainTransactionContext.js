@@ -41,15 +41,34 @@ const customConfigs = {
   },
   AcceptPrepaidAgreement: {
     equalityTest: ['target.id', 'target.label', 'permission'],
-    getTransferConfig: ({ recipient, permission, permitted, target, termPrice }) => ({
-      amount: safeBigInt(termPrice),
-      recipient,
-      memo: [
-        Entity.packEntity(target),
-        permission,
-        Entity.packEntity(permitted),
-      ]
-    })
+    getTransferConfig: ({ recipient, permission, permitted, repossession, target, termPrice }) => {
+      const transfers = [];
+      if (repossession?.price > 0 && repossession?.recipient) {
+        transfers.push(
+          {
+            amount: safeBigInt(repossession.price),
+            recipient: repossession.recipient,
+            memo: [
+              Entity.packEntity(target),
+              permission,
+              Entity.packEntity(permitted),
+            ]
+          }
+        )
+      }
+      transfers.push(
+        {
+          amount: safeBigInt(termPrice),
+          recipient,
+          memo: [
+            Entity.packEntity(target),
+            permission,
+            Entity.packEntity(permitted),
+          ]
+        }
+      )
+      return transfers;
+    }
   },
   AnnotateEvent: {
     equalityTest: ['transaction_hash', 'log_index'],
@@ -191,6 +210,11 @@ const customConfigs = {
   // TODO: could do fancier conditional multisystems if that would help
   // i.e. `multisystemCalls: [{ name: 'InitializeAsteroid', cond: (a) => !a.AsteroidProof.used }, 'ScanAsteroid'],`
 
+  AcceptPrepaidAgreementAndRepossess: {
+    multisystemCalls: ['AcceptPrepaidAgreement', 'RepossessBuilding'],
+    equalityTest: ['target.id', 'target.label', 'permission'],
+    isVirtual: true
+  },
   BulkPurchaseAdalians: {
     repeatableSystemCall: 'PurchaseAdalian',
     getRepeatTally: (vars) => Math.max(1, Math.floor(vars.tally)),

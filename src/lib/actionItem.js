@@ -864,6 +864,7 @@ const formatAsTx = (item) => {
       break;
     }
 
+    case 'AcceptPrepaidAgreementAndRepossess':
     case 'AcceptPrepaidAgreement': {
       formatted.icon = <PermissionIcon />;
       formatted.label = 'Prepaid Lease Agreement';

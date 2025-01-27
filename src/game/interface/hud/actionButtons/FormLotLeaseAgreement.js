@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Permission } from '@influenceth/sdk';
+import { Building, Permission } from '@influenceth/sdk';
 
 import { FormLotAgreementIcon, SwayIcon } from '~/components/Icons';
 import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
@@ -55,16 +55,16 @@ const FormLotLeaseAgreement = ({ accountCrewIds, blockTime, lot, permission, sim
     if (lot?.building) {
       const lastAgreementEndTime = lot?.PrepaidAgreements?.sort((a, b) => b.endTime - a.endTime)[0]?.endTime;
       const salvageRightsPrice = Permission.getLotAuctionPrice(lastAgreementEndTime, blockTime);
-      if (salvageRightsPrice) {
-        return {
-          label: (
-            <>
-              Acquire Salvage Rights (<SwayIcon />{formatFixed(salvageRightsPrice)})<br/>
-              and Lease Lot (<SwayIcon />{leaseRate} / day)
-            </>
-          ),
-        };
-      }
+      return {
+        label: (
+          <>
+            Repossess
+            {lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL ? ' Building' : ' Construction Site'}
+            {salvageRightsPrice > 0 ? <> (<SwayIcon />{formatFixed(salvageRightsPrice)})</> : null}<br/>
+            and Lease Lot (<SwayIcon />{leaseRate} / day)
+          </>
+        ),
+      };
     }
 
     // else (no building or no expired lease), just lease the lot

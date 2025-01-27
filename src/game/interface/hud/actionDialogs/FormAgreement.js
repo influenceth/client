@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Entity, Permission, Time } from '@influenceth/sdk';
+import { Building, Entity, Permission, Time } from '@influenceth/sdk';
 import styled from 'styled-components';
 import Clipboard from 'react-clipboard.js';
 import numeral from 'numeral';
@@ -21,6 +21,7 @@ import {
   LotInputBlock,
   BuildingInputBlock,
   ShipInputBlock,
+  ProgressBarSection,
 } from './components';
 import { ActionDialogInner } from '../ActionDialog';
 import actionStages from '~/lib/actionStages';
@@ -44,6 +45,11 @@ const FormSection = styled.div`
   &:first-child {
     margin-top: 0px;
   }
+`;
+
+const MouseoverWarning = styled.span`
+  & b { color: ${theme.colors.error}; }
+  & em { font-weight: bold; font-style: normal; color: white; }
 `;
 
 const InputLabel = styled.div`
@@ -141,13 +147,14 @@ const FormAgreement = ({
   isExtension,
   isTermination,
   permission,
+  repossession,
   stage,
   ...props
 }) => {
   const { provider } = useSession();
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
-  const { currentAgreement, currentPolicy, cancelAgreement, enterAgreement, extendAgreement, pendingChange } = agreementManager;
+  const { currentAgreement, currentPolicy, cancelAgreement, enterAgreement, enterAgreementAndReposess, extendAgreement, pendingChange } = agreementManager;
   const { data: asteroid } = useAsteroid(locationsArrToObj(entity?.Location?.locations || []).asteroidId);
   const blockTime = useBlockTime();
   const { crew } = useCrewContext();
@@ -220,10 +227,10 @@ const FormAgreement = ({
   const totalLeaseCost = useMemo(() => {
     const p = initialPeriod || 0;
     const r = currentPolicy?.policyDetails?.rate || 0;
+    const repossessionPrice = repossession?.price || 0;
     const precision = TOKEN_SCALE[TOKEN.SWAY] * 1e3; // TODO: check contracts for what should actually use here
-    return Math.round(p * 24 * r * precision) / precision;
-    ;
-  }, [initialPeriod, currentPolicy]);
+    return Math.round((repossessionPrice + p * 24 * r) * precision) / precision;
+  }, [initialPeriod, currentPolicy, repossession?.price]);
 
   const insufficientAssets = useMemo(
     () => safeBigInt(Math.ceil(isTermination ? refundableAmount : totalLeaseCost)) > swayBalance,
@@ -282,10 +289,13 @@ const FormAgreement = ({
     const recipient = controller?.Crew?.delegatedTo;
     // TODO: should these conversions be in useAgreementManager?
     const term = daysToSeconds(initialPeriod);
-    console.log({ totalLeaseCost, x: totalLeaseCost * TOKEN_SCALE[TOKEN.SWAY] });
     const termPrice = Math.ceil(totalLeaseCost * TOKEN_SCALE[TOKEN.SWAY]);
-    enterAgreement({ recipient, term, termPrice });
-  }, [controller?.Crew?.delegatedTo, enterAgreement, initialPeriod, totalLeaseCost]);
+    if (repossession) {
+      enterAgreementAndReposess({ recipient, term, termPrice, repossession });
+    } else {
+      enterAgreement({ recipient, term, termPrice });
+    }
+  }, [controller?.Crew?.delegatedTo, enterAgreement, enterAgreementAndReposess, initialPeriod, repossession, totalLeaseCost]);
 
   const onExtendAgreement = useCallback(() => {
     const recipient = controller?.Crew?.delegatedTo;
@@ -335,10 +345,10 @@ const FormAgreement = ({
       status: stage === actionStages.NOT_STARTED
         ? (policyType === Permission.POLICY_IDS.PREPAID ? 'Prepaid Lease' : 'Custom Contract')
         : undefined,
-      goLabel: 'Create Agreement',
+      goLabel: repossession ? 'Create Agreement & Repossess' : 'Create Agreement',
       onGo: onEnterAgreement
     }
-  }, [currentAgreement?.noticePeriod, currentPolicy?.policyType, entity, isExtension, isTermination, onEnterAgreement, onExtendAgreement, onTerminateAgreement, stage]);
+  }, [currentAgreement?.noticePeriod, currentPolicy?.policyType, entity, isExtension, isTermination, onEnterAgreement, onExtendAgreement, onTerminateAgreement, repossession, stage]);
 
   const disableGo = useMemo(() => {
     if (insufficientAssets) return true;
@@ -349,6 +359,7 @@ const FormAgreement = ({
 
   // NOTE: anywhere rate === 0 here (i.e. for "free" LOT_USE permissions), we could display
   // the "refund period" stuff, but it is sort of irrelevant since there is no cost to refund
+
   return (
     <>
       <ActionDialogHeader
@@ -360,6 +371,7 @@ const FormAgreement = ({
         stage={stage} />
 
       <ActionDialogBody>
+
         <FlexSection style={{ alignItems: 'flex-start' }}>
           <FlexSectionBlock
             title="Permission Target"
@@ -491,6 +503,37 @@ const FormAgreement = ({
           )}
         </FlexSection>
 
+        {repossession && (
+          <ProgressBarSection
+            finishTime={repossession.finishTime}
+            isCountDown
+            overrides={{
+              barColor: theme.colors.glowGreen,
+              left: <><SwayIcon />{formatFixed(repossession.price)}</>
+            }}
+            startTime={repossession.startTime}
+            stage={actionStages.IN_PROGRESS}
+            title="Repossession Auction"
+            totalTime={repossession.finishTime - repossession.startTime}
+            tooltip={(
+              <MouseoverWarning>
+                The previous lot-use agreement at this location has expired. Rights
+                to repossess the {repossession.noun}{' '}remaining on the lot are 
+                governed by a Dutch auction.
+                <br/><br/>
+                Through the course of the auction, the set auction price will continue
+                to decrease exponentially until a bid is finally placed. The first
+                willing to pay the auction price and start a new lot-use agreement
+                will acquire control of the lot, as well as the abandoned {repossession.noun}.
+                <br/><br/>
+                The auction price paid will be sent to the original owner as compensation.
+                If the auction ends without any bids, repossession rights will be free to
+                whoever forms the next lot-use agreement.
+              </MouseoverWarning>
+            )}
+          />
+        )}
+
         <FlexSection style={{ alignItems: 'flex-start' }}>
           <FlexSectionInputBlock
             title="Agreement Details"
@@ -499,7 +542,7 @@ const FormAgreement = ({
             <Alert scheme={alertScheme}>
               <div>
                 {entity.label === Entity.IDS.LOT
-                  ? <><LotControlIcon /> Lot Control (Exclusive)</>
+                  ? <><LotControlIcon /> Lot Control (Exclusive){repossession ? <> + Repossession Rights</> : ''}</>
                   : <><PermissionIcon /> {Permission.TYPES[permission].name}</>
                 }
               </div>
@@ -599,7 +642,9 @@ const FormAgreement = ({
 };
 
 const Wrapper = ({ entity: entityId, permission, isExtension, agreementPath, ...props }) => {
-  const { crewIsLoading } = useCrewContext();
+  const blockTime = useBlockTime();
+  const { crew: buildingOwnerCrew } = useCrew(permission === Permission.IDS.USE_LOT ? lot.building?.Control?.controller?.id : undefined)
+  const { accountCrewIds, crewIsLoading } = useCrewContext();
   const { data: asset, isLoading: assetIsLoading } = useEntity(entityId?.label === Entity.IDS.LOT ? undefined : entityId);
   const { data: lot, isLoading: lotIsLoading } = useLot(entityId?.label === Entity.IDS.LOT ? entityId?.id : undefined);
   const entity = asset || lot;
@@ -607,6 +652,22 @@ const Wrapper = ({ entity: entityId, permission, isExtension, agreementPath, ...
 
   const agreementManager = useAgreementManager(entity, permission, agreementPath);
   const stage = agreementManager.pendingChange ? actionStages.STARTING : actionStages.NOT_STARTED;
+
+  const repossession = useMemo(() => {
+    if (entityId?.label === Entity.IDS.LOT && permission === Permission.IDS.USE_LOT) {
+      if (lot?.building && !accountCrewIds.includes(lot.building?.Control?.controller?.id)) {
+        const lastAgreementEndTime = lot?.PrepaidAgreements?.sort((a, b) => b.endTime - a.endTime)[0]?.endTime;
+        return {
+          price: Permission.getLotAuctionPrice(lastAgreementEndTime, blockTime),
+          recipient: buildingOwnerCrew?.Crew?.delegatedTo,
+          startTime: lastAgreementEndTime,
+          finishTime: lastAgreementEndTime + Permission.REPOSSESSION_AUCTION_DURATION,
+          noun: lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL ? 'building' : 'construction site'
+        }
+      }
+    }
+    return null;
+  }, [accountCrewIds, blockTime, buildingOwnerCrew?.Crew?.delegatedTo, entityId, lot, permission]);
 
   // handle auto-closing on any status change
   const lastStatus = useRef();
@@ -634,6 +695,7 @@ const Wrapper = ({ entity: entityId, permission, isExtension, agreementPath, ...
         entity={entity}
         agreementManager={agreementManager}
         permission={permission}
+        repossession={repossession}
         isExtension={isExtension}
         stage={stage}
         {...props} />

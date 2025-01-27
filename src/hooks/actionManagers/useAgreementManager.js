@@ -62,6 +62,16 @@ const useAgreementManager = (target, permission, agreementPath) => {
     );
   }, [currentPolicy, execute, meta, payload]);
 
+  const enterAgreementAndReposess = useCallback((details = {}) => {
+    if (currentPolicy.policyType === Permission.POLICY_IDS.PREPAID) {
+      execute(
+        'AcceptPrepaidAgreementAndRepossess',
+        { ...payload, ...details },
+        meta
+      );
+    }
+  }, [currentPolicy, execute, meta, payload]);
+
   const extendAgreement = useCallback((details = {}) => {
     const { term, ...params } = details;
     execute(
@@ -107,6 +117,7 @@ const useAgreementManager = (target, permission, agreementPath) => {
     currentPolicy,
 
     enterAgreement,
+    enterAgreementAndReposess,
     extendAgreement,
     cancelAgreement,
     transferAgreement,

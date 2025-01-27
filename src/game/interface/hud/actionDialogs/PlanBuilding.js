@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import styled from 'styled-components';
 import { Building, Crewmate, Lot, Permission } from '@influenceth/sdk';
 
 import { PlanBuildingIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
-import theme from '~/theme';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import { reactBool, formatTimer, getCrewAbilityBonuses } from '~/lib/utils';
 
@@ -22,7 +20,6 @@ import {
   BuildingImage,
   EmptyBuildingImage,
   SitePlanSelectionDialog,
-  ProgressBarSection,
   TravelBonusTooltip,
   ActionDialogBody,
   getBuildingRequirements,
@@ -33,11 +30,6 @@ import {
 import actionStage from '~/lib/actionStages';
 import useSimulationState from '~/hooks/useSimulationState';
 import useSimulationEnabled from '~/hooks/useSimulationEnabled';
-
-const MouseoverWarning = styled.span`
-  & b { color: ${theme.colors.error}; }
-  & em { font-weight: bold; font-style: normal; color: white; }
-`;
 
 const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const { currentConstructionAction, planConstruction } = constructionManager;

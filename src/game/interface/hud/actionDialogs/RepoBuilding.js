@@ -4,8 +4,7 @@ import { Building } from '@influenceth/sdk';
 
 import {
   PermissionIcon,
-  TakeControlIcon,
-  WarningIcon
+  TakeControlIcon
 } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import theme, { hexToRGB } from '~/theme';
@@ -19,7 +18,6 @@ import {
 
   FlexSection,
   FlexSectionInputBlock,
-  ProgressBarSection,
   ActionDialogBody,
   BuildingInputBlock,
   FlexSectionSpacer,
