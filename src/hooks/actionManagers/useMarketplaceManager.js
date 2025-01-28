@@ -85,11 +85,11 @@ const useMarketplaceManager = (buildingId) => {
   );
 
   const fillBuyOrders = useCallback(
-    ({ isCancellation, origin, originSlot, fillOrders }) => {
+    ({ isCancellation, origin, originSlot, fillOrders }, skipEscrow) => {
       if (!fillOrders?.length) return;
 
       return execute(
-        'EscrowWithdrawalAndFillBuyOrders',
+        skipEscrow ? 'ForceCancelBuyOrders' : 'EscrowWithdrawalAndFillBuyOrders',
         fillOrders.map((order) => ({
           depositCaller: order.initialCaller || crew?.Crew?.delegatedTo,
           seller_account: crew?.Crew?.delegatedTo,
@@ -156,28 +156,31 @@ const useMarketplaceManager = (buildingId) => {
   );
 
   const cancelBuyOrder = useCallback(
-    ({ amount, buyer, price, product, destination, destinationSlot, initialCaller, makerFee }) => {
-      fillBuyOrders({
-        isCancellation: true,
-        origin: destination,
-        originSlot: destinationSlot,
-        fillOrders: [
-          {
-            initialCaller,
-            makerFee,
-            paymentsUnscaled: {
-              toExchange: 0,
-              toPlayer: Order.getBuyOrderDeposit(amount * Math.floor(price * TOKEN_SCALE[TOKEN.SWAY]), makerFee)
-            },
-            fillAmount: amount,
-            crew: buyer,
-            price: price,
-            storage: destination,
-            storageSlot: destinationSlot,
-            product,
-          }
-        ]
-      });
+    ({ amount, buyer, price, product, destination, destinationSlot, initialCaller, makerFee }, skipEscrow) => {
+      fillBuyOrders(
+        {
+          isCancellation: true,
+          origin: destination,
+          originSlot: destinationSlot,
+          fillOrders: [
+            {
+              initialCaller,
+              makerFee,
+              paymentsUnscaled: {
+                toExchange: 0,
+                toPlayer: Order.getBuyOrderDeposit(amount * Math.floor(price * TOKEN_SCALE[TOKEN.SWAY]), makerFee)
+              },
+              fillAmount: amount,
+              crew: buyer,
+              price: price,
+              storage: destination,
+              storageSlot: destinationSlot,
+              product,
+            }
+          ]
+        },
+        skipEscrow
+      );
     },
     [fillBuyOrders]
   );

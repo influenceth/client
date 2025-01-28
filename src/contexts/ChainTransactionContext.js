@@ -356,6 +356,13 @@ const customConfigs = {
     equalityTest: true, // TODO: ...
     isVirtual: true
   },
+  ForceCancelBuyOrders: {
+    multisystemCalls: (orders) => {
+      return orders.map((vars) => ({ system: 'CancelBuyOrder', vars }));
+    },
+    equalityTest: ['storage.id', 'storageSlot'],
+    isVirtual: true
+  },
   FillSellOrder: {
     getTransferConfig: (vars) => {
       // memo === order path

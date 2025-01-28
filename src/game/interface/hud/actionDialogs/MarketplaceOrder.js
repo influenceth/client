@@ -218,7 +218,7 @@ const MarketplaceOrder = ({
     orderStatus,
     currentOrder = {}
   } = manager;
-  const { crew, crewCan } = useCrewContext();
+  const { accountCrewIds, crew, crewCan } = useCrewContext();
   const { data: orders, refetch } = useOrderList(exchange?.id, resourceId);
 
   const [buyOrders, sellOrders] = useMemo(() => ([
@@ -272,6 +272,13 @@ const MarketplaceOrder = ({
   const storageLotId = useMemo(() => storage && locationsArrToObj(storage?.Location?.locations || []).lotId, [storage]);
   const { data: storageLot } = useLot(storageLotId);
   const storageInventory = useMemo(() => (storage?.Inventories || []).find((i) => i.slot === storageSelection?.slot), [storage, storageSelection]);
+
+  const isForcedCancellation = useMemo(() => {
+    if (isCancellation && (crew?.id !== preselect?.crew?.id)) {
+      return accountCrewIds.includes(storage?.Control?.controller?.id);
+    }
+    return false;
+  }, [accountCrewIds, crew?.id, isCancellation, preselect?.crew?.id, storage]);
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
@@ -478,7 +485,7 @@ const MarketplaceOrder = ({
           destinationSlot: storageInventory?.slot,
           initialCaller: cancellationInitialCaller,
           makerFee: cancellationMakerFee
-        })
+        }, isForcedCancellation)
       } else {
         cancelSellOrder({
           amount: quantityToUnits(quantity),
@@ -673,12 +680,13 @@ const MarketplaceOrder = ({
     }
     if (isCancellation) {
       a.icon = <CancelLimitOrderIcon />;
-      a.label = `Cancel ${a.label}`;
+      a.label = `${isForcedCancellation ? 'Force Cancel' : 'Cancel'} ${a.label}`;
     }
     return a;
   }, [mode, type, isCancellation]);
 
   const goLabel = useMemo(() => {
+    if (isForcedCancellation) return `Force Cancel Order`;
     if (isCancellation) return `Cancel Order`;
     if (type === 'market' && mode === 'buy') return `Market Buy`;
     if (type === 'market' && mode === 'sell') return `Market Sell`;
@@ -694,7 +702,7 @@ const MarketplaceOrder = ({
     if (type === 'market' && mode === 'buy') perm = Permission.IDS.BUY;
     if (type === 'market' && mode === 'sell') perm = Permission.IDS.SELL;
     return crewCan(perm, exchange);
-  }, [crewCan, exchange, mode, type, isCancellation]);
+  }, [crewCan, exchange, mode, type, isCancellation, isForcedCancellation]);
   
   return (
     <>
@@ -911,7 +919,7 @@ const MarketplaceOrder = ({
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}
         disabled={
-          (isCancellation && orderCrew?.id !== crew?.id) ||
+          (isCancellation && !(isForcedCancellation || orderCrew?.id === crew?.id)) ||
           !isCancellation && (
             !storageSelection || !quantity || !total
             || exceedsOtherSide || insufficientAssets || insufficientCapacity
