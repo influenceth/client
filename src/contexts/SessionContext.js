@@ -595,7 +595,7 @@ export function SessionProvider({ children }) {
   const payGasWith = useMemo(() => {
     if (authenticated && feeAbstractionCompatibility?.isCompatible) {
       // if wallet has gas rewards available, use those
-      if (feeRewards > 0) { // TODO: remove `false &&`
+      if (feeRewards > 0) {
         return {
           method: 'REWARDS',
           gasConsumedOverhead: feeAbstractionCompatibility.gasConsumedOverhead,
