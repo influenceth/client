@@ -192,7 +192,6 @@ const MarketplaceOrder = ({
   manager,
   stage,
   isCancellation,
-  cancellationInitialCaller,
   cancellationMakerFee,
   mode,
   type,
@@ -476,20 +475,22 @@ const MarketplaceOrder = ({
   const onSubmitOrder = useCallback(() => {
     if (isCancellation) {
       if (mode === 'buy') {
+        const cancelOrderId = `${orderCrew?.uuid}.${exchange?.uuid}.${mode === 'buy' ? Order.IDS.LIMIT_BUY : Order.IDS.LIMIT_SELL}.${resourceId}.${limitPrice}.${storage?.uuid}.${storageInventory?.slot}`;
+        const orderToCancel = orders.find((o) => cancelOrderId === `${o.crew?.uuid}.${o.entity?.uuid}.${o.orderType}.${o.product}.${o.price}.${o.storage?.uuid}.${o.storageSlot}`);
         cancelBuyOrder({
           amount: quantityToUnits(quantity),
-          buyer: { id: crew?.id, label: crew?.label },
+          buyer: { id: orderCrew?.id, label: orderCrew?.label },
           price: limitPrice,
           product: resourceId,
           destination: { id: storage?.id, label: storage?.label },
           destinationSlot: storageInventory?.slot,
-          initialCaller: cancellationInitialCaller,
+          initialCaller: orderToCancel?.initialCaller,
           makerFee: cancellationMakerFee
         }, isForcedCancellation)
       } else {
         cancelSellOrder({
           amount: quantityToUnits(quantity),
-          seller: { id: crew?.id, label: crew?.label },
+          seller: { id: orderCrew?.id, label: orderCrew?.label },
           product: resourceId,
           price: limitPrice,
           origin: { id: storage?.id, label: storage?.label },
@@ -533,7 +534,7 @@ const MarketplaceOrder = ({
         });
       }
     }
-  }, [cancellationInitialCaller, feeTotal, limitPrice, marketFills, quantity, quantityToUnits, resourceId, storage, storageInventory]);
+  }, [feeTotal, limitPrice, marketFills, quantity, quantityToUnits, resourceId, storage, storageInventory]);
 
   // handle auto-closing
   const lastStatus = useRef();

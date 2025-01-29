@@ -85,14 +85,14 @@ const useMarketplaceManager = (buildingId) => {
   );
 
   const fillBuyOrders = useCallback(
-    ({ isCancellation, origin, originSlot, fillOrders }, skipEscrow) => {
+    ({ isCancellation, origin, originSlot, fillOrders }) => {
       if (!fillOrders?.length) return;
 
       return execute(
-        skipEscrow ? 'ForceCancelBuyOrders' : 'EscrowWithdrawalAndFillBuyOrders',
+        'EscrowWithdrawalAndFillBuyOrders',
         fillOrders.map((order) => ({
           depositCaller: order.initialCaller || crew?.Crew?.delegatedTo,
-          seller_account: crew?.Crew?.delegatedTo,
+          seller_account: order?.sellerOverride || crew?.Crew?.delegatedTo,
           exchange_owner_account: exchangeController?.Crew?.delegatedTo,
           makerFee: order.makerFee / Order.FEE_SCALE,
           payments: {
@@ -124,7 +124,7 @@ const useMarketplaceManager = (buildingId) => {
     async ({ destination, destinationSlot, fillOrders }) => {
       if (!fillOrders?.length) return;
       const sellerCrewIds = fillOrders.map((order) => order.crew?.id);
-      const sellerCrews = await api.getEntities({ ids: sellerCrewIds, label: Entity.IDS.CREW, component: 'Crew' })
+      const sellerCrews = await api.getEntities({ ids: sellerCrewIds, label: Entity.IDS.CREW, component: 'Crew' });
       execute(
         'BulkFillSellOrder',
         fillOrders.map((order) => ({
@@ -156,7 +156,7 @@ const useMarketplaceManager = (buildingId) => {
   );
 
   const cancelBuyOrder = useCallback(
-    ({ amount, buyer, price, product, destination, destinationSlot, initialCaller, makerFee }, skipEscrow) => {
+    ({ amount, buyer, price, product, destination, destinationSlot, initialCaller, makerFee }, isForced) => {
       fillBuyOrders(
         {
           isCancellation: true,
@@ -164,6 +164,7 @@ const useMarketplaceManager = (buildingId) => {
           originSlot: destinationSlot,
           fillOrders: [
             {
+              sellerOverride: isForced ? initialCaller : undefined,
               initialCaller,
               makerFee,
               paymentsUnscaled: {
@@ -178,8 +179,7 @@ const useMarketplaceManager = (buildingId) => {
               product,
             }
           ]
-        },
-        skipEscrow
+        }
       );
     },
     [fillBuyOrders]
