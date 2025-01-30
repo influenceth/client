@@ -154,7 +154,7 @@ const FormAgreement = ({
   const { provider } = useSession();
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
-  const { currentAgreement, currentPolicy, cancelAgreement, enterAgreement, enterAgreementAndReposess, extendAgreement, pendingChange } = agreementManager;
+  const { currentAgreement, currentPolicy, cancelAgreement, enterAgreement, enterAgreementAndRepossess, extendAgreement, pendingChange } = agreementManager;
   const { data: asteroid } = useAsteroid(locationsArrToObj(entity?.Location?.locations || []).asteroidId);
   const blockTime = useBlockTime();
   const { crew } = useCrewContext();
@@ -227,14 +227,17 @@ const FormAgreement = ({
   const totalLeaseCost = useMemo(() => {
     const p = initialPeriod || 0;
     const r = currentPolicy?.policyDetails?.rate || 0;
-    const repossessionPrice = repossession?.price || 0;
     const precision = TOKEN_SCALE[TOKEN.SWAY] * 1e3; // TODO: check contracts for what should actually use here
-    return Math.round((repossessionPrice + p * 24 * r) * precision) / precision;
-  }, [initialPeriod, currentPolicy, repossession?.price]);
+    return Math.round(p * 24 * r * precision) / precision;
+  }, [initialPeriod, currentPolicy]);
+
+  const totalTransactionCost = useMemo(() => {
+    return totalLeaseCost + (repossession?.price || 0);
+  }, [totalLeaseCost, repossession?.price]);
 
   const insufficientAssets = useMemo(
-    () => safeBigInt(Math.ceil(isTermination ? refundableAmount : totalLeaseCost)) > swayBalance,
-    [swayBalance, refundableAmount, totalLeaseCost, isTermination]
+    () => safeBigInt(Math.ceil(isTermination ? refundableAmount : totalTransactionCost)) > swayBalance,
+    [swayBalance, refundableAmount, totalTransactionCost, isTermination]
   );
 
   const [eligible, setEligible] = useState(false);
@@ -291,11 +294,21 @@ const FormAgreement = ({
     const term = daysToSeconds(initialPeriod);
     const termPrice = Math.ceil(totalLeaseCost * TOKEN_SCALE[TOKEN.SWAY]);
     if (repossession) {
-      enterAgreementAndReposess({ recipient, term, termPrice, repossession });
+      enterAgreementAndRepossess({
+        recipient,
+        term,
+        termPrice,
+        repossession: {
+          building: repossession.target,
+          price: (repossession.price || 0) * TOKEN_SCALE[TOKEN.SWAY],
+          recipient: repossession.recipient,
+          recipientCrew: repossession.recipientCrew
+        }
+      });
     } else {
       enterAgreement({ recipient, term, termPrice });
     }
-  }, [controller?.Crew?.delegatedTo, enterAgreement, enterAgreementAndReposess, initialPeriod, repossession, totalLeaseCost]);
+  }, [controller?.Crew?.delegatedTo, enterAgreement, enterAgreementAndRepossess, initialPeriod, repossession, totalLeaseCost]);
 
   const onExtendAgreement = useCallback(() => {
     const recipient = controller?.Crew?.delegatedTo;
@@ -503,7 +516,7 @@ const FormAgreement = ({
           )}
         </FlexSection>
 
-        {repossession && (
+        {repossession?.price > 0 && (
           <ProgressBarSection
             finishTime={repossession.finishTime}
             isCountDown
@@ -598,7 +611,7 @@ const FormAgreement = ({
                         <div style={{ position: 'relative', top: 4 }}>
                           <span style={{ position: 'relative', bottom: 4 }}>Total:</span>
                           <span style={{ color: 'white', display: 'inline-flex', fontSize: '32px', height: '32px', lineHeight: '32px' }}>
-                            <SwayIcon /> <span>{formatFixed(totalLeaseCost)}</span>
+                            <SwayIcon /> <span>{formatFixed(totalTransactionCost)}</span>
                           </span>
                         </div>
                       </div>
@@ -643,11 +656,13 @@ const FormAgreement = ({
 
 const Wrapper = ({ entity: entityId, permission, isExtension, agreementPath, ...props }) => {
   const blockTime = useBlockTime();
-  const { crew: buildingOwnerCrew } = useCrew(permission === Permission.IDS.USE_LOT ? lot.building?.Control?.controller?.id : undefined)
   const { accountCrewIds, crewIsLoading } = useCrewContext();
   const { data: asset, isLoading: assetIsLoading } = useEntity(entityId?.label === Entity.IDS.LOT ? undefined : entityId);
-  const { data: lot, isLoading: lotIsLoading } = useLot(entityId?.label === Entity.IDS.LOT ? entityId?.id : undefined);
-  const entity = asset || lot;
+  const { data: lot, isLoading: lotIsLoading  } = useLot(entityId?.label === Entity.IDS.LOT ? entityId?.id : undefined);
+  const lastAgreement = useMemo(() => lot?.PrepaidAgreements?.sort((a, b) => b.endTime - a.endTime)?.[0], [lot?.PrepaidAgreements]);
+  const { data: lastAgreementCrew } = useCrew(lastAgreement?.permitted?.id);
+
+  const entity = useMemo(() => asset || lot, [asset, lot]);
   const entityIsLoading = assetIsLoading || lotIsLoading;
 
   const agreementManager = useAgreementManager(entity, permission, agreementPath);
@@ -655,19 +670,21 @@ const Wrapper = ({ entity: entityId, permission, isExtension, agreementPath, ...
 
   const repossession = useMemo(() => {
     if (entityId?.label === Entity.IDS.LOT && permission === Permission.IDS.USE_LOT) {
-      if (lot?.building && !accountCrewIds.includes(lot.building?.Control?.controller?.id)) {
-        const lastAgreementEndTime = lot?.PrepaidAgreements?.sort((a, b) => b.endTime - a.endTime)[0]?.endTime;
+      if (lot?.building && !accountCrewIds.includes(lastAgreementCrew?.id)) {
+        const lastAgreementEndTime = lastAgreement?.endTime || 0;
         return {
           price: Permission.getLotAuctionPrice(lastAgreementEndTime, blockTime),
-          recipient: buildingOwnerCrew?.Crew?.delegatedTo,
-          startTime: lastAgreementEndTime,
+          recipient: lastAgreementCrew?.Crew?.delegatedTo,
+          recipientCrew: { id: lastAgreementCrew?.id, label: lastAgreementCrew?.label },
+          startTime: lastAgreementEndTime || 0,
           finishTime: lastAgreementEndTime + Permission.REPOSSESSION_AUCTION_DURATION,
-          noun: lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL ? 'building' : 'construction site'
+          noun: lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL ? 'building' : 'construction site',
+          target: { id: lot.building.id, label: lot.building.label },
         }
       }
     }
     return null;
-  }, [accountCrewIds, blockTime, buildingOwnerCrew?.Crew?.delegatedTo, entityId, lot, permission]);
+  }, [accountCrewIds, blockTime, entityId, lastAgreementCrew?.Crew?.delegatedTo, lot?.building, permission]);
 
   // handle auto-closing on any status change
   const lastStatus = useRef();

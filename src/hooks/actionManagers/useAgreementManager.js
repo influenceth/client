@@ -62,11 +62,15 @@ const useAgreementManager = (target, permission, agreementPath) => {
     );
   }, [currentPolicy, execute, meta, payload]);
 
-  const enterAgreementAndReposess = useCallback((details = {}) => {
+  const enterAgreementAndRepossess = useCallback((details = {}) => {
     if (currentPolicy.policyType === Permission.POLICY_IDS.PREPAID) {
       execute(
         'AcceptPrepaidAgreementAndRepossess',
-        { ...payload, ...details },
+        {
+          ...payload,
+          ...details,
+          building: details.repossession?.building,
+        },
         meta
       );
     }
@@ -101,6 +105,7 @@ const useAgreementManager = (target, permission, agreementPath) => {
     () => {
       if (getPendingTx) {
         return getPendingTx('AcceptPrepaidAgreement', { ...payload })
+          || getPendingTx('AcceptPrepaidAgreementAndRepossess', { ...payload })
           || getPendingTx('AcceptContractAgreement', { ...payload })
           || getPendingTx('AcceptPrepaidMerkleAgreement', { ...payload })
           || getPendingTx('ExtendPrepaidAgreement', { ...payload })
@@ -117,7 +122,7 @@ const useAgreementManager = (target, permission, agreementPath) => {
     currentPolicy,
 
     enterAgreement,
-    enterAgreementAndReposess,
+    enterAgreementAndRepossess,
     extendAgreement,
     cancelAgreement,
     transferAgreement,

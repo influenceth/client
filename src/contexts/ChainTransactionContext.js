@@ -43,15 +43,16 @@ const customConfigs = {
     equalityTest: ['target.id', 'target.label', 'permission'],
     getTransferConfig: ({ recipient, permission, permitted, repossession, target, termPrice }) => {
       const transfers = [];
-      if (repossession?.price > 0 && repossession?.recipient) {
+      if (repossession?.price > 0 && repossession?.recipient && repossession?.recipientCrew) {
         transfers.push(
           {
             amount: safeBigInt(repossession.price),
             recipient: repossession.recipient,
             memo: [
-              Entity.packEntity(target),
-              permission,
-              Entity.packEntity(permitted),
+              Entity.packEntity(target), // <-- this is the lot
+              permission, // <-- lot_use perm (1)
+              Entity.packEntity(repossession.recipientCrew), // <-- building controller
+              shortString.encodeShortString('auction')
             ]
           }
         )

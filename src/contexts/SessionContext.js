@@ -593,6 +593,7 @@ export function SessionProvider({ children }) {
   }, [currentSession?.walletId, currentSession?.isDeployed, deployWithSubsidy, status]);
 
   const payGasWith = useMemo(() => {
+    return null; // TODO: remove
     if (authenticated && feeAbstractionCompatibility?.isCompatible) {
       // if wallet has gas rewards available, use those
       if (feeRewards > 0) {
