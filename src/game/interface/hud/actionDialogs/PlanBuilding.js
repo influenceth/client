@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import styled from 'styled-components';
 import { Building, Crewmate, Lot, Permission } from '@influenceth/sdk';
 
 import { PlanBuildingIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
-import theme from '~/theme';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import { reactBool, formatTimer, getCrewAbilityBonuses } from '~/lib/utils';
 
@@ -22,7 +20,6 @@ import {
   BuildingImage,
   EmptyBuildingImage,
   SitePlanSelectionDialog,
-  ProgressBarSection,
   TravelBonusTooltip,
   ActionDialogBody,
   getBuildingRequirements,
@@ -33,11 +30,6 @@ import {
 import actionStage from '~/lib/actionStages';
 import useSimulationState from '~/hooks/useSimulationState';
 import useSimulationEnabled from '~/hooks/useSimulationEnabled';
-
-const MouseoverWarning = styled.span`
-  & b { color: ${theme.colors.error}; }
-  & em { font-weight: bold; font-style: normal; color: white; }
-`;
 
 const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const { currentConstructionAction, planConstruction } = constructionManager;
@@ -149,32 +141,6 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
             mode="simple"
             requirements={buildingRequirements}
             requirementsMet />
-        )}
-
-        {stage === actionStage.NOT_STARTED && (
-          <ProgressBarSection
-            overrides={{
-              barColor: buildingType ? theme.colors.main : '#bbbbbb',
-              color: buildingType ? '#ffffff' : undefined,
-              left: `Site Timer`,
-              right: formatTimer(Building.GRACE_PERIOD)
-            }}
-            stage={stage}
-            title="Staging Time"
-            tooltip={(
-              <MouseoverWarning>
-                <em>Building Sites</em> are used to stage materials before construction. If you are the <em>Lot Contoller</em>,
-                any assets moved to the building site are protected for the duration of the <em>Site Timer</em>.
-                <br/><br/>
-                A site is designated as <b>Abandoned</b> if it has not started construction before the
-                timer expires. Materials left on an <b>Abandoned Site</b> are public, and are thus subject to
-                be claimed by other players!
-                <br/><br/>
-                If you are not the <em>Lot Contoller</em>, the <em>Lot Contoller</em> may takeover your Building Site and its
-                materials at any time (even before the <em>Site Timer</em> elapses).
-              </MouseoverWarning>
-            )}
-          />
         )}
 
         <LotControlWarning lot={lot} />

@@ -4,8 +4,7 @@ import { Building } from '@influenceth/sdk';
 
 import {
   PermissionIcon,
-  TakeControlIcon,
-  WarningIcon
+  TakeControlIcon
 } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import theme, { hexToRGB } from '~/theme';
@@ -19,7 +18,6 @@ import {
 
   FlexSection,
   FlexSectionInputBlock,
-  ProgressBarSection,
   ActionDialogBody,
   BuildingInputBlock,
   FlexSectionSpacer,
@@ -59,7 +57,7 @@ const MouseoverWarning = styled.span`
 `;
 
 const RepoBuilding = ({ asteroid, lot, actionManager, stage, ...props }) => {
-  const { repoBuilding, takeoverType } = actionManager;
+  const { repoBuilding } = actionManager;
   const { crew } = useCrewContext();
   const { data: delinquentController } = useCrew(lot?.building?.Control?.controller?.id);
 
@@ -76,12 +74,8 @@ const RepoBuilding = ({ asteroid, lot, actionManager, stage, ...props }) => {
       <ActionDialogHeader
         action={{
           icon: <TakeControlIcon />,
-          label: takeoverType === 'squatted'
-            ? `Repossess ${buildingOrSite}`
-            : 'Claim Construction Site',
-          status: stage === actionStage.NOT_STARTED
-            ? (takeoverType === 'squatted' ? 'Owner Action' : 'Control Change')
-            : undefined,
+          label: `Repossess ${buildingOrSite}`,
+          status: stage === actionStage.NOT_STARTED ? 'Owner Action' : undefined,
         }}
         overrideColor={stage === actionStage.NOT_STARTED ? theme.colors.error : undefined}
         actionCrew={crew}
@@ -94,10 +88,6 @@ const RepoBuilding = ({ asteroid, lot, actionManager, stage, ...props }) => {
           <BuildingInputBlock
             title="Location"
             building={lot?.building}
-            imageProps={takeoverType === 'expired' && {
-              iconOverlay: <WarningIcon />,
-              iconOverlayColor: theme.colors.error
-            }}
           />
 
           <FlexSectionSpacer />
@@ -108,10 +98,7 @@ const RepoBuilding = ({ asteroid, lot, actionManager, stage, ...props }) => {
               <span>Take Control of {buildingOrSite === 'Construction Site' ? 'Site' : buildingOrSite}</span>
             </DescTitle>
             <Desc>
-              {takeoverType === 'squatted'
-                ? <>You have <b>Lot Control</b> and may assume control of this asset.</>
-                : <>The <b>Staging Time</b> has expired and any crew may assume control of this asset.</>
-              }
+              You have <b>Lot Control</b> and may assume control of this asset.
             </Desc>
           </FlexSectionInputBlock>
         </FlexSection>
@@ -122,32 +109,6 @@ const RepoBuilding = ({ asteroid, lot, actionManager, stage, ...props }) => {
           </FlexSectionBlock>
         </FlexSection>
 
-        {takeoverType === 'expired' && (
-          <ProgressBarSection
-            overrides={{
-              barColor: theme.colors.main,
-              color: '#ffffff',
-              left: `Reset Site Timer`,
-              right: formatTimer(Building.GRACE_PERIOD)
-            }}
-            stage={stage}
-            title="Staging Time"
-            tooltip={(
-              <MouseoverWarning>
-                <em>Building Sites</em> are used to stage materials before construction. If you are the <em>Lot Contoller</em>,
-                any assets moved to the building site are protected for the duration of the <em>Site Timer</em>.
-                <br/><br/>
-                A site is designated as <b>Abandoned</b> if it has not started construction before the
-                timer expires. Materials left on an <b>Abandoned Site</b> are public, and are thus subject to
-                be claimed by other players!
-                <br/><br/>
-                If you are not the <em>Lot Contoller</em>, the <em>Lot Contoller</em> may takeover your Building Site and its
-                materials at any time (even before the <em>Site Timer</em> elapses).
-              </MouseoverWarning>
-            )}
-          />
-        )}
-
         <ActionDialogStats
           stage={stage}
           stats={stats}
@@ -157,7 +118,7 @@ const RepoBuilding = ({ asteroid, lot, actionManager, stage, ...props }) => {
       </ActionDialogBody>
 
       <ActionDialogFooter
-        goLabel={takeoverType === 'squatted' ? 'Repossess' : 'Claim'}
+        goLabel="Repossess"
         onGo={repoBuilding}
         stage={stage}
         waitForCrewReady
@@ -168,6 +129,7 @@ const RepoBuilding = ({ asteroid, lot, actionManager, stage, ...props }) => {
 
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
+  const { accountCrewIds } = useCrewContext();
   const repoManager = useRepoManager(lot?.id);
   const { actionStage } = repoManager;
 
@@ -178,10 +140,14 @@ const Wrapper = (props) => {
       }
     }
 
-    if (asteroid && lot && !repoManager.takeoverType) {
-      if (props.onClose) props.onClose();
+    if (asteroid && lot && accountCrewIds) {
+      if (accountCrewIds.includes(lot.Control?.controller?.id)) {
+        if (!accountCrewIds.includes(lot.building?.Control?.controller?.id)) {
+          if (props.onClose) props.onClose();
+        }
+      }
     }
-  }, [asteroid, lot, isLoading, repoManager.takeoverType]);
+  }, [asteroid, lot, isLoading]);
 
   return (
     <ActionDialogInner

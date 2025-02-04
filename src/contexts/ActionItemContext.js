@@ -72,13 +72,6 @@ export function ActionItemProvider({ children }) {
     { enabled: !!crewId && crewId !== SIMULATION_CONFIG.crewId }
   );
 
-  const { data: crewBuildings, isLoading: plannedBuildingsLoading, dataUpdatedAt: plansUpdatedAt } = useCrewBuildings();
-  const plannedBuildings = useMemo(() => {
-    return crewBuildings
-      ? (crewBuildings || []).filter((a) => a.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED)
-      : undefined;
-  }, [crewBuildings, plansUpdatedAt]);
-
   const failedTransactions = useStore(s => s.failedTransactions);
   const hiddenActionItems = useStore(s => s.hiddenActionItems);
   const dispatchToggleHideActionItem = useStore(s => s.dispatchToggleHideActionItem);
@@ -88,7 +81,6 @@ export function ActionItemProvider({ children }) {
   const [unreadyItems, setUnreadyItems] = useState([]);
   const [unstartedItems, setUnstartedItems] = useState([]);
   const [agreementItems, setAgreementItems] = useState([]);
-  const [plannedItems, setPlannedItems] = useState([]);
 
   const randomEventItems = useMemo(() => {
     if (crew?._actionTypeTriggered) {
@@ -198,19 +190,6 @@ export function ActionItemProvider({ children }) {
 
     setUnstartedItems(sequencedItems);
 
-    setPlannedItems(
-      (plannedBuildings || [])
-        // .filter((a) => a.Building.plannedAt + Building.GRACE_PERIOD >= nowTime)
-        .map((a) => {
-          const gracePeriodEnd = a.Building.plannedAt + Building.GRACE_PERIOD;
-          return {
-            ...a,
-            waitingFor: gracePeriodEnd > blockTime ? gracePeriodEnd : null
-          };
-        })
-        .sort((a, b) => a.plannedAt - b.plannedAt)
-    );
-
     setAgreementItems(
       (crewAgreements || [])
         .filter((a) => (
@@ -225,7 +204,7 @@ export function ActionItemProvider({ children }) {
         }))
         .sort((a, b) => a._agreement.endTime - b._agreement.endTime)
     );
-  }, [actionItems, busyActivity, crew, crew?._ready, crewAgreements, plannedBuildings, blockTime, itemsUpdatedAt, plansUpdatedAt]);
+  }, [actionItems, busyActivity, crew, crew?._ready, crewAgreements, blockTime, itemsUpdatedAt]);
 
   useEffect(() => {
     const movementEvents = Object.keys(activities).filter((i) => !!activities[i].getVisitedLot);
@@ -245,16 +224,6 @@ export function ActionItemProvider({ children }) {
     const visibleReadyItems = (readyItems || []).filter((item) => {
       if (pendingTransactions) {
         return !getActivityConfig(item)?.isActionItemHidden(pendingTransactions);
-      }
-      return true;
-    });
-
-    const visiblePlannedItems = (plannedItems || []).filter((item) => {
-      if (pendingTransactions) {
-        return !pendingTransactions.find((tx) => (
-          ['ConstructionStart', 'ConstructionAbandon'].includes(tx.key)
-          && tx.vars.building.id === item.id
-        ));
       }
       return true;
     });
@@ -281,11 +250,10 @@ export function ActionItemProvider({ children }) {
       ...(failedTransactions || []).map((item) => ({ ...item, type: 'failed', category: 'tx' })),
       ...(randomEventItems || []).map((item) => ({ ...item, type: 'randomEvent', category: 'ready' })),
       ...(visibleReadyItems || []).map((item) => ({ ...item, type: 'ready', category: 'ready' })),
-      ...(visiblePlannedItems || []).map((item) => ({ ...item, type: 'plan', category: 'warning' })),
       ...(visibleAgreementItems || []).map((item) => ({ ...item, type: 'agreement', category: 'warning' })),
       ...(unreadyItems || []).map((item) => ({ ...item, type: 'unready', category: 'unready' })),
       ...(unstartedItems || []).map((item) => ({ ...item, type: 'unstarted', category: 'unstarted' }))
-    ].map((x) => {  // make sure everything has a unique key (only `plan` should fall through to the label_id option)
+    ].map((x) => {  // make sure everything has a unique key
       x.uniqueKey = `${x.type}_${x._id || x.txHash || x.timestamp || x.key || `${x.label}_${x.id}`}`;
       x.hidden = (hiddenActionItems || []).includes(x.uniqueKey);
       return x;
@@ -298,25 +266,23 @@ export function ActionItemProvider({ children }) {
     hiddenActionItems,
     pendingTransactions,
     perProcessLeases,
-    plannedItems,
     randomEventItems,
     readyItems,
     unreadyItems,
-    unstartedItems,
-    plansUpdatedAt
+    unstartedItems
   ]);
 
   // if there is data for all types (i.e. we know loaded successfully), clean out all
   // hidden keys that no longer exist to minimize long-term state bloat
   useEffect(() => {
-    if (allVisibleItems?.length > 0 && actionItems?.length > 0 && crewAgreements?.length > 0 && plannedBuildings?.length > 0) {
+    if (allVisibleItems?.length > 0 && actionItems?.length > 0 && crewAgreements?.length > 0) {
       hiddenActionItems.forEach((key) => {
         if (!allVisibleItems.find((i) => i.uniqueKey === key)) {
           dispatchToggleHideActionItem(key);
         }
       })
     }
-  }, [actionItems, allVisibleItems, crewAgreements, hiddenActionItems, plannedBuildings, itemsUpdatedAt, plansUpdatedAt]);
+  }, [actionItems, allVisibleItems, crewAgreements, hiddenActionItems, itemsUpdatedAt]);
 
   // TODO: clear timers in the serviceworker
   //  for not yet ready to finish, set new timers based on time remaining
@@ -328,25 +294,21 @@ export function ActionItemProvider({ children }) {
     failedTransactions,
     randomEventItems,
     readyItems,
-    plannedItems,
     unreadyItems,
     unstartedItems,
     actionItems,
-    isLoading: actionItemsLoading || agreementsLoading || plannedBuildingsLoading
+    isLoading: actionItemsLoading || agreementsLoading
   }), [
     allVisibleItems,
     pendingTransactions,
     failedTransactions,
     randomEventItems,
     readyItems,
-    plannedItems,
     unreadyItems,
     unstartedItems,
     actionItems,
     actionItemsLoading,
-    plannedBuildingsLoading,
-    itemsUpdatedAt,
-    plansUpdatedAt
+    itemsUpdatedAt
   ]);
 
   // TODO: pending and failed transactions are already in context

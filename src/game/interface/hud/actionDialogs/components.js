@@ -91,7 +91,6 @@ import { theming } from '../ActionDialog';
 import ThumbnailWithData from '~/components/AssetThumbnailWithData';
 import AssetBlock, { assetBlockCornerSize } from '~/components/AssetBlock';
 import LiveReadyStatus from '~/components/LiveReadyStatus';
-import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import EntityName from '~/components/EntityName';
 import DataTableComponent from '~/components/DataTable';
 import Autocomplete, { StaticAutocomplete } from '~/components/Autocomplete';
@@ -3972,17 +3971,13 @@ export const FlexSectionBlock = ({ bodyStyle, children, style = {}, title, title
 
 export const LotControlWarning = ({ lot }) => {
   const { accountCrewIds, crew } = useCrewContext();
-  const { isAtRisk } = useConstructionManager(lot?.id);
 
   const warning = useMemo(() => {
     if (!(crew && lot)) return null;
-    if (isAtRisk) {
-      return <>Construction Site is vulnerable to any crew.</>;
-    }
     if (!accountCrewIds?.includes(lot?.Control?.controller?.id)) {
       return <>Lot Not Controlled. Construction Site is vulnerable to <EntityName {...(lot?.Control?.controller || {})} /></>;
     }
-  }, [accountCrewIds, crew, isAtRisk, lot?.building]);
+  }, [accountCrewIds, crew, lot?.building]);
 
   if (!warning) return null;
   return (

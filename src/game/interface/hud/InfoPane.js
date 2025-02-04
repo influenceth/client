@@ -350,7 +350,7 @@ const InfoPane = () => {
 
   const { actions, props: actionProps } = useActionButtons();
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(asteroidId);
-  const { constructionStatus, isAtRisk } = useConstructionManager(lotId);
+  const { constructionStatus } = useConstructionManager(lotId);
   const { crew } = useCrewContext();
   const { data: lot, isLoading: lotIsLoading } = useLot(lotId);
   const { data: ship, isLoading: shipIsLoading } = useShip(zoomScene?.type === 'SHIP' ? zoomScene.shipId : undefined);
@@ -509,9 +509,11 @@ const InfoPane = () => {
         pane.thumbVisible = true;
         pane.thumbnail = <ThumbBackground image={thumbUrl} />;
       } else if (lotId && lot) {
-        let hologram = !!(isAtRisk || isIncompleteBuilding);
-        hologram = lot.building ? hologram : false;
-        const thumbUrl = getBuildingIcon(lot.building?.Building?.buildingType || 0, 'w400', hologram);
+        const thumbUrl = getBuildingIcon(
+          lot.building?.Building?.buildingType || 0,
+          'w400',
+          lot.building ? !!isIncompleteBuilding : false
+        );
 
         if (zoomScene?.overrides?.buildingType)
           pane.title = Building.TYPES[zoomScene?.overrides?.buildingType]?.name;
@@ -534,13 +536,8 @@ const InfoPane = () => {
             thumbBannerColor = 'brightMain';
             thumbBannerBackgroundColor = 'backgroundMain';
           }
-          else if (isAtRisk) {
-            thumbBanner = <><WarningIcon />Expired</>;
-            thumbBannerColor = 'red';
-            thumbBannerBackgroundColor = 'backgroundRed';
-          }
           else {
-            thumbBanner = <><LiveTimer target={lot?.building?.Building?.plannedAt + Building.GRACE_PERIOD} /></>;
+            thumbBanner = <>Site Planned</>;
             thumbBannerColor = 'lightOrange';
             thumbBannerBackgroundColor = 'backgroundOrange';
           }
@@ -583,7 +580,6 @@ const InfoPane = () => {
     asteroid,
     constructionStatus,
     crew?.id,
-    isAtRisk,
     lotId,
     lot,
     saleIsActive,

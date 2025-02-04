@@ -94,15 +94,6 @@ const useColumns = () => {
                   )
                   : `Expired`
               )}
-              {row.type === 'plan' && (
-                row.finishTime
-                  ? (
-                    <LiveTimer target={row.finishTime} maxPrecision={2}>
-                      {(formattedTime, isTimer) => isTimer ? <>Timer <span style={{ color: 'white' }}>{formattedTime}</span></> : <b>{formattedTime}</b>}
-                    </LiveTimer>
-                  )
-                  : `Materials at Risk`
-              )}
             </Highlight>
           </>
         ),

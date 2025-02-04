@@ -82,26 +82,6 @@ const formatAsItem = (activity, actionItem = {}) => {
   return formatted;
 };
 
-const formatAsPlan = (item) => {
-  return {
-    key: item.key,
-    type: item.type,
-    _expired: !item.waitingFor,
-    icon: <PlanBuildingIcon />,
-    label: `${Building.TYPES[item.Building?.buildingType].name || ''} Site`,
-    crewId: item.Control?.controller?.id,
-    asteroidId: Number((item.Location?.locations || []).find((l) => l.label === Entity.IDS.ASTEROID)?.id),
-    lotId: Number((item.Location?.locations || []).find((l) => l.label === Entity.IDS.LOT)?.id),
-    resourceId: null,
-    locationDetail: '',
-    finishTime: item.waitingFor,
-    startTime: null,
-    onClick: ({ openDialog }) => {
-      openDialog('CONSTRUCT');
-    }
-  };
-};
-
 const formatAsAgreement = (item) => {
   return {
     key: item.key,
@@ -884,6 +864,7 @@ const formatAsTx = (item) => {
       break;
     }
 
+    case 'AcceptPrepaidAgreementAndRepossess':
     case 'AcceptPrepaidAgreement': {
       formatted.icon = <PermissionIcon />;
       formatted.label = 'Prepaid Lease Agreement';
@@ -1074,7 +1055,6 @@ export const formatActionItem = (item, actionItem) => {
   try {
     if (item.type === 'pending' || item.type === 'failed') return formatAsTx(item);
     if (item.type === 'randomEvent') return formatAsRandomEvent(item);
-    if (item.type === 'plan') return formatAsPlan(item);
     if (item.type === 'agreement') return formatAsAgreement(item);
     return formatAsItem(item, actionItem);
   } catch (e) {
@@ -1114,7 +1094,6 @@ export const statuses = {
   ready: 'Ready',
   unready: 'In Progress',
   unstarted: 'Scheduled',
-  plan: 'Staging',
   agreement: 'Lease Expiring',
   _expired: 'Expired'
 };

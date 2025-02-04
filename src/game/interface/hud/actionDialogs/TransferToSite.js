@@ -273,18 +273,6 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
           selectedItems={selectedItems}
         />
 
-        {/* TODO: don't ever show progress here... close if complete and user can link to individual surface transports
-        {stage !== actionStage.NOT_STARTED && (
-          <ProgressBarSection
-            finishTime={currentDeliveryAction?.finishTime}
-            startTime={currentDeliveryAction?.startTime}
-            stage={stage}
-            title="Progress"
-            totalTime={transportTime.total}
-          />
-        )}
-        */}
-
         <ActionDialogStats
           stage={stage}
           stats={stats}

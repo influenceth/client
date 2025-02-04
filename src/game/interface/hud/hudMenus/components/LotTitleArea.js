@@ -20,7 +20,6 @@ const Abandoned = styled.div`
 `;
 
 const LotTitleArea = ({ lot }) => {
-  const { isAtRisk } = useConstructionManager(lot?.id);
   const [title, subtitle, background] = useMemo(() => {
     if (!lot) return [];
     if (lot.building) {
@@ -50,8 +49,7 @@ const LotTitleArea = ({ lot }) => {
     <TitleArea
       background={background}
       title={title}
-      subtitle={isAtRisk ? <SubtitleRow><div>{subtitle}</div><Abandoned>Expired</Abandoned></SubtitleRow> : subtitle}
-      overlay={isAtRisk && <Abandoned><WarningIcon /></Abandoned>}
+      subtitle={subtitle}
       upperLeft={lot && (
         <>
           <LocationIcon />

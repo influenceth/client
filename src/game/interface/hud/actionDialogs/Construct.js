@@ -57,7 +57,7 @@ const ReqTitle = styled.div`
 
 const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const setCoachmarkRef = useCoachmarkRefSetter();
-  const { currentConstructionAction, constructionStatus, startConstruction, finishConstruction, isAtRisk } = constructionManager;
+  const { currentConstructionAction, constructionStatus, startConstruction, finishConstruction } = constructionManager;
   const { currentDeliveryActions } = useDeliveryManager({ destination: lot?.building });
 
   const crew = useActionCrew(currentConstructionAction);
@@ -237,38 +237,6 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
             requirements={buildingRequirements} />
         )}
 
-        {stage === actionStage.NOT_STARTED && (
-          <ProgressBarSection
-            finishTime={lot?.building?.Building?.plannedAt + Building.GRACE_PERIOD}
-            startTime={lot?.building?.Building?.plannedAt}
-            isCountDown
-            overrides={
-              isAtRisk
-              ? {
-                barColor: theme.colors.error,
-                color: theme.colors.error,
-                left: <span style={{ display: 'flex', alignItems: 'center' }}><WarningIcon /> <span style={{ marginLeft: 6 }}>Expired</span></span>,
-              }
-              : {
-                barColor: theme.colors.main,
-                color: 'white',
-                left: <span style={{ display: 'flex', alignItems: 'center' }}><span style={{ marginLeft: 6 }}>Site Timer</span></span>,
-              }
-            }
-            stage={stage}
-            title="Staging Time"
-            tooltip={(
-              <MouseoverWarning>
-                Building Sites are used to stage materials before construction. While the{' '}<b>Site Timer</b>
-                {' '}is active, any assets moved to the building site are protected. However, a site becomes
-                {' '}<b>Abandoned</b>{' '}if it has not started construction when the time expires.
-                <br/><br/>
-                Warning: Any materials on an{' '}<b>Abandoned Site</b>{' '}become public, and are subject to be
-                claimed by other players!
-              </MouseoverWarning>
-            )}
-          />
-        )}
         {stage !== actionStage.NOT_STARTED && (
           <ProgressBarSection
             finishTime={currentConstructionAction?.finishTime}

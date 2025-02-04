@@ -24,7 +24,7 @@ const useAgreementManager = (target, permission, agreementPath) => {
 
     if (agreement) {
       const agg = cloneDeep(agreement);
-      if (agg?.rate) {
+      if (agg?.rate > 0 || (agg?.rate === 0 && permission === Permission.IDS.LOT_USE)) {
         agg.rate_swayPerSec = agg.rate / TOKEN_SCALE[TOKEN.SWAY] / 3600; // (need this precision to avoid rounding issues)
         agg.rate = agg.rate / TOKEN_SCALE[TOKEN.SWAY] * 24;  // stored in microsway per hour, UI in sway/day
       }
@@ -62,6 +62,20 @@ const useAgreementManager = (target, permission, agreementPath) => {
     );
   }, [currentPolicy, execute, meta, payload]);
 
+  const enterAgreementAndRepossess = useCallback((details = {}) => {
+    if (currentPolicy.policyType === Permission.POLICY_IDS.PREPAID) {
+      execute(
+        'AcceptPrepaidAgreementAndRepossess',
+        {
+          ...payload,
+          ...details,
+          building: details.repossession?.building,
+        },
+        meta
+      );
+    }
+  }, [currentPolicy, execute, meta, payload]);
+
   const extendAgreement = useCallback((details = {}) => {
     const { term, ...params } = details;
     execute(
@@ -91,6 +105,7 @@ const useAgreementManager = (target, permission, agreementPath) => {
     () => {
       if (getPendingTx) {
         return getPendingTx('AcceptPrepaidAgreement', { ...payload })
+          || getPendingTx('AcceptPrepaidAgreementAndRepossess', { ...payload })
           || getPendingTx('AcceptContractAgreement', { ...payload })
           || getPendingTx('AcceptPrepaidMerkleAgreement', { ...payload })
           || getPendingTx('ExtendPrepaidAgreement', { ...payload })
@@ -107,6 +122,7 @@ const useAgreementManager = (target, permission, agreementPath) => {
     currentPolicy,
 
     enterAgreement,
+    enterAgreementAndRepossess,
     extendAgreement,
     cancelAgreement,
     transferAgreement,

@@ -34,7 +34,7 @@ const useConstructionManager = (lotId) => {
   // UNBUILDABLE (before asteroid is scanned)
   // READY_TO_PLAN > PLANNING  > PLANNED > UNDER_CONSTRUCTION > READY_TO_FINISH > FINISHING > OPERATIONAL
   //               < CANCELING <         <                  DECONSTRUCTING                  <
-  const [currentConstructionAction, constructionStatus, isAtRisk, stageByActivity] = useMemo(() => {
+  const [currentConstructionAction, constructionStatus, stageByActivity] = useMemo(() => {
     let current = {
       _cachedData: null,
       _isAccessible: true,
@@ -54,7 +54,6 @@ const useConstructionManager = (lotId) => {
     let status = asteroid?.Celestial?.scanStatus === Asteroid.SCAN_STATUSES.RESOURCE_SCANNED
       ? 'READY_TO_PLAN'
       : 'UNBUILDABLE';
-    let isAtRisk = false;
     if (lot?.building) {
       let actionItem = (actionItems || []).find((item) => (
         item.event.name === 'ConstructionStarted'
@@ -80,27 +79,9 @@ const useConstructionManager = (lotId) => {
         } else if (getStatus('ConstructionAbandon', payload) === 'pending') {
           status = 'CANCELING';
           stages.unplan = actionStage.COMPLETING;
-        } else if (lot.building.Building.plannedAt + Building.GRACE_PERIOD >= blockTime) {
+        } else {
           status = 'PLANNED';
           stages.plan = actionStage.COMPLETED;
-        } else {
-          isAtRisk = true;
-
-          // if at-risk is being rebuilt on, check transaction to see if a new occupier is re-planning
-          const planTx = getPendingTx('ConstructionPlan', planPayload);
-          if (planTx) {
-            current.buildingType = planTx.vars.buildingType;
-            current.crewId = planTx.vars.crewId;
-            current.finishTime = null;
-            current.startTime = null;
-            status = 'PLANNING';
-            stages.plan = actionStage.COMPLETING;
-
-          // if at risk, but i was the occupier, still treat as "planned" (will go back to "ready to plan" for other crews)
-          } else if (accountCrewIds?.includes(lot.building?.Control?.controller?.id)) {
-            status = 'PLANNED';
-            stages.plan = actionStage.COMPLETED;
-          }
         }
 
       } else if (lot.building.Building.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION) {
@@ -137,7 +118,6 @@ const useConstructionManager = (lotId) => {
     return [
       current,
       status,
-      isAtRisk,
       stages
     ];
   }, [accountCrewIds, actionItems, asteroid, getPendingTx, getStatus, payload, planPayload, lot?.building]);
@@ -186,7 +166,6 @@ const useConstructionManager = (lotId) => {
     deconstruct,
     constructionStatus,
     currentConstructionAction,
-    isAtRisk,
     stageByActivity
   };
 };
