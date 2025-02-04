@@ -381,6 +381,13 @@ const customConfigs = {
     equalityTest: true, // TODO: ...
     isVirtual: true
   },
+  ForceCancelBuyOrders: {
+    multisystemCalls: (orders) => {
+      return orders.map((vars) => ({ system: 'CancelBuyOrder', vars }));
+    },
+    equalityTest: ['storage.id', 'storageSlot'],
+    isVirtual: true
+  },
   FillSellOrder: {
     getTransferConfig: (vars) => {
       // memo === order path
@@ -638,9 +645,8 @@ export function ChainTransactionProvider({ children }) {
         const gasToken = gasTokenOptions.find((t) => Address.areEqual(t.tokenAddress, gasTokenAddress));
         console.log('gasToken', gasToken);
 
-        const maxFee = appConfig.get('App.deployment') === 'production'
-          ? 3n * Math.abs(gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken))
-          : BigInt(1e16);
+        const maxFee = (appConfig.get('App.deployment') === 'production' ? 3n : 3n)
+          * gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken);
         console.log('maxFee', maxFee);
 
         // pay gas with rewards if available
@@ -670,19 +676,23 @@ export function ChainTransactionProvider({ children }) {
 
           // ^^^
 
-          return gasless.executeCalls(
-            account,
-            formattedCalls,
-            {},
-            { baseUrl: appConfig.get('Api.avnu') }
-          )
+          try {
+            return await gasless.executeCalls(
+              account,
+              formattedCalls,
+              {},
+              { baseUrl: appConfig.get('Api.avnu') }
+            )
+          } catch (e) {
+            console.warn('Could not pay gas with rewards! Trying with sway, then eth/strk...', e);
+          }
         }
 
         // pay gas with sway if possible
         // Check if wallet has sufficient funds for gas fees
         // (skip this check in testnet since the allowed gas tokens are inconsistent)
         // if (appConfig.get('App.deployment') !== 'production' || gasTokenBalance >= maxFee) {
-        else if (payGasWith?.method === 'SWAY' && swayRef.current >= maxFee) {
+        if (['REWARDS', 'SWAY'].includes(payGasWith?.method) && swayRef.current >= maxFee) {
           const { typedData, signature } = await getOutsideExecutionData(formattedCalls, gasToken.tokenAddress, maxFee, canUseSessionKey);
           return await gasless.fetchExecuteTransaction(
             accountAddress,

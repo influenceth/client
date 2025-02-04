@@ -92,7 +92,7 @@ const useMarketplaceManager = (buildingId) => {
         'EscrowWithdrawalAndFillBuyOrders',
         fillOrders.map((order) => ({
           depositCaller: order.initialCaller || crew?.Crew?.delegatedTo,
-          seller_account: crew?.Crew?.delegatedTo,
+          seller_account: order?.sellerOverride || crew?.Crew?.delegatedTo,
           exchange_owner_account: exchangeController?.Crew?.delegatedTo,
           makerFee: order.makerFee / Order.FEE_SCALE,
           payments: {
@@ -124,7 +124,7 @@ const useMarketplaceManager = (buildingId) => {
     async ({ destination, destinationSlot, fillOrders }) => {
       if (!fillOrders?.length) return;
       const sellerCrewIds = fillOrders.map((order) => order.crew?.id);
-      const sellerCrews = await api.getEntities({ ids: sellerCrewIds, label: Entity.IDS.CREW, component: 'Crew' })
+      const sellerCrews = await api.getEntities({ ids: sellerCrewIds, label: Entity.IDS.CREW, component: 'Crew' });
       execute(
         'BulkFillSellOrder',
         fillOrders.map((order) => ({
@@ -156,28 +156,31 @@ const useMarketplaceManager = (buildingId) => {
   );
 
   const cancelBuyOrder = useCallback(
-    ({ amount, buyer, price, product, destination, destinationSlot, initialCaller, makerFee }) => {
-      fillBuyOrders({
-        isCancellation: true,
-        origin: destination,
-        originSlot: destinationSlot,
-        fillOrders: [
-          {
-            initialCaller,
-            makerFee,
-            paymentsUnscaled: {
-              toExchange: 0,
-              toPlayer: Order.getBuyOrderDeposit(amount * Math.floor(price * TOKEN_SCALE[TOKEN.SWAY]), makerFee)
-            },
-            fillAmount: amount,
-            crew: buyer,
-            price: price,
-            storage: destination,
-            storageSlot: destinationSlot,
-            product,
-          }
-        ]
-      });
+    ({ amount, buyer, price, product, destination, destinationSlot, initialCaller, makerFee }, isForced) => {
+      fillBuyOrders(
+        {
+          isCancellation: true,
+          origin: destination,
+          originSlot: destinationSlot,
+          fillOrders: [
+            {
+              sellerOverride: isForced ? initialCaller : undefined,
+              initialCaller,
+              makerFee,
+              paymentsUnscaled: {
+                toExchange: 0,
+                toPlayer: Order.getBuyOrderDeposit(amount * Math.floor(price * TOKEN_SCALE[TOKEN.SWAY]), makerFee)
+              },
+              fillAmount: amount,
+              crew: buyer,
+              price: price,
+              storage: destination,
+              storageSlot: destinationSlot,
+              product,
+            }
+          ]
+        }
+      );
     },
     [fillBuyOrders]
   );
