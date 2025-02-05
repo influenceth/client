@@ -141,10 +141,13 @@ const Wrapper = (props) => {
     }
 
     if (asteroid && lot && accountCrewIds) {
-      if (accountCrewIds.includes(lot.Control?.controller?.id)) {
-        if (!accountCrewIds.includes(lot.building?.Control?.controller?.id)) {
-          if (props.onClose) props.onClose();
-        }
+      // if i do not control the lot, i cannot repo the building
+      if (!accountCrewIds.includes(lot.Control?.controller?.id)) {
+        if (props.onClose) props.onClose();
+      }
+      // if i already control the building, i cannot repo it
+      if (accountCrewIds.includes(lot.building?.Control?.controller?.id)) {
+        if (props.onClose) props.onClose();
       }
     }
   }, [asteroid, lot, isLoading]);
