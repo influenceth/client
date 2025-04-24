@@ -34,6 +34,7 @@ import useNameAvailability from '~/hooks/useNameAvailability';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import useSimulationEnabled from '~/hooks/useSimulationEnabled';
+import useStarterPacks from '~/hooks/useStarterPacks';
 import useStore from '~/hooks/useStore';
 import useWalletPurchasableBalances from '~/hooks/useWalletPurchasableBalances';
 import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
@@ -832,6 +833,7 @@ const TraitSelector = ({ crewmate, currentTraits, onUpdateTraits, onClose, trait
 
 const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, crewmateId, locationId, pendingCrewmate }) => {
   const history = useHistory();
+  const starterPacks = useStarterPacks();
 
   const simulationEnabled = useSimulationEnabled();
   const dispatchSimulationState = useStore((s) => s.dispatchSimulationState);
@@ -1013,8 +1015,10 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     // always show prompt while processing (so can see "loading")
     if (isPurchasingPack || isPackPurchaseIsProcessing) return true;
 
+    // else, show prompt when no sway, crewmate credits, or crewmates (if not already dismissed)
+    return !(swayBalance > 0n || adalianRecruits.length > 0 || Object.keys(crewmateMap || {}).length > 0) && !packPromptDismissed
     // else, show prompt when no sway and not using a credit (if not already dismissed)
-    return !(swayBalance > 0n || !!crewmate?.id) && !packPromptDismissed;
+    // return !(swayBalance > 0n || !!crewmate?.id) && !packPromptDismissed;
   }, [!!crewmate?.id, isPurchasingPack, packPromptDismissed, pendingTransactions, swayBalance]);
 
   // init appearance options as desired
@@ -1626,9 +1630,15 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
               </p>
               <Selector><div>Select</div></Selector>
               <div style={{ color: 'white', display: 'flex', flexDirection: 'row', marginBottom: 20 }}>
-                <StarterPack packLabel="intro" asButton setIsPurchasing={setIsPurchasingPack} style={{ marginRight: 15 }} />
-                <StarterPack packLabel="basic" asButton setIsPurchasing={setIsPurchasingPack} style={{ marginRight: 15 }} />
-                <StarterPack packLabel="advanced" asButton setIsPurchasing={setIsPurchasingPack} />
+                {(starterPacks || []).map((product, i) => (
+                  <StarterPack
+                    key={product.id}
+                    asButton
+                    index={i}
+                    product={product}
+                    setIsPurchasing={setIsPurchasingPack}
+                    style={i > 0 ? { marginLeft: 15 } : {}} />
+                ))}
               </div>
             </PromptBody>
           )}
@@ -1638,7 +1648,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
           }}
           confirmText="Proceed with crewmate only"
           onReject={() => setConfirming(false)}
-          style={{ width: 960 }}
+          style={{ width: Math.max(480, starterPacks?.length * 320 + Math.max(0, (starterPacks?.length - 1) * 15) + 60) }}
         />
       )}
       {confirming && !shouldPromptForPack && (
