@@ -4514,6 +4514,8 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
       <ProductWrapper horizontalScroll={products?.length > 7}>
         {products.map(({ i: resourceId, recipe, amount }) => {
           const thumbProps = {};
+          const resource = Product.TYPES[resourceId];
+          let denominator = null;
           if (output) {
             thumbProps.backgroundColor = `rgba(${hexToRGB(theme.colors.green)}, 0.15)`;
             thumbProps.badgeColor = theme.colors.green;
@@ -4530,7 +4532,13 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
               thumbProps.tooltipOverride = `[INSUFFICIENT] ${Product.TYPES[resourceId]?.name}`;
             }
           }
-          const resource = Product.TYPES[resourceId];
+          if (!output && stage == actionStage.NOT_STARTED) {
+            denominator = resource.isAtomic ? sourceContents[resourceId] || '0' : formatResourceMass(sourceContents[resourceId], resourceId);
+            if (amount + recipe >= sourceContents[resourceId] && sourceContents[resourceId] >= amount) {
+              thumbProps.backgroundColor = `rgba(${hexToRGB(theme.colors.warning)}, 0.15)`;
+              thumbProps.badgeColor = theme.colors.warning;
+            }
+          }
           return (
             <ProductSelector
               key={resourceId}
@@ -4541,6 +4549,7 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
               <ResourceThumbnail
                 resource={resource}
                 badge={`${output ? '+' : '-'}${resource.isAtomic ? amount : formatResourceMass(amount, resourceId)}`}
+                badgeDenominator={denominator}
                 iconBadge={<RecipeLabel>{recipe.toLocaleString()}</RecipeLabel>}
                 tooltipContainer="actionDialogTooltip"
                 {...thumbProps}
