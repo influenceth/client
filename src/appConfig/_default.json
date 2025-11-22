@@ -15,17 +15,22 @@
     "argent": "",
     "argentWebWallet": "",
     "avnu": "",
+    "banxa": "",
     "influence": "",
     "influenceImage": "",
     "ipfs": "",
     "ramp": "",
     "ClientId": {
+      "banxa": "",
       "google": "",
       "gtm": "",
       "layerswap": "",
       "ramp": "",
       "stripe": ""
     }
+  },
+  "Banxa": {
+    "minFiat": 11
   },
   "Cloudfront": {
     "imageUrl": "",
